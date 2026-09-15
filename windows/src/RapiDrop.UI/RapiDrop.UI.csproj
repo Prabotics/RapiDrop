@@ -13,7 +13,6 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/Prabotics/RapiDrop</RepositoryUrl>
     <UseWPF>true</UseWPF>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>RapiDrop.UI</RootNamespace>
     <AssemblyName>RapiDrop</AssemblyName>
