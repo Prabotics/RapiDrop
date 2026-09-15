@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: false
+        default: 'v1.0.0'
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS Artifacts
+    runs-on: macos-14
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+      - name: Select Xcode 16
+        run: |
+          for xcode in /Applications/Xcode_16*.app; do
+            if [ -d "$xcode" ]; then
+              sudo xcode-select -s "$xcode"
+              break
+            fi
+          done
+          xcodebuild -version
+          swift --version
+
+      - name: Run Unit Tests
+        run: swift test --package-path macos
+
+      - name: Package macOS App Bundle & DMG
+        run: |
+          chmod +x macos/package.sh
+          cd macos && ./package.sh --all
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-artifacts
+          path: |
+            macos/RapiDrop-macOS.dmg
+            macos/RapiDrop-macOS.zip
+
+  build-android:
+    name: Build Android Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x android/gradlew
+
+      - name: Run Unit Tests
+        working-directory: android
+        run: ./gradlew test
+
+      - name: Assemble Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Prepare APK Artifact
+        run: |
+          mkdir -p android-release
+          cp android/app/build/outputs/apk/release/app-release.apk android-release/RapiDrop.apk
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-artifacts
+          path: android-release/RapiDrop.apk
+
+  build-windows:
+    name: Build Windows Artifacts
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore Dependencies
+        run: dotnet restore windows/RapiDrop.sln -r win-x64
+
+      - name: Run Unit Tests
+        run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -f net10.0
+
+      - name: Publish Standalone Executable (Self-Contained)
+        run: |
+          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained true -o dist/standalone
+          Move-Item dist/standalone/RapiDrop.exe dist/RapiDrop-Standalone.exe
+
+      - name: Publish Framework-Dependent Executable
+        run: |
+          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained false -o dist/dependent
+          Move-Item dist/dependent/RapiDrop.exe dist/RapiDrop.exe
+          Compress-Archive -Path dist/dependent/* -DestinationPath dist/RapiDrop-Windows-x64.zip
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-artifacts
+          path: |
+            dist/RapiDrop-Standalone.exe
+            dist/RapiDrop.exe
+            dist/RapiDrop-Windows-x64.zip
+
+  publish-release:
+    name: Create GitHub Release
+    needs: [build-macos, build-android, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate Checksums
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: release-assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false

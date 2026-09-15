@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Report
+    url: https://github.com/Prabotics/RapiDrop/security/policy
+    about: Please report security vulnerabilities privately via GitHub Security Advisories or as detailed in SECURITY.md.
+  - name: Engineering & Contribution Guidelines
+    url: https://github.com/Prabotics/RapiDrop/blob/main/CONTRIBUTING.md
+    about: Review coding standards, platform architecture, and local testing instructions before proposing major changes.

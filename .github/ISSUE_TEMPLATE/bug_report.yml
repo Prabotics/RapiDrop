@@ -1,0 +1,88 @@
+name: Bug Report
+description: Report an issue or unexpected behavior in RapiDrop
+title: '[BUG] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please ensure you are testing the latest version or commit of RapiDrop.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which operating system and architecture are you running RapiDrop on?
+      options:
+        - 'macOS (Apple Silicon - M1/M2/M3/M4)'
+        - 'macOS (Intel x86_64)'
+        - 'Android (Phone / Tablet)'
+        - 'Windows 11 (x64)'
+        - 'Windows 10 (x64)'
+        - 'Multi-Platform Sync Issue'
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: RapiDrop Version or Commit Hash
+      description: The release version (e.g. v1.0.0) or git commit hash.
+      placeholder: 'e.g. v1.0.0 or git rev-parse --short HEAD'
+    validations:
+      required: true
+
+  - type: input
+    id: os_hardware
+    attributes:
+      label: OS Version & Hardware Details
+      description: OS version and hardware specs of the affected device(s).
+      placeholder: 'e.g. macOS 15.0 on MacBook Air M3, Android 15 on Pixel 8'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: 'Describe the problem clearly and succinctly...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the problem.
+      placeholder: |
+        1. Start RapiDrop on Mac and Android
+        2. Send pairing request from Device A and accept on Device B
+        3. Copy ...
+        4. See error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What did you expect to happen versus what actually occurred?
+      placeholder: 'Expected: Clipboard content syncs instantly. Actual: ...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Logs & Diagnostics
+      description: Paste any relevant terminal logs, debug output, or attach screenshots. Please sanitize any private credentials before submitting.
+      render: shell
+
+  - type: checkboxes
+    id: privacy_confirmation
+    attributes:
+      label: Privacy Confirmation
+      options:
+        - label: I have verified that no sensitive clipboard data (passwords, tokens, personal keys) is included in the logs above.
+          required: true

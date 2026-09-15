@@ -1,0 +1,97 @@
+# macOS & Apple
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+macos/.build/
+macos/.swiftpm/
+macos/*.xcodeproj/xcuserdata/
+macos/*.xcworkspace/xcuserdata/
+*.app
+*.app/
+*.dmg
+*.zip
+DerivedData/
+
+# Android, Gradle & Kotlin
+.gradle/
+**/.gradle/
+build/
+**/build/
+.kotlin/
+**/.kotlin/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.hprof
+# .NET & Windows Build Artifacts
+.vs/
+**/.vs/
+bin/
+**/bin/
+obj/
+**/obj/
+TestResults/
+**/TestResults/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+# IDEs & Editors
+.idea/
+.vscode/
+.fleet/
+.zed/
+*.iml
+*.ipr
+*.iws
+
+# Python & Build Scripts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS & Desktop Metadata
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*~
+.directory
+
+# Temporary & Swap Files
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+*.rej
+
+# Logs & Credentials
+*.log
+*.pem
+*.key
+.env*
+
+# Release & Packaging Artifacts
+windows-publish/
+release-assets/
+raw-artifacts/
+.dmg-staging/
+*.sha256
+SHA256SUMS.txt
+*.pdb
+*.apk.idsig
+
+

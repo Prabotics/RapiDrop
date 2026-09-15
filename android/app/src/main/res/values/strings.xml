@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RapiDrop</string>
+    <string name="tile_name">Sync Clipboard</string>
+    <string name="shortcut_send_files">Send Files</string>
+    <string name="shortcut_sync_clipboard">Sync Clipboard</string>
+</resources>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>1.0.0</Version>
+    <Authors>Prabotics Technologies Ltd</Authors>
+    <Company>Prabotics Technologies Ltd</Company>
+    <Product>RapiDrop</Product>
+    <Copyright>Copyright © 2026 Prabotics Technologies Ltd. All rights reserved.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Prabotics/RapiDrop</RepositoryUrl>
+    <RootNamespace>RapiDrop.Core</RootNamespace>
+    <AssemblyName>RapiDrop.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+    <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
+  </ItemGroup>
+
+</Project>

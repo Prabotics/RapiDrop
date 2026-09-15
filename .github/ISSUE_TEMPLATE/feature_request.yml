@@ -1,0 +1,44 @@
+name: Feature Request
+description: Propose a new capability or enhancement for RapiDrop
+title: '[FEATURE] '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement for RapiDrop. RapiDrop prioritizes zero cloud dependencies, extreme low resource overhead (< 20MB RAM, < 0.05% CPU idle), and native platform aesthetics.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific limitation, friction, or workflow problem?
+      placeholder: 'I often find that when transferring files...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution or user experience you would like to see.
+      placeholder: 'Add a native keyboard shortcut or menu item that...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered other tools or approaches to address this problem?
+      placeholder: 'I currently use AirDrop or LocalSend, but...'
+
+  - type: checkboxes
+    id: constraints_check
+    attributes:
+      label: Resource & Security Constraints
+      options:
+        - label: This proposed feature can operate entirely peer-to-peer over the local subnet without third-party servers or telemetry.
+          required: true
+        - label: This feature respects native system design guidelines (macOS HIG, Material 3, Windows Fluent).
+          required: true

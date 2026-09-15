@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.0.0</Version>
+    <Authors>Prabotics Technologies Ltd</Authors>
+    <Company>Prabotics Technologies Ltd</Company>
+    <Product>RapiDrop</Product>
+    <Copyright>Copyright © 2026 Prabotics Technologies Ltd. All rights reserved.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Prabotics/RapiDrop</RepositoryUrl>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>RapiDrop.UI</RootNamespace>
+    <AssemblyName>RapiDrop</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>RapiDrop.ico</ApplicationIcon>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <GarbageCollectionAdaptation>1</GarbageCollectionAdaptation>
+    <RetainVM>false</RetainVM>
+    <TieredPGO>true</TieredPGO>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RapiDrop.Core\RapiDrop.Core.csproj" />
+    <Resource Include="RapiDrop.ico" />
+    <Resource Include="RapiDrop_tray.ico" />
+    <EmbeddedResource Include="RapiDrop.ico" />
+    <EmbeddedResource Include="RapiDrop_tray.ico" />
+  </ItemGroup>
+
+</Project>

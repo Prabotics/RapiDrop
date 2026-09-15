@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene-check:
+    name: Repository Hygiene Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Audit Forbidden OS & IDE Artifacts
+        run: |
+          UNWANTED=$(find . -name ".DS_Store" -o -name "Thumbs.db" -o -name "*.userosscache" || true)
+          if [ -n "$UNWANTED" ]; then
+            echo "Error: Unwanted desktop/OS metadata files detected:"
+            echo "$UNWANTED"
+            exit 1
+          fi
+          echo "Verified: Working tree is clean of unwanted OS metadata."
+
+  macos:
+    name: macOS Build & Test
+    needs: [hygiene-check]
+    runs-on: macos-14
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Select Xcode 16
+        run: |
+          for xcode in /Applications/Xcode_16*.app; do
+            if [ -d "$xcode" ]; then
+              sudo xcode-select -s "$xcode"
+              break
+            fi
+          done
+          xcodebuild -version
+          swift --version
+      - name: Run Swift Unit Tests
+        run: swift test --package-path macos
+
+      - name: Build & Package macOS Bundle
+        run: |
+          chmod +x macos/package.sh
+          cd macos && ./package.sh --all
+
+  android:
+    name: Android Build & Test
+    needs: [hygiene-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x android/gradlew
+
+      - name: Run Android Unit Tests
+        working-directory: android
+        run: ./gradlew test --stacktrace
+
+      - name: Assemble Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --stacktrace
+
+  windows:
+    name: Windows Build & Test
+    needs: [hygiene-check]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore windows/RapiDrop.sln -r win-x64
+
+      - name: Run Windows Unit Tests
+        run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -c Release
+
+      - name: Build Single-File Release Executable
+        run: dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained false

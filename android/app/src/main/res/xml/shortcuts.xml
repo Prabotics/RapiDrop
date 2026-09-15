@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="send_files"
+        android:enabled="true"
+        android:icon="@drawable/ic_splash_icon"
+        android:shortcutShortLabel="@string/shortcut_send_files">
+        <intent
+            android:action="com.prabotics.rapidrop.ACTION_SEND_FILES"
+            android:targetPackage="com.prabotics.rapidrop"
+            android:targetClass="com.prabotics.rapidrop.ui.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="sync_clipboard"
+        android:enabled="true"
+        android:icon="@drawable/ic_splash_icon"
+        android:shortcutShortLabel="@string/shortcut_sync_clipboard">
+        <intent
+            android:action="com.prabotics.rapidrop.ACTION_SYNC_CLIPBOARD"
+            android:targetPackage="com.prabotics.rapidrop"
+            android:targetClass="com.prabotics.rapidrop.ui.MainActivity" />
+    </shortcut>
+</shortcuts>

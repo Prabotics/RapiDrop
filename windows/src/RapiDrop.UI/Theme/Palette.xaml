@@ -1,0 +1,153 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <Color x:Key="DarkCanvas">#0F1015</Color>
+    <Color x:Key="DarkCard">#16171D</Color>
+    <Color x:Key="DarkBorder">#23252E</Color>
+    <Color x:Key="DarkSurfaceSubtle">#21222A</Color>
+    <Color x:Key="DarkSquircle">#21222A</Color>
+    <Color x:Key="DarkTextPrimary">#F4F4F6</Color>
+    <Color x:Key="DarkTextSecondary">#9496A1</Color>
+    <Color x:Key="DarkTextMuted">#646675</Color>
+    <Color x:Key="DarkPulse">#10B981</Color>
+    <Color x:Key="DarkPulseText">#34D399</Color>
+    <Color x:Key="DarkStatusConnected">#10B981</Color>
+    <Color x:Key="DarkStatusWarning">#F59E0B</Color>
+    <Color x:Key="DarkStatusError">#EF4444</Color>
+    <Color x:Key="DarkStatusDisconnected">#9496A1</Color>
+
+    <Color x:Key="LightCanvas">#F8FAFC</Color>
+    <Color x:Key="LightCard">#FFFFFF</Color>
+    <Color x:Key="LightBorder">#E2E8F0</Color>
+    <Color x:Key="LightSurfaceSubtle">#F1F5F9</Color>
+    <Color x:Key="LightSquircle">#F1F5F9</Color>
+    <Color x:Key="LightTextPrimary">#0F172A</Color>
+    <Color x:Key="LightTextSecondary">#64748B</Color>
+    <Color x:Key="LightTextMuted">#94A3B8</Color>
+    <Color x:Key="LightPulse">#059669</Color>
+    <Color x:Key="LightPulseText">#047857</Color>
+    <Color x:Key="LightStatusConnected">#059669</Color>
+    <Color x:Key="LightStatusWarning">#D97706</Color>
+    <Color x:Key="LightStatusError">#DC2626</Color>
+    <Color x:Key="LightStatusDisconnected">#64748B</Color>
+
+    <Color x:Key="DarkBadgeDeviceBg">#0F291E</Color>
+    <Color x:Key="DarkBadgeDeviceBorder">#134E39</Color>
+    <Color x:Key="DarkBadgeDeviceFg">#34D399</Color>
+    <Color x:Key="LightBadgeDeviceBg">#ECFDF5</Color>
+    <Color x:Key="LightBadgeDeviceBorder">#A7F3D0</Color>
+    <Color x:Key="LightBadgeDeviceFg">#059669</Color>
+
+    <Color x:Key="DarkBadgeMediaBg">#172554</Color>
+    <Color x:Key="DarkBadgeMediaBorder">#1E40AF</Color>
+    <Color x:Key="DarkBadgeMediaFg">#60A5FA</Color>
+    <Color x:Key="LightBadgeMediaBg">#EFF6FF</Color>
+    <Color x:Key="LightBadgeMediaBorder">#BFDBFE</Color>
+    <Color x:Key="LightBadgeMediaFg">#2563EB</Color>
+
+    <Color x:Key="DarkBadgeClipBg">#2E1065</Color>
+    <Color x:Key="DarkBadgeClipBorder">#4C1D95</Color>
+    <Color x:Key="DarkBadgeClipFg">#A78BFA</Color>
+    <Color x:Key="LightBadgeClipBg">#F5F3FF</Color>
+    <Color x:Key="LightBadgeClipBorder">#DDD6FE</Color>
+    <Color x:Key="LightBadgeClipFg">#7C3AED</Color>
+
+    <Color x:Key="DarkBadgeHistoryBg">#451A03</Color>
+    <Color x:Key="DarkBadgeHistoryBorder">#78350F</Color>
+    <Color x:Key="DarkBadgeHistoryFg">#FBBF24</Color>
+    <Color x:Key="LightBadgeHistoryBg">#FFFBEB</Color>
+    <Color x:Key="LightBadgeHistoryBorder">#FDE68A</Color>
+    <Color x:Key="LightBadgeHistoryFg">#D97706</Color>
+
+
+    <SolidColorBrush x:Key="BrushCanvas" Color="{DynamicResource DarkCanvas}" />
+    <SolidColorBrush x:Key="BrushCard" Color="{DynamicResource DarkCard}" />
+    <SolidColorBrush x:Key="BrushBorder" Color="{DynamicResource DarkBorder}" />
+    <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{DynamicResource DarkSurfaceSubtle}" />
+    <SolidColorBrush x:Key="BrushSquircle" Color="{DynamicResource DarkSquircle}" />
+    <SolidColorBrush x:Key="BrushTextPrimary" Color="{DynamicResource DarkTextPrimary}" />
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="{DynamicResource DarkTextSecondary}" />
+    <SolidColorBrush x:Key="BrushTextMuted" Color="{DynamicResource DarkTextMuted}" />
+    <SolidColorBrush x:Key="BrushPulse" Color="{DynamicResource DarkPulse}" />
+    <SolidColorBrush x:Key="BrushPulseText" Color="{DynamicResource DarkPulseText}" />
+    <SolidColorBrush x:Key="BrushStatusConnected" Color="{DynamicResource DarkStatusConnected}" />
+    <SolidColorBrush x:Key="BrushStatusWarning" Color="{DynamicResource DarkStatusWarning}" />
+    <SolidColorBrush x:Key="BrushStatusError" Color="{DynamicResource DarkStatusError}" />
+    <SolidColorBrush x:Key="BrushStatusDisconnected" Color="{DynamicResource DarkStatusDisconnected}" />
+
+    <SolidColorBrush x:Key="BrushBadgeDeviceBg" Color="{DynamicResource DarkBadgeDeviceBg}" />
+    <SolidColorBrush x:Key="BrushBadgeDeviceBorder" Color="{DynamicResource DarkBadgeDeviceBorder}" />
+    <SolidColorBrush x:Key="BrushBadgeDeviceFg" Color="{DynamicResource DarkBadgeDeviceFg}" />
+
+    <SolidColorBrush x:Key="BrushBadgeMediaBg" Color="{DynamicResource DarkBadgeMediaBg}" />
+    <SolidColorBrush x:Key="BrushBadgeMediaBorder" Color="{DynamicResource DarkBadgeMediaBorder}" />
+    <SolidColorBrush x:Key="BrushBadgeMediaFg" Color="{DynamicResource DarkBadgeMediaFg}" />
+
+    <SolidColorBrush x:Key="BrushBadgeClipBg" Color="{DynamicResource DarkBadgeClipBg}" />
+    <SolidColorBrush x:Key="BrushBadgeClipBorder" Color="{DynamicResource DarkBadgeClipBorder}" />
+    <SolidColorBrush x:Key="BrushBadgeClipFg" Color="{DynamicResource DarkBadgeClipFg}" />
+
+    <SolidColorBrush x:Key="BrushBadgeHistoryBg" Color="{DynamicResource DarkBadgeHistoryBg}" />
+    <SolidColorBrush x:Key="BrushBadgeHistoryBorder" Color="{DynamicResource DarkBadgeHistoryBorder}" />
+    <SolidColorBrush x:Key="BrushBadgeHistoryFg" Color="{DynamicResource DarkBadgeHistoryFg}" />
+
+
+    <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMedium">6</CornerRadius>
+    <CornerRadius x:Key="RadiusLarge">8</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">10</CornerRadius>
+
+    <sys:Double x:Key="SpacingSmall">4</sys:Double>
+    <sys:Double x:Key="SpacingMedium">8</sys:Double>
+    <sys:Double x:Key="SpacingLarge">12</sys:Double>
+    <sys:Double x:Key="SpacingExtraLarge">16</sys:Double>
+
+    <Geometry x:Key="IconLaptop">M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z</Geometry>
+    <Geometry x:Key="IconMobile">M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z</Geometry>
+    <Geometry x:Key="IconDesktop">M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z</Geometry>
+    <Geometry x:Key="IconSendMedia">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z</Geometry>
+    <Geometry x:Key="IconPushClipboard">M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z</Geometry>
+    <Geometry x:Key="IconLock">M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z</Geometry>
+    <Geometry x:Key="IconSettings">M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z</Geometry>
+    <Geometry x:Key="IconEye">M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z</Geometry>
+    <Geometry x:Key="IconEyeOff">M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z</Geometry>
+    <Geometry x:Key="IconText">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z</Geometry>
+    <Geometry x:Key="IconLink">M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z</Geometry>
+    <Geometry x:Key="IconImage">M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z</Geometry>
+    <Geometry x:Key="IconFile">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-7V3.5L18.5 9H13z</Geometry>
+    <Geometry x:Key="IconPeerWave">M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 2.9c3.97 0 7.58 1.55 10.27 4.07L12 18.33 1.73 10.97C4.42 8.45 8.03 6.9 12 6.9z</Geometry>
+    <Geometry x:Key="IconPin">M16 9V4l1 0c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1l1 0v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z</Geometry>
+    <Geometry x:Key="IconTrash">M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z</Geometry>
+    <Geometry x:Key="IconSearch">M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z</Geometry>
+    <Geometry x:Key="IconClose">M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z</Geometry>
+    <Geometry x:Key="IconChevronRight">M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z</Geometry>
+    <Geometry x:Key="IconFolder">M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z</Geometry>
+    <Geometry x:Key="IconHistory">M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z</Geometry>
+    <DrawingGroup x:Key="AppBrandLogo">
+        <GeometryDrawing Brush="{DynamicResource BrushPulse}">
+            <GeometryDrawing.Geometry>
+                <GeometryGroup FillRule="EvenOdd">
+                    <PathGeometry Figures="M 194,263 L 186,275 L 178,295 L 176,306 L 175,354 L 175,671 L 179,688 L 192,711 L 117,712 L 103,717 L 95,727 L 94,746 L 100,763 L 113,779 L 122,786 L 136,793 L 149,797 L 331,798 L 364,978 L 368,988 L 373,993 L 385,994 L 390,992 L 417,965 L 419,965 L 442,989 L 465,1008 L 491,1026 L 517,1041 L 549,1055 L 580,1065 L 610,1072 L 640,1076 L 697,1076 L 737,1070 L 786,1056 L 829,1036 L 851,1050 L 872,1058 L 1109,1101 L 1135,1100 L 1155,1094 L 1176,1082 L 1191,1068 L 1200,1056 L 1206,1044 L 1215,1012 L 1269,688 L 1298,528 L 1299,502 L 1296,488 L 1285,467 L 1272,453 L 1252,441 L 1234,435 L 1020,408 L 993,408 L 973,413 L 954,423 L 939,437 L 928,454 L 920,478 L 877,725 L 872,734 L 859,747 L 843,758 L 841,764 L 832,819 L 802,967 L 804,991 L 812,1013 L 807,1015 L 773,1015 L 723,1010 L 680,1001 L 635,987 L 578,961 L 554,946 L 532,930 L 506,906 L 508,902 L 533,902 L 559,915 L 591,926 L 642,937 L 680,940 L 737,940 L 777,935 L 804,929 L 822,916 L 828,908 L 828,897 L 822,886 L 805,869 L 775,852 L 749,842 L 702,831 L 656,825 L 598,824 L 567,827 L 530,836 L 493,848 L 474,858 L 452,873 L 429,890 L 413,873 L 387,838 L 380,827 L 377,816 L 377,798 L 485,798 L 493,792 L 497,786 L 498,779 L 498,397 L 495,389 L 489,383 L 480,380 L 256,380 L 256,295 L 261,280 L 273,268 L 295,263 Z" />
+                    <PathGeometry Figures="M 501,193 L 504,198 L 508,198 L 554,177 L 598,163 L 663,152 L 696,150 L 739,151 L 796,159 L 829,167 L 880,185 L 929,209 L 980,243 L 1001,260 L 1017,276 L 1017,278 L 956,314 L 950,323 L 951,331 L 955,336 L 1165,420 L 1179,421 L 1189,417 L 1196,410 L 1200,402 L 1201,387 L 1190,285 L 1183,203 L 1180,197 L 1171,190 L 1160,190 L 1132,209 L 1126,210 L 1086,167 L 1040,131 L 987,102 L 938,84 L 891,73 L 830,66 L 779,66 L 754,68 L 693,79 L 636,98 L 596,118 L 566,137 L 533,162 Z" />
+                    <PathGeometry Figures="M 525,424 L 525,444 L 534,465 L 548,478 L 570,485 L 829,485 L 846,480 L 863,465 L 869,454 L 873,438 L 872,422 L 869,412 L 862,399 L 850,387 L 835,379 L 823,376 L 774,376 L 764,358 L 747,340 L 727,329 L 702,323 L 677,325 L 660,331 L 646,339 L 628,358 L 618,376 L 575,376 L 554,383 L 546,388 L 534,401 L 529,410 Z M 689,367 L 703,367 L 714,371 L 725,381 L 731,394 L 732,406 L 727,420 L 717,431 L 704,437 L 689,437 L 678,433 L 666,422 L 661,411 L 660,398 L 665,384 L 675,373 Z" />
+                    <PathGeometry Figures="M 564,551 L 564,560 L 568,571 L 575,578 L 585,582 L 818,582 L 826,579 L 833,573 L 839,558 L 838,548 L 834,540 L 824,531 L 813,528 L 585,529 L 576,533 L 568,541 Z" />
+                    <PathGeometry Figures="M 782,629 L 779,622 L 772,614 L 761,609 L 585,609 L 577,612 L 568,621 L 564,630 L 564,640 L 571,654 L 586,662 L 760,662 L 770,658 L 777,652 L 782,642 Z" />
+                    <PathGeometry Figures="M 564,705 L 564,714 L 568,724 L 575,731 L 586,736 L 695,736 L 705,732 L 714,723 L 717,716 L 717,703 L 714,696 L 703,686 L 693,683 L 588,683 L 580,685 L 568,695 Z" />
+                </GeometryGroup>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFFFFF">
+            <GeometryDrawing.Geometry>
+                <GeometryGroup FillRule="EvenOdd">
+                    <PathGeometry Figures="M 271,308 L 742,308 A 24,24 0 0,1 765,332 L 765,619 A 24,24 0 0,1 742,643 L 271,643 A 24,24 0 0,1 247,619 L 247,332 A 24,24 0 0,1 271,308 Z" />
+                    <PathGeometry Figures="M 546,380 L 849,380 A 36,36 0 0,1 885,416 L 885,764 A 36,36 0 0,1 849,800 L 546,800 A 36,36 0 0,1 510,764 L 510,416 A 36,36 0 0,1 546,380 Z" />
+                    <PathGeometry Figures="M 685,369 L 675,374 L 666,384 L 661,398 L 662,411 L 667,422 L 678,432 L 688,436 L 704,436 L 717,430 L 726,420 L 731,406 L 730,394 L 724,381 L 714,372 L 703,368 Z" />
+                    <PathGeometry Figures="M 971,492 L 963,496 L 956,503 L 950,517 L 876,896 L 875,909 L 877,918 L 886,930 L 900,936 L 1114,973 L 1130,974 L 1147,968 L 1155,960 L 1162,944 L 1234,558 L 1235,544 L 1233,537 L 1226,527 L 1211,520 L 990,491 Z" />
+                    <PathGeometry Figures="M 1051,457 L 1052,465 L 1060,469 L 1140,479 L 1149,477 L 1152,472 L 1150,464 L 1144,461 L 1064,451 L 1055,452 Z" />
+                    <PathGeometry Figures="M 995,973 L 981,974 L 968,981 L 961,989 L 956,1002 L 956,1016 L 960,1027 L 968,1036 L 981,1042 L 990,1043 L 1005,1039 L 1015,1031 L 1023,1014 L 1023,1000 L 1019,989 L 1010,979 Z" />
+                </GeometryGroup>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+</ResourceDictionary>
