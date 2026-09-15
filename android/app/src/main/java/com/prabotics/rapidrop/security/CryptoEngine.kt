@@ -213,17 +213,9 @@ object CryptoEngine {
         val cipher = getCipher()
         val spec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce)
         cipher.init(Cipher.DECRYPT_MODE, key, spec)
-        val p1 = cipher.update(ciphertext)
-        val p2 = cipher.doFinal(tag)
-        return when {
-            p1 == null || p1.isEmpty() -> p2 ?: ByteArray(0)
-            p2 == null || p2.isEmpty() -> p1
-            else -> {
-                val combined = ByteArray(p1.size + p2.size)
-                System.arraycopy(p1, 0, combined, 0, p1.size)
-                System.arraycopy(p2, 0, combined, p1.size, p2.size)
-                combined
-            }
-        }
+        val combined = ByteArray(ciphertext.size + tag.size)
+        System.arraycopy(ciphertext, 0, combined, 0, ciphertext.size)
+        System.arraycopy(tag, 0, combined, ciphertext.size, tag.size)
+        return cipher.doFinal(combined)
     }
 }

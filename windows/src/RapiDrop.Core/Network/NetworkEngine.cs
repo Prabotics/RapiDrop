@@ -1373,21 +1373,30 @@ public sealed class NetworkEngine : IDisposable
                 {
                     port = DefaultPort;
                 }
-                var client = new TcpClient();
-                ConfigureSocketOptimizations(client);
-                client.ReceiveTimeout = 15000;
-                client.SendTimeout = 10000;
-                await client.ConnectAsync(_pairedHost, port, ct).ConfigureAwait(false);
-                _lastDataOrPongReceivedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                AddActiveClient(client);
-                var desc = ConnectedDeviceInfo.Current();
-                string json = JsonSerializer.Serialize(desc);
-                byte[] payload = Encoding.UTF8.GetBytes(json);
-                var (ciphertext, nonce, tag) = CryptoEngine.Encrypt(payload, _sessionKey);
-                var frame = new WireFrame(PacketType.PairRequest, nonce, ciphertext, tag);
-                await SendFrameAsync(client, frame);
-                await SendDeviceInfoAsync(client, _sessionKey);
-                _ = Task.Run(() => ReceiveLoopAsync(client, ct), ct);
+                TcpClient? client = null;
+                try
+                {
+                    client = new TcpClient();
+                    ConfigureSocketOptimizations(client);
+                    client.ReceiveTimeout = 15000;
+                    client.SendTimeout = 10000;
+                    await client.ConnectAsync(_pairedHost, port, ct).ConfigureAwait(false);
+                    _lastDataOrPongReceivedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    AddActiveClient(client);
+                    var desc = ConnectedDeviceInfo.Current();
+                    string json = JsonSerializer.Serialize(desc);
+                    byte[] payload = Encoding.UTF8.GetBytes(json);
+                    var (ciphertext, nonce, tag) = CryptoEngine.Encrypt(payload, _sessionKey);
+                    var frame = new WireFrame(PacketType.PairRequest, nonce, ciphertext, tag);
+                    await SendFrameAsync(client, frame);
+                    await SendDeviceInfoAsync(client, _sessionKey);
+                    _ = Task.Run(() => ReceiveLoopAsync(client, ct), ct);
+                }
+                catch
+                {
+                    try { client?.Dispose(); } catch { }
+                    throw;
+                }
             }
             catch
             {

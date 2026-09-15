@@ -149,7 +149,7 @@ public final class NetworkEngine: @unchecked Sendable {
   private var lastActivityTimestamp = Date()
   private var watchdogTimer: DispatchSourceTimer?
   private var isConnectionNotified = false
-  public var onDiscoveredDevicesChanged: (([DiscoveredClientDevice]) -> Void)?
+  public var onDiscoveredDevicesChanged: (@Sendable ([DiscoveredClientDevice]) -> Void)?
   public weak var delegate: NetworkEngineDelegate?
   public var downloadFolderURL: URL =
     FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
@@ -501,10 +501,8 @@ public final class NetworkEngine: @unchecked Sendable {
         merged.append(dev)
       }
     }
-
     self.onDiscoveredDevicesChanged?(merged)
   }
-
   public func stop() {
     queue.async { [weak self] in
       guard let self else { return }
@@ -1629,8 +1627,8 @@ private actor SendWindow {
           self.receiveFrame(from: conn)
           if let key = self.sessionKey {
             self.sendPairRequest(to: conn, using: key)
+            self.sendDeviceInfo(to: conn)
           }
-          self.sendDeviceInfo(to: conn)
         case .failed, .cancelled:
           self.activeConnections.removeAll { $0 === conn }
           if self.activeConnections.isEmpty {

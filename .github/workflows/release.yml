@@ -98,7 +98,7 @@ jobs:
         run: dotnet restore windows/RapiDrop.sln -r win-x64
 
       - name: Run Unit Tests
-        run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -f net10.0
+        run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -c Release
 
       - name: Publish Standalone Executable (Self-Contained)
         run: |

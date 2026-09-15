@@ -427,11 +427,6 @@ public partial class TrayFlyoutWindow : Window
             WpfApplication.Current?.Shutdown(0);
         }
         catch { }
-        try
-        {
-            Environment.Exit(0);
-        }
-        catch { }
     }
 
     private void BtnPinWindow_Click(object sender, RoutedEventArgs e)
@@ -439,6 +434,12 @@ public partial class TrayFlyoutWindow : Window
         _isPinned = !_isPinned;
         IconPinPath.SetResourceReference(WpfPath.FillProperty, _isPinned ? "BrushPulse" : "BrushTextSecondary");
         BtnPinWindow.ToolTip = _isPinned ? "Unpin window" : "Pin window open";
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        e.Cancel = true;
+        Hide();
     }
 
     private void BtnQuit_Click(object sender, RoutedEventArgs e)

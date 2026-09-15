@@ -868,7 +868,7 @@ class SyncService : Service() {
         isConnected.value = false
         connectedDeviceInfo.value = null
         nsdDiscovery.restartDiscovery()
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.IO) {
             socketClient.sendDisconnect()
             if (savedHost != null && savedPort > 0) {
                 try {
@@ -979,14 +979,18 @@ class SyncService : Service() {
 
     private fun startInForeground() {
         val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                FOREGROUND_NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-            )
-        } else {
-            startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    FOREGROUND_NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                )
+            } else {
+                startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("RapiDrop", "Failed to startForeground: ${e.message}")
         }
     }
 
@@ -1011,14 +1015,11 @@ class SyncService : Service() {
             this,
             1,
             sendIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
 
-        val peer = connectedPeerName.value ?: "device"
         val statusText = if (isConnected.value) {
-            "Connected to $peer"
-        } else if (pairingPin.value != null) {
-            "Waiting for $peer on Wi-Fi"
+            "Connected to ${connectedPeerName.value ?: "device"}"
         } else {
             "Not connected to any device"
         }

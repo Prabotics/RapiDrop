@@ -274,7 +274,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     }
 
     self.network.onDiscoveredDevicesChanged = { [weak self] devices in
-      Task { @MainActor in
+      DispatchQueue.main.async {
         guard let self else { return }
         self.discoveredDevices = devices
         self.checkAutoReconnect(devices: devices)

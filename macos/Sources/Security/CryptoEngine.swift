@@ -28,7 +28,10 @@ public struct CryptoEngine: Sendable {
 
   public static func generateNonce(count: Int = 16) -> Data {
     var data = Data(count: count)
-    _ = data.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, count, $0.baseAddress!) }
+    let status = data.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, count, $0.baseAddress!) }
+    guard status == errSecSuccess else {
+      fatalError("SecRandomCopyBytes failed: \(status)")
+    }
     return data
   }
 
