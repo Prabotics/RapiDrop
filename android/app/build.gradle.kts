@@ -17,21 +17,22 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    signingConfigs {
-        create("release") {
-            val keystorePath = (project.findProperty("KEYSTORE_PATH") as String?)
-                ?: System.getenv("KEYSTORE_PATH")
-                ?: "${System.getProperty("user.home")}/.android/rapidrop-release.jks"
-            val keystorePassword = (project.findProperty("KEYSTORE_PASSWORD") as String?)
-                ?: System.getenv("KEYSTORE_PASSWORD")
-            val keyAliasStr = (project.findProperty("KEY_ALIAS") as String?)
-                ?: System.getenv("KEY_ALIAS")
-                ?: "rapidrop"
-            val keyPasswordStr = (project.findProperty("KEY_PASSWORD") as String?)
-                ?: System.getenv("KEY_PASSWORD")
-                ?: keystorePassword
+    val keystorePath = (project.findProperty("KEYSTORE_PATH") as String?)
+        ?: System.getenv("KEYSTORE_PATH")
+        ?: "${System.getProperty("user.home")}/.android/rapidrop-release.jks"
+    val keystorePassword = (project.findProperty("KEYSTORE_PASSWORD") as String?)
+        ?: System.getenv("KEYSTORE_PASSWORD")
+    val keyAliasStr = (project.findProperty("KEY_ALIAS") as String?)
+        ?: System.getenv("KEY_ALIAS")
+        ?: "rapidrop"
+    val keyPasswordStr = (project.findProperty("KEY_PASSWORD") as String?)
+        ?: System.getenv("KEY_PASSWORD")
+        ?: keystorePassword
+    val hasReleaseKeystore = !keystorePassword.isNullOrBlank() && file(keystorePath).exists()
 
-            if (keystorePassword != null && file(keystorePath).exists()) {
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
                 storeFile = file(keystorePath)
                 storePassword = keystorePassword
                 keyAlias = keyAliasStr
@@ -40,8 +41,6 @@ android {
                 enableV2Signing = true
                 enableV3Signing = true
                 enableV4Signing = false
-            } else {
-                initWith(getByName("debug"))
             }
         }
     }
@@ -54,7 +53,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {
