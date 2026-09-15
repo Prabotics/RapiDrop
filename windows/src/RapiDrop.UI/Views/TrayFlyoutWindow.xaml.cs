@@ -853,6 +853,14 @@ public partial class TrayFlyoutWindow : Window
                     BtnSendMedia.IsEnabled = true;
                     BtnPushClipboard.IsEnabled = true;
                 }
+                else if (_network.IsConnecting)
+                {
+                    DotConnectedStatus.Fill = (WpfBrush)FindResource("BrushStatusWarning");
+                    TxtConnectedStatus.Text = "Connecting...";
+                    TxtConnectedStatus.Foreground = (WpfBrush)FindResource("BrushStatusWarning");
+                    BtnSendMedia.IsEnabled = false;
+                    BtnPushClipboard.IsEnabled = false;
+                }
                 else
                 {
                     DotConnectedStatus.Fill = (WpfBrush)FindResource("BrushStatusDisconnected");

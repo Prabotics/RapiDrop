@@ -850,11 +850,11 @@ public struct MenuBarView: View {
 
         HStack(spacing: 5) {
           Circle()
-            .fill(appState.isConnected ? AppColors.statusConnected : AppColors.statusDisconnected)
+            .fill(appState.isConnected ? AppColors.statusConnected : (appState.isConnecting ? Color.orange : AppColors.statusDisconnected))
             .frame(width: 5, height: 5)
-          Text(appState.isConnected ? "Connected" : "Offline")
+          Text(appState.isConnected ? "Connected" : (appState.isConnecting ? "Connecting..." : "Offline"))
             .font(AppTypography.statusBadge)
-            .foregroundColor(appState.isConnected ? AppColors.statusConnected : AppColors.statusDisconnected)
+            .foregroundColor(appState.isConnected ? AppColors.statusConnected : (appState.isConnecting ? Color.orange : AppColors.statusDisconnected))
             .lineLimit(1)
         }
       }

@@ -59,6 +59,7 @@ public sealed class NetworkEngine : IDisposable
     private TcpListener? _listener;
     private TcpListener? _clientListener;
     private readonly List<TcpClient> _activeClients = new();
+    private readonly HashSet<TcpClient> _handshakeClients = new();
     private readonly object _clientsLock = new();
     private CancellationTokenSource? _cts;
     private Task? _reconnectTask;
@@ -77,6 +78,7 @@ public sealed class NetworkEngine : IDisposable
     private (byte[] SessionKey, string SasCode, DiscoveredDevice Device)? _pendingReceiverState;
     private string? _pendingReceiverAcceptPayload;
     public bool IsConnected => _isConnected;
+    public bool IsConnecting { get; private set; }
     public string? ConnectedPeerName => _connectedPeerName;
 
     public string DownloadFolderPath { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "RapiDrop");
@@ -138,7 +140,7 @@ public sealed class NetworkEngine : IDisposable
                 if (match != null && !string.IsNullOrEmpty(match.Host))
                 {
                     _pairedHost = match.Host;
-                    if (match.Port > 0 && match.Port != WireFrame.DefaultClientPort)
+                    if (match.Port > 0)
                     {
                         _pairedPort = match.Port;
                     }
@@ -253,14 +255,16 @@ public sealed class NetworkEngine : IDisposable
             key = CryptoEngine.DeriveKeyFromPin(pin);
             SetSessionKey(key);
         }
-        int connectPort = (target.Port > 0 && target.Port != WireFrame.DefaultClientPort) ? target.Port : WireFrame.DefaultPort;
+        int connectPort = target.Port > 0 ? target.Port : WireFrame.DefaultPort;
         _pairedPeerName = target.Name;
         if (!string.IsNullOrEmpty(target.Id)) _pairedPeerId = target.Id;
         _pairedHost = target.Host;
         _pairedPort = connectPort;
         if (key == null) return;
         byte[] sessionKeyToUse = key;
-
+        _lastDataOrPongReceivedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        IsConnecting = true;
+        ConnectionStateChanged?.Invoke(false, _pairedPeerName);
         Task.Run(async () =>
         {
             try
@@ -703,7 +707,10 @@ public sealed class NetworkEngine : IDisposable
                 }
                 catch { }
                 _lastDataOrPongReceivedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                AddActiveClient(client);
+                lock (_clientsLock)
+                {
+                    _handshakeClients.Add(client);
+                }
                 _ = Task.Run(() => ReceiveLoopAsync(client, ct), ct);
             }
             catch (OperationCanceledException)
@@ -869,6 +876,10 @@ public sealed class NetworkEngine : IDisposable
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to parse PairInvite: {ex.Message}");
             }
+            lock (_clientsLock)
+            {
+                _handshakeClients.Remove(client);
+            }
             return;
         }
 
@@ -928,6 +939,10 @@ public sealed class NetworkEngine : IDisposable
                 }
             }
             catch { }
+            lock (_clientsLock)
+            {
+                _handshakeClients.Remove(client);
+            }
             return;
         }
 
@@ -1233,9 +1248,10 @@ public sealed class NetworkEngine : IDisposable
     {
         lock (_clientsLock)
         {
+            bool isHandshake = _handshakeClients.Remove(client);
             _activeClients.Remove(client);
             try { client.Close(); } catch { }
-            if (_activeClients.Count == 0)
+            if (!isHandshake && _activeClients.Count == 0)
             {
                 if (_activeIncomingTransfer != null)
                 {
@@ -1253,6 +1269,7 @@ public sealed class NetworkEngine : IDisposable
 
     private void UpdateConnectionState(bool isConnected, string? peerName)
     {
+        if (isConnected) IsConnecting = false;
         if (_isConnected == isConnected && _connectedPeerName == peerName) return;
         _isConnected = isConnected;
         _connectedPeerName = peerName;
@@ -1369,10 +1386,6 @@ public sealed class NetworkEngine : IDisposable
             try
             {
                 int port = _pairedPort ?? DefaultPort;
-                if (port == WireFrame.DefaultClientPort)
-                {
-                    port = DefaultPort;
-                }
                 TcpClient? client = null;
                 try
                 {
@@ -1391,6 +1404,7 @@ public sealed class NetworkEngine : IDisposable
                     await SendFrameAsync(client, frame);
                     await SendDeviceInfoAsync(client, _sessionKey);
                     _ = Task.Run(() => ReceiveLoopAsync(client, ct), ct);
+                    await Task.Delay(2000, ct).ConfigureAwait(false);
                 }
                 catch
                 {

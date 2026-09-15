@@ -149,6 +149,8 @@ public final class NetworkEngine: @unchecked Sendable {
   private var lastActivityTimestamp = Date()
   private var watchdogTimer: DispatchSourceTimer?
   private var isConnectionNotified = false
+  private var isSessionEstablished = false
+  private var pendingIncomingConnections: [ObjectIdentifier: (connection: NWConnection, timestamp: Date)] = [:]
   public var onDiscoveredDevicesChanged: (@Sendable ([DiscoveredClientDevice]) -> Void)?
   public weak var delegate: NetworkEngineDelegate?
   public var downloadFolderURL: URL =
@@ -227,8 +229,21 @@ public final class NetworkEngine: @unchecked Sendable {
     timer.schedule(deadline: .now() + 5, repeating: 5)
     timer.setEventHandler { [weak self] in
       guard let self else { return }
+      let now = Date()
+      if !self.pendingIncomingConnections.isEmpty {
+        var dead: [ObjectIdentifier] = []
+        for (id, item) in self.pendingIncomingConnections {
+          if now.timeIntervalSince(item.timestamp) > 16.0 {
+            item.connection.cancel()
+            dead.append(id)
+          }
+        }
+        for id in dead {
+          self.pendingIncomingConnections.removeValue(forKey: id)
+        }
+      }
       if !self.activeConnections.isEmpty {
-        let elapsed = Date().timeIntervalSince(self.lastActivityTimestamp)
+        let elapsed = now.timeIntervalSince(self.lastActivityTimestamp)
         if elapsed > 16.0 {
           for conn in self.activeConnections {
             conn.cancel()
@@ -532,8 +547,10 @@ public final class NetworkEngine: @unchecked Sendable {
       switch state {
       case .ready:
         self.lastActivityTimestamp = Date()
+        self.pendingIncomingConnections[ObjectIdentifier(connection)] = (connection, Date())
         self.receiveFrame(from: connection)
       case .failed, .cancelled:
+        self.pendingIncomingConnections.removeValue(forKey: ObjectIdentifier(connection))
         if self.activeConnections.contains(where: { $0 === connection }) {
           self.activeConnections.removeAll { $0 === connection }
           if self.activeConnections.isEmpty {
@@ -892,6 +909,7 @@ public final class NetworkEngine: @unchecked Sendable {
     case .pong:
       clipItem = nil
     case .pairRequest:
+      self.pendingIncomingConnections.removeValue(forKey: ObjectIdentifier(connection))
       self.pendingInitiatorKeypair = nil
       for oldConn in self.activeConnections {
         if oldConn !== connection {
@@ -913,6 +931,7 @@ public final class NetworkEngine: @unchecked Sendable {
       sendDeviceInfo(to: connection)
       clipItem = nil
     case .pairConfirm:
+      self.pendingIncomingConnections.removeValue(forKey: ObjectIdentifier(connection))
       self.pendingInitiatorKeypair = nil
       for oldConn in self.activeConnections {
         if oldConn !== connection {
@@ -926,6 +945,7 @@ public final class NetworkEngine: @unchecked Sendable {
       sendDeviceInfo(to: connection)
       clipItem = nil
     case .deviceInfo:
+      self.pendingIncomingConnections.removeValue(forKey: ObjectIdentifier(connection))
       if !self.activeConnections.contains(where: { $0 === connection }) {
         self.activeConnections.append(connection)
       }
@@ -1241,6 +1261,7 @@ private actor SendWindow {
       waiters.append(continuation)
     }
     if let error = firstError {
+      release()
       throw error
     }
   }
@@ -1605,10 +1626,12 @@ private actor SendWindow {
       self.connectionGeneration &+= 1
       let currentGen = self.connectionGeneration
       self.currentOutgoingConnection?.cancel()
-      for oldConn in self.activeConnections {
-        oldConn.cancel()
+      if !self.isSessionEstablished {
+        for oldConn in self.activeConnections {
+          oldConn.cancel()
+        }
+        self.activeConnections.removeAll()
       }
-      self.activeConnections.removeAll()
 
       let conn = NWConnection(to: endpoint, using: Self.createTcpParameters())
       self.currentOutgoingConnection = conn
@@ -1871,11 +1894,13 @@ private actor SendWindow {
 
   private func notifyConnectionState(isConnected: Bool, peerName: String?) {
     if isConnected {
+      isSessionEstablished = true
       if !isConnectionNotified {
         isConnectionNotified = true
         delegate?.networkEngine(self, didUpdateConnectionState: true, peerName: peerName)
       }
     } else {
+      isSessionEstablished = false
       if isConnectionNotified {
         isConnectionNotified = false
         delegate?.networkEngine(self, didUpdateConnectionState: false, peerName: nil)

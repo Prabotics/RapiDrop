@@ -122,6 +122,8 @@ class NsdDiscovery(
         releaseMulticast()
     }
     fun restartDiscovery() {
+        resolvedServices.clear()
+        updateMergedDevices()
         if (isDiscovering) {
             serverDiscoveryListener?.let {
                 try { nsdManager.stopServiceDiscovery(it) } catch (_: Exception) {}
@@ -271,7 +273,10 @@ class NsdDiscovery(
             if (isSelf) continue
 
             if (dev.id.isNotBlank()) {
-                devicesById[dev.id] = dev
+                val existing = devicesById[dev.id]
+                if (existing == null || existing.port != WireFrame.DEFAULT_PORT || dev.port == WireFrame.DEFAULT_PORT) {
+                    devicesById[dev.id] = dev
+                }
             } else {
                 val nameKey = DeviceNameHelper.normalizeDeviceName(dev.name)
                 if (!devicesByNameWithoutId.containsKey(nameKey)) {

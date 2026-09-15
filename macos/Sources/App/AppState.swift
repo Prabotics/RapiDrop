@@ -66,6 +66,7 @@ final class TransferSpeedTracker: @unchecked Sendable {
 @MainActor
 public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var isConnected: Bool = false
+  @Published public var isConnecting: Bool = false
   @Published public var peerName: String? = nil
   @Published public var pairedPeerName: String? = nil
   @Published public var recentClips: [ClipItem] = []
@@ -310,8 +311,11 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     self.pairedPeerName = invite.deviceName
     self.peerName = invite.deviceName
 
+    self.isConnecting = true
     if let host = invite.host, !host.isEmpty {
+      let connectPort = (invite.port > 0 && invite.port != Int(WireFrame.defaultClientPort)) ? UInt16(invite.port) : WireFrame.defaultPort
       self.network.sendPairAccept(to: host, port: UInt16(invite.port))
+      self.network.connect(to: host, port: connectPort)
     }
     if let keyData = self.network.getSessionKeyData() {
       let hex = keyData.map { String(format: "%02x", $0) }.joined()
@@ -866,6 +870,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   ) {
     Task { @MainActor in
       let wasConnected = self.isConnected
+      self.isConnecting = false
       self.isConnected = isConnected
       self.monitor.setConnected(isConnected)
       if isConnected {
@@ -941,6 +946,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       self.pendingPairingSasCode = sasCode
       self.selectedDeviceForPairing = nil
       self.incomingPairInvite = nil
+      self.isConnecting = true
       if let host = host, !host.isEmpty {
         let connectPort = (port > 0 && port != Int(WireFrame.defaultClientPort)) ? UInt16(port) : WireFrame.defaultPort
         self.network.connect(to: host, port: connectPort)
@@ -953,6 +959,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       self.pairingTimeoutTask = nil
       self.incomingPairInvite = nil
       self.selectedDeviceForPairing = nil
+      self.isConnecting = false
       self.pendingPairingSasCode = nil
       if let savedPin = self.storedPairedPin {
         self.setPin(savedPin)
@@ -978,8 +985,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       self.network.setSessionKey(nil)
       self.pairedPeerName = nil
       self.peerName = nil
+      self.isConnecting = false
       self.isConnected = false
-      self.selectedDeviceForPairing = nil
       self.regeneratePin()
       self.refreshDiscovery()
       self.playSound("Blow")

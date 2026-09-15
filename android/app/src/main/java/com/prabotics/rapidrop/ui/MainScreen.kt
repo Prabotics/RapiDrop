@@ -110,6 +110,7 @@ enum class SyncState {
 data class MainScreenState(
     val activeTransferProgress: TransferProgress? = null,
     val isConnected: Boolean = false,
+    val isConnecting: Boolean = false,
     val deviceInfo: ConnectedDeviceInfo? = null,
     val discoveredDevices: List<DiscoveredDevice> = emptyList(),
     val pinnedClipIds: Set<String> = emptySet(),
@@ -158,6 +159,7 @@ fun MainScreen(
     val (
         activeTransferProgress,
         isConnected,
+        isConnecting,
         deviceInfo,
         discoveredDevices,
         pinnedClipIds,
@@ -451,6 +453,7 @@ fun MainScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             PairedDeviceContent(
                                 isConnected = isConnected,
+                                isConnecting = isConnecting,
                                 deviceInfo = effectiveDeviceInfo,
                                 syncState = syncState,
                                 recentClips = recentClips,

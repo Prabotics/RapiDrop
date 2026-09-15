@@ -129,6 +129,7 @@ class SyncService : Service() {
         const val PAIRING_NOTIFICATION_ID = 1002
         const val ACTION_STOP_SERVICE = "com.prabotics.rapidrop.ACTION_STOP_SERVICE"
         val isConnected = MutableStateFlow(false)
+        val isConnecting = MutableStateFlow(false)
         val connectedPeerName = MutableStateFlow<String?>(null)
         val connectedDeviceInfo = MutableStateFlow<ConnectedDeviceInfo?>(null)
         val pairingPin = MutableStateFlow<String?>(null)
@@ -434,9 +435,11 @@ class SyncService : Service() {
                 updateNotification()
             },
             onConnectionStateChanged = { connected ->
+                isConnecting.value = false
                 if (isConnected.value != connected) {
                     isConnected.value = connected
                     if (connected) {
+                        startAutoReconnect()
                         acquireWifiLock()
                         android.util.Log.d("RapiDrop", "connection.connected")
                         pairingError.value = null
@@ -775,6 +778,7 @@ class SyncService : Service() {
         pairingError.value = null
         pairingPin.value = pin
         connectedPeerName.value = device.name
+        isConnecting.value = true
 
         preferencesManager.savePairingPin(pin)
         val targetHost = device.host.ifBlank { inviteInfo?.host ?: "" }
@@ -809,8 +813,6 @@ class SyncService : Service() {
                 }
             }
         }
-
-        startAutoReconnect()
     }
 
     fun sendPairInvite(device: DiscoveredDevice, pin: String) {

@@ -1,4 +1,3 @@
-# macOS & Apple
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -14,9 +13,7 @@ macos/*.xcworkspace/xcuserdata/
 *.app/
 *.dmg
 *.zip
-DerivedData/
 
-# Android, Gradle & Kotlin
 .gradle/
 **/.gradle/
 build/
@@ -31,9 +28,7 @@ captures/
 *.aab
 *.ap_
 *.dex
-*.class
-*.hprof
-# .NET & Windows Build Artifacts
+
 .vs/
 **/.vs/
 bin/
@@ -44,47 +39,36 @@ TestResults/
 **/TestResults/
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
-# IDEs & Editors
+
 .idea/
 .vscode/
 .fleet/
 .zed/
 *.iml
-*.ipr
-*.iws
 
-# Python & Build Scripts
-__pycache__/
-*.py[cod]
+
+
 *$py.class
 
-# OS & Desktop Metadata
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
-Desktop.ini
-$RECYCLE.BIN/
+
 *~
 .directory
 
-# Temporary & Swap Files
 *.tmp
-*.bak
-*.swp
+
 *.swo
 *.orig
 *.rej
 
-# Logs & Credentials
 *.log
 *.pem
 *.key
 .env*
 
-# Release & Packaging Artifacts
 windows-publish/
 release-assets/
 raw-artifacts/

@@ -77,6 +77,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PairedDeviceContent(
     isConnected: Boolean,
+    isConnecting: Boolean = false,
     deviceInfo: ConnectedDeviceInfo?,
     syncState: SyncState,
     recentClips: List<ClipItem> = emptyList(),
@@ -107,12 +108,20 @@ fun PairedDeviceContent(
     val statusColors = LocalStatusColors.current
 
     val animatedBadgeBg by animateColorAsState(
-        targetValue = if (isConnected) statusColors.connected.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+        targetValue = when {
+            isConnected -> statusColors.connected.copy(alpha = 0.12f)
+            isConnecting -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+        },
         animationSpec = spring(stiffness = 500f),
         label = "statusBadgeBgAnimation"
     )
     val animatedBadgeTint by animateColorAsState(
-        targetValue = if (isConnected) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = when {
+            isConnected -> statusColors.connected
+            isConnecting -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
         animationSpec = spring(stiffness = 500f),
         label = "statusBadgeTintAnimation"
     )
@@ -248,7 +257,11 @@ fun PairedDeviceContent(
                                 .background(animatedBadgeTint, CircleShape)
                         )
                         Text(
-                            text = if (isConnected) "Connected" else "Offline",
+                            text = when {
+                                isConnected -> "Connected"
+                                isConnecting -> "Connecting..."
+                                else -> "Offline"
+                            },
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = animatedBadgeTint
                         )

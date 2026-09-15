@@ -63,7 +63,7 @@ public final class PasteboardMonitor: @unchecked Sendable {
   }
 
   private func poll() {
-    let currentCount = pasteboard.changeCount
+    let currentCount = DispatchQueue.main.sync { pasteboard.changeCount }
     guard currentCount != lastChangeCount else { return }
 
     lastChangeCount = currentCount
@@ -74,6 +74,14 @@ public final class PasteboardMonitor: @unchecked Sendable {
   }
 
   public func readCurrentClip() -> ClipItem? {
+    if Thread.isMainThread {
+      return readCurrentClipInternal()
+    } else {
+      return DispatchQueue.main.sync { readCurrentClipInternal() }
+    }
+  }
+
+  private func readCurrentClipInternal() -> ClipItem? {
     guard !hasSensitiveTypes() else { return nil }
 
     if let stringValue = pasteboard.string(forType: .string), !stringValue.isEmpty {

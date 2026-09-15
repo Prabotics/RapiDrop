@@ -117,6 +117,7 @@ class MainActivity : ComponentActivity() {
             var appThemeMode by remember { mutableStateOf(preferencesManager.getAppThemeMode()) }
             RapiDropTheme(themeMode = appThemeMode) {
                 val isConnected by SyncService.isConnected.collectAsState()
+                val isConnecting by SyncService.isConnecting.collectAsState()
                 val deviceInfo by SyncService.connectedDeviceInfo.collectAsState()
                 val pairingPin by SyncService.pairingPin.collectAsState()
                 val connectedPeerName by SyncService.connectedPeerName.collectAsState()
@@ -144,6 +145,7 @@ class MainActivity : ComponentActivity() {
                     state = MainScreenState(
                         activeTransferProgress = activeTransferProgress,
                         isConnected = isConnected,
+                        isConnecting = isConnecting,
                         deviceInfo = deviceInfo,
                         discoveredDevices = discoveredDevices,
                         pinnedClipIds = pinnedClipIds,
