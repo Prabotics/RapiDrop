@@ -17,6 +17,34 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        create("release") {
+            val keystorePath = (project.findProperty("KEYSTORE_PATH") as String?)
+                ?: System.getenv("KEYSTORE_PATH")
+                ?: "${System.getProperty("user.home")}/.android/rapidrop-release.jks"
+            val keystorePassword = (project.findProperty("KEYSTORE_PASSWORD") as String?)
+                ?: System.getenv("KEYSTORE_PASSWORD")
+            val keyAliasStr = (project.findProperty("KEY_ALIAS") as String?)
+                ?: System.getenv("KEY_ALIAS")
+                ?: "rapidrop"
+            val keyPasswordStr = (project.findProperty("KEY_PASSWORD") as String?)
+                ?: System.getenv("KEY_PASSWORD")
+                ?: keystorePassword
+
+            if (keystorePassword != null && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                keyAlias = keyAliasStr
+                keyPassword = keyPasswordStr
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = false
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
+    }
 
     buildTypes {
         release {
@@ -26,7 +54,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

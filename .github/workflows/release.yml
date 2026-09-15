@@ -68,10 +68,26 @@ jobs:
         working-directory: android
         run: ./gradlew test
 
+      - name: Decode Release Keystore
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/rapidrop-release.jks
+
       - name: Assemble Release APK
         working-directory: android
+        env:
+          KEYSTORE_PATH: /home/runner/.android/rapidrop-release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
+      - name: Clean Up Keystore
+        if: always()
+        run: rm -f ~/.android/rapidrop-release.jks
       - name: Prepare APK Artifact
         run: |
           mkdir -p android-release
