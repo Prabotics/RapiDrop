@@ -123,7 +123,7 @@ jobs:
 
       - name: Publish Standalone Executable (Self-Contained)
         run: |
-          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-${{ matrix.arch }} -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true -o dist/standalone
+          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-${{ matrix.arch }} -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --self-contained true -o dist/standalone
           Move-Item dist/standalone/RapiDrop.exe dist/RapiDrop-Standalone-${{ matrix.arch }}.exe
 
       - name: Publish Framework-Dependent Package
