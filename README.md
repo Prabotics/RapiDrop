@@ -15,18 +15,22 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 
 | Platform | Download | Requirements |
 | :--- | :--- | :--- |
-| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest) | macOS 14.0+ (Apple Silicon & Intel) |
-| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest) | Android 10+ (API 29–35+) |
-| **Windows** | [`RapiDrop-Standalone.exe`](https://github.com/Prabotics/RapiDrop/releases/latest) | Windows 10/11 (64-bit) |
+| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) | macOS 14.0+ (Apple Silicon & Intel) |
+| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29–35+) |
+| **Windows** | [`RapiDrop-Standalone.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone.exe) | Windows 10/11 (64-bit) |
 
-*Checksums for all release binaries are published in `SHA256SUMS.txt` alongside every release.*
-
+> Looking for portable ZIP archives (`.zip`) or cryptographic checksums? Visit the [Latest Release Page](https://github.com/Prabotics/RapiDrop/releases/latest).
 ## Installation & Setup
 
 ### macOS
 1. Open `RapiDrop-macOS.dmg` and drag **RapiDrop** into your `/Applications` folder.
 2. Launch RapiDrop from `/Applications`. The icon will appear in your menu bar.
-3. *First launch tip*: If macOS shows a security warning on first open, right-click `RapiDrop.app` in `/Applications` and select **Open** (or run `xattr -cr /Applications/RapiDrop.app` in Terminal).
+
+> [!NOTE]
+> **macOS Gatekeeper**: On first launch, macOS may report that the developer cannot be verified. Right-click `RapiDrop.app` in `/Applications` and choose **Open**, or run:
+> ```bash
+> xattr -cr /Applications/RapiDrop.app
+> ```
 
 ### Android
 1. Download and open `RapiDrop.apk` on your phone to install.
@@ -34,8 +38,8 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 3. (Optional) Add the **RapiDrop** tile to your Quick Settings notification shade for instant one-tap sharing.
 
 ### Windows
-1. Download and run `RapiDrop-Standalone.exe`. No installation or .NET setup required.
-2. RapiDrop runs in your taskbar system tray. Click the tray icon to connect to your devices and send clips.
+1. Download and run `RapiDrop-Standalone.exe`.
+2. Click the RapiDrop icon in your system tray to discover devices and share clips.
 
 ## Key Highlights
 
