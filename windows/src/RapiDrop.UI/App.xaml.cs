@@ -83,10 +83,11 @@ public partial class App : WpfApplication
         if (!isNewInstance)
         {
             int currentPid = Environment.ProcessId;
-            var otherInstances = System.Diagnostics.Process.GetProcessesByName("RapiDrop")
-                .Where(p => p.Id != currentPid)
+            var otherInstances = System.Diagnostics.Process.GetProcesses()
+                .Where(p => (string.Equals(p.ProcessName, "RapiDrop", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(p.ProcessName, "RapiDrop-Standalone", StringComparison.OrdinalIgnoreCase)) &&
+                            p.Id != currentPid)
                 .ToList();
-
             if (otherInstances.Count > 0)
             {
                 IntPtr existingHwnd = FindWindow(null, "RapiDropTrayIconHost");
@@ -101,8 +102,9 @@ public partial class App : WpfApplication
                 Shutdown(0);
                 return;
             }
+            Shutdown(0);
+            return;
         }
-
         try
         {
             base.OnStartup(e);
