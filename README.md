@@ -107,9 +107,9 @@ cd windows
 # Run unit tests
 dotnet test tests/RapiDrop.Tests/RapiDrop.Tests.csproj -f net10.0
 
-# Build release executable
-dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained true
-```
+# Build release executable (x64 for Intel/AMD, arm64 for Copilot+/Parallels)
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-arm64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
 ## License
 

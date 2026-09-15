@@ -84,8 +84,7 @@ public partial class App : WpfApplication
         {
             int currentPid = Environment.ProcessId;
             var otherInstances = System.Diagnostics.Process.GetProcesses()
-                .Where(p => (string.Equals(p.ProcessName, "RapiDrop", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(p.ProcessName, "RapiDrop-Standalone", StringComparison.OrdinalIgnoreCase)) &&
+                .Where(p => p.ProcessName.StartsWith("RapiDrop", StringComparison.OrdinalIgnoreCase) &&
                             p.Id != currentPid)
                 .ToList();
             if (otherInstances.Count > 0)

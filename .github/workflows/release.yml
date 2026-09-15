@@ -86,6 +86,9 @@ jobs:
   build-windows:
     name: Build Windows Artifacts
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -94,32 +97,33 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
+
       - name: Restore Dependencies
-        run: dotnet restore windows/RapiDrop.sln -r win-x64
+        run: dotnet restore windows/RapiDrop.sln -r win-${{ matrix.arch }}
 
       - name: Run Unit Tests
+        if: matrix.arch == 'x64'
         run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -c Release
 
       - name: Publish Standalone Executable (Self-Contained)
         run: |
-          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained true -o dist/standalone
-          Move-Item dist/standalone/RapiDrop.exe dist/RapiDrop-Standalone.exe
+          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-${{ matrix.arch }} -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true -o dist/standalone
+          Move-Item dist/standalone/RapiDrop.exe dist/RapiDrop-Standalone-${{ matrix.arch }}.exe
 
-      - name: Publish Framework-Dependent Executable
+      - name: Publish Framework-Dependent Package
         run: |
-          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained false -o dist/dependent
-          Move-Item dist/dependent/RapiDrop.exe dist/RapiDrop.exe
-          Compress-Archive -Path dist/dependent/* -DestinationPath dist/RapiDrop-Windows-x64.zip
+          dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-${{ matrix.arch }} -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained false -o dist/dependent
+          Move-Item dist/dependent/RapiDrop.exe dist/RapiDrop-${{ matrix.arch }}.exe
+          Compress-Archive -Path dist/dependent/* -DestinationPath dist/RapiDrop-Windows-${{ matrix.arch }}.zip
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: windows-artifacts
+          name: windows-artifacts-${{ matrix.arch }}
           path: |
-            dist/RapiDrop-Standalone.exe
-            dist/RapiDrop.exe
-            dist/RapiDrop-Windows-x64.zip
-
+            dist/RapiDrop-Standalone-${{ matrix.arch }}.exe
+            dist/RapiDrop-${{ matrix.arch }}.exe
+            dist/RapiDrop-Windows-${{ matrix.arch }}.zip
   publish-release:
     name: Create GitHub Release
     needs: [build-macos, build-android, build-windows]
