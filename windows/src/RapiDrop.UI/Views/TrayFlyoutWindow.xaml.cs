@@ -402,7 +402,7 @@ public partial class TrayFlyoutWindow : Window
         SizeChanged += (s, e) =>
         {
             if (!IsVisible || _isClosing) return;
-            PositionAtTaskbarCorner();
+            PositionAtTaskbarCorner(e.NewSize.Height, e.NewSize.Width);
         };
         UpdateUI();
 
@@ -568,7 +568,7 @@ public partial class TrayFlyoutWindow : Window
         }
     }
 
-    private void PositionAtTaskbarCorner()
+    private void PositionAtTaskbarCorner(double? overrideHeight = null, double? overrideWidth = null)
     {
         var helper = new System.Windows.Interop.WindowInteropHelper(this);
         IntPtr hwnd = helper.Handle;
@@ -581,14 +581,6 @@ public partial class TrayFlyoutWindow : Window
             dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
             dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
         }
-
-        double wDips = ActualWidth > 50 ? ActualWidth : (DesiredSize.Width > 50 ? DesiredSize.Width : (Width > 0 ? Width : 320));
-        double hDips = ActualHeight > 50 ? ActualHeight : (DesiredSize.Height > 50 ? DesiredSize.Height : 400);
-        double maxHDips = MaxHeight > 0 ? MaxHeight : 500;
-        hDips = Math.Min(hDips, maxHDips);
-
-        double wPixels = wDips * dpiScaleX;
-        double hPixels = hDips * dpiScaleY;
 
         RECT workRectPixels = new RECT();
         bool gotMonitor = false;
@@ -619,48 +611,46 @@ public partial class TrayFlyoutWindow : Window
             };
         }
 
+        double marginDips = 12.0;
+        double marginPixels = marginDips * dpiScaleX;
+
+        double workAreaHeightDips = (workRectPixels.Bottom - workRectPixels.Top) / dpiScaleY;
+        double maxAllowedHeightDips = Math.Max(260.0, workAreaHeightDips - (marginDips * 2));
+        MaxHeight = Math.Min(520.0, maxAllowedHeightDips);
+
+        double wDips = overrideWidth ?? (ActualWidth > 50 ? ActualWidth : (DesiredSize.Width > 50 ? DesiredSize.Width : (Width > 0 ? Width : 320)));
+        double hDips = overrideHeight ?? (ActualHeight > 50 ? ActualHeight : (DesiredSize.Height > 50 ? DesiredSize.Height : 380));
+        hDips = Math.Min(hDips, MaxHeight);
+
+        double wPixels = wDips * dpiScaleX;
+        double hPixels = hDips * dpiScaleY;
+
+        double targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
+        double targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
+
         var abd = new APPBARDATA { cbSize = Marshal.SizeOf<APPBARDATA>() };
         IntPtr result = SHAppBarMessage(ABM_GETTASKBARPOS, ref abd);
-
-        double targetLeftPixels;
-        double targetTopPixels;
-        int marginPixels = (int)(12 * dpiScaleX);
-
         if (result != IntPtr.Zero)
         {
-            switch (abd.uEdge)
+            if (abd.uEdge == 1)
             {
-                case 3:
-                    targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
-                    targetTopPixels = abd.rc.Top - hPixels - marginPixels;
-                    break;
-
-                case 1:
-                    targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
-                    targetTopPixels = abd.rc.Bottom + marginPixels;
-                    break;
-
-                case 0:
-                    targetLeftPixels = abd.rc.Right + marginPixels;
-                    targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
-                    break;
-
-                case 2:
-                    targetLeftPixels = abd.rc.Left - wPixels - marginPixels;
-                    targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
-                    break;
-
-                default:
-                    targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
-                    targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
-                    break;
+                targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
+                targetTopPixels = workRectPixels.Top + marginPixels;
+            }
+            else if (abd.uEdge == 0)
+            {
+                targetLeftPixels = workRectPixels.Left + marginPixels;
+                targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
+            }
+            else if (abd.uEdge == 2)
+            {
+                targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
+                targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
             }
         }
-        else
-        {
-            targetLeftPixels = workRectPixels.Right - wPixels - marginPixels;
-            targetTopPixels = workRectPixels.Bottom - hPixels - marginPixels;
-        }
+
+        targetTopPixels = Math.Max(workRectPixels.Top + marginPixels, targetTopPixels);
+        targetLeftPixels = Math.Max(workRectPixels.Left + marginPixels, targetLeftPixels);
 
         Left = targetLeftPixels / dpiScaleX;
         Top = targetTopPixels / dpiScaleY;
@@ -751,6 +741,9 @@ public partial class TrayFlyoutWindow : Window
 
         _discoveredDevices = deduped;
         UpdateUI();
+        InvalidateMeasure();
+        UpdateLayout();
+        PositionAtTaskbarCorner();
     }
     private static bool IsSelfDevice(DiscoveredDevice device, string localId)
     {
@@ -905,12 +898,11 @@ public partial class TrayFlyoutWindow : Window
     }
     private void RenderDiscoveredDevicesList()
     {
-        PanelDiscoveredDevices.Children.Clear();
-
         string? pairedPeer = _store.Config.PairedPeerName;
         var unpaired = _discoveredDevices
             .Where(d => string.IsNullOrEmpty(pairedPeer) || !IsSameDeviceName(d.Name, pairedPeer))
             .ToList();
+
         if (unpaired.Count == 0)
         {
             _lastRenderedDevicesSignature = "";
@@ -927,114 +919,128 @@ public partial class TrayFlyoutWindow : Window
             CardSearchingDevices.Visibility = Visibility.Collapsed;
             return;
         }
+
         _lastRenderedDevicesSignature = signature;
-        PanelDiscoveredDevices.Children.Clear();
-        TxtDiscoveredHeader.Text = "Nearby devices";
-        CardSearchingDevices.Visibility = Visibility.Collapsed;
-        bool isInitialMount = string.IsNullOrEmpty(_lastRenderedDevicesSignature);
-        _lastRenderedDevicesSignature = signature;
-        PanelDiscoveredDevices.Children.Clear();
         TxtDiscoveredHeader.Text = "Nearby devices";
         CardSearchingDevices.Visibility = Visibility.Collapsed;
 
+        var currentKeys = new HashSet<string>(unpaired.Select(d => $"{d.Id}_{d.Name}_{d.Host}_{d.Port}"));
+
+        for (int i = PanelDiscoveredDevices.Children.Count - 1; i >= 0; i--)
+        {
+            if (PanelDiscoveredDevices.Children[i] is Border b && b.Tag is string key && !currentKeys.Contains(key))
+            {
+                PanelDiscoveredDevices.Children.RemoveAt(i);
+            }
+        }
+
+        var renderedKeys = new HashSet<string>(PanelDiscoveredDevices.Children.OfType<Border>().Select(b => b.Tag as string ?? ""));
         foreach (var device in unpaired)
         {
-            var card = new Border
-            {
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(8),
-                Margin = new Thickness(0, 0, 0, 6)
-            };
-            card.SetResourceReference(Border.BackgroundProperty, "BrushCanvas");
-            card.SetResourceReference(Border.BorderBrushProperty, "BrushBorder");
+            string key = $"{device.Id}_{device.Name}_{device.Host}_{device.Port}";
+            if (renderedKeys.Contains(key)) continue;
 
-            if (!isInitialMount)
-            {
-                card.Opacity = 0.0;
-                var cardAnim = new DoubleAnimation(0.0, 1.0, new Duration(TimeSpan.FromMilliseconds(180)))
-                {
-                    EasingFunction = new QuarticEase { EasingMode = EasingMode.EaseOut }
-                };
-                card.BeginAnimation(UIElement.OpacityProperty, cardAnim);
-            }
-
-            var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var iconBorder = new Border
-            {
-                Width = 32,
-                Height = 32,
-                CornerRadius = new CornerRadius(6),
-                Margin = new Thickness(0, 0, 8, 0)
-            };
-            iconBorder.SetResourceReference(Border.BackgroundProperty, "BrushSquircle");
-
-            var iconPath = new WpfPath
-            {
-                Data = (Geometry)FindResource(device.DeviceType == "mac" ? "IconLaptop" : "IconMobile"),
-                Width = 15,
-                Height = 15,
-                Stretch = Stretch.Uniform,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                VerticalAlignment = System.Windows.VerticalAlignment.Center
-            };
-            iconPath.SetResourceReference(WpfPath.FillProperty, "BrushTextPrimary");
-            iconBorder.Child = iconPath;
-            Grid.SetColumn(iconBorder, 0);
-            grid.Children.Add(iconBorder);
-
-            var infoPanel = new StackPanel
-            {
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var nameText = new TextBlock
-            {
-                Text = FormatFriendlyDeviceName(device.Name),
-                FontSize = 12.5,
-                FontWeight = FontWeights.SemiBold,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            };
-            nameText.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
-
-            var subText = new TextBlock
-            {
-                Text = GetDeviceSubtitle(device.Name),
-                FontSize = 10,
-                Margin = new Thickness(0, 1, 0, 0)
-            };
-            subText.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextSecondary");
-
-            infoPanel.Children.Add(nameText);
-            infoPanel.Children.Add(subText);
-            Grid.SetColumn(infoPanel, 1);
-            grid.Children.Add(infoPanel);
-
-            var pairBtn = new WpfButton
-            {
-                Content = "Connect",
-                Style = (Style)FindResource("BtnOutline"),
-                Height = 26,
-                FontSize = 11,
-                FontWeight = FontWeights.Medium,
-                Padding = new Thickness(12, 3, 12, 3),
-                VerticalAlignment = System.Windows.VerticalAlignment.Center
-            };
-            var targetDevice = device;
-            pairBtn.Click += (s, e) =>
-            {
-                InitiatePairingWithDevice(targetDevice);
-            };
-
-            Grid.SetColumn(pairBtn, 2);
-            grid.Children.Add(pairBtn);
-
-            card.Child = grid;
+            var card = CreateDeviceCard(device, key);
             PanelDiscoveredDevices.Children.Add(card);
         }
+    }
+
+    private Border CreateDeviceCard(DiscoveredDevice device, string key)
+    {
+        var card = new Border
+        {
+            Tag = key,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8),
+            Margin = new Thickness(0, 0, 0, 6)
+        };
+        card.SetResourceReference(Border.BackgroundProperty, "BrushCanvas");
+        card.SetResourceReference(Border.BorderBrushProperty, "BrushBorder");
+
+        card.Opacity = 0.0;
+        var cardAnim = new DoubleAnimation(0.0, 1.0, new Duration(TimeSpan.FromMilliseconds(180)))
+        {
+            EasingFunction = new QuarticEase { EasingMode = EasingMode.EaseOut }
+        };
+        card.BeginAnimation(UIElement.OpacityProperty, cardAnim);
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var iconBorder = new Border
+        {
+            Width = 32,
+            Height = 32,
+            CornerRadius = new CornerRadius(6),
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        iconBorder.SetResourceReference(Border.BackgroundProperty, "BrushSquircle");
+
+        var iconPath = new WpfPath
+        {
+            Data = (Geometry)FindResource(device.DeviceType == "mac" ? "IconLaptop" : "IconMobile"),
+            Width = 15,
+            Height = 15,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        iconPath.SetResourceReference(WpfPath.FillProperty, "BrushTextPrimary");
+        iconBorder.Child = iconPath;
+        Grid.SetColumn(iconBorder, 0);
+        grid.Children.Add(iconBorder);
+
+        var infoPanel = new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var nameText = new TextBlock
+        {
+            Text = FormatFriendlyDeviceName(device.Name),
+            FontSize = 12.5,
+            FontWeight = FontWeights.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        nameText.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
+
+        var subText = new TextBlock
+        {
+            Text = GetDeviceSubtitle(device.Name),
+            FontSize = 10,
+            Margin = new Thickness(0, 1, 0, 0)
+        };
+        subText.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextSecondary");
+
+        infoPanel.Children.Add(nameText);
+        infoPanel.Children.Add(subText);
+        Grid.SetColumn(infoPanel, 1);
+        grid.Children.Add(infoPanel);
+
+        var pairBtn = new WpfButton
+        {
+            Content = "Connect",
+            Style = (Style)FindResource("BtnOutline"),
+            Height = 26,
+            FontSize = 11,
+            FontWeight = FontWeights.Medium,
+            Padding = new Thickness(12, 3, 12, 3),
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        var targetDevice = device;
+        pairBtn.Click += (s, e) =>
+        {
+            InitiatePairingWithDevice(targetDevice);
+        };
+
+        Grid.SetColumn(pairBtn, 2);
+        grid.Children.Add(pairBtn);
+
+        card.Child = grid;
+        return card;
     }
 
     private void InitiatePairingWithDevice(DiscoveredDevice device)
