@@ -15,12 +15,12 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 
 | Platform | Download | Requirements |
 | :--- | :--- | :--- |
-| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) | macOS 14.0+ (Apple Silicon & Intel) |
-| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29–35+) |
-| **Windows** | [`RapiDrop-Standalone.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone.exe) | Windows 10/11 (64-bit) |
+| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) | macOS 14.0+ (Universal Apple Silicon & Intel) |
+| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29–35+, ARM64 & x86_64) |
+| **Windows (x64)** | [`RapiDrop-Standalone-x64.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone-x64.exe) | Windows 10/11 (Intel / AMD 64-bit) |
+| **Windows (ARM64)** | [`RapiDrop-Standalone-arm64.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone-arm64.exe) | Windows 11 on ARM (Copilot+ PCs / Parallels) |
 
 > Looking for portable ZIP archives (`.zip`) or cryptographic checksums? Visit the [Latest Release Page](https://github.com/Prabotics/RapiDrop/releases/latest).
-## Installation & Setup
 
 ### macOS
 1. Open `RapiDrop-macOS.dmg` and drag **RapiDrop** into your `/Applications` folder.
@@ -38,9 +38,9 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 3. (Optional) Add the **RapiDrop** tile to your Quick Settings notification shade for instant one-tap sharing.
 
 ### Windows
-1. Download and run `RapiDrop-Standalone.exe`.
-2. Click the RapiDrop icon in your system tray to discover devices and share clips.
-
+1. Download **`RapiDrop-Standalone-x64.exe`** (for standard Intel/AMD PCs) or **`RapiDrop-Standalone-arm64.exe`** (for ARM64 PCs like Snapdragon Copilot+ or Parallels on Mac).
+2. Run the executable. It opens directly and docks into your system tray notification area (near the clock).
+3. Click the RapiDrop icon in the tray to discover nearby devices, inspect clips, or adjust settings.
 ## Key Highlights
 
 * **Instant Clipboard Sync**: Copy text, links, or screenshots on one device and paste them on another in milliseconds.
@@ -56,8 +56,7 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 | :--- | :--- | :--- |
 | **macOS** | Swift 6 / Apple `Network.framework` | Menu Bar Accessory (`LSUIElement`) & `NSPasteboard` 400ms polling |
 | **Android** | Kotlin 2.0 / Jetpack Compose | `connectedDevice` Foreground Service & MediaStore Scoped Storage |
-| **Windows** | C# 13 / .NET 10 / Win32 | System Tray Flyout & Win32 Clipboard Format Listener |
-
+| **Windows** | C# 13 / .NET 10 / Win32 (x64 & ARM64) | System Tray Flyout & Win32 Clipboard Format Listener |
 ## Documentation
 
 ### For Users
