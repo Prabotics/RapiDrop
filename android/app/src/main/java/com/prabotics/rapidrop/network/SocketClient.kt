@@ -49,6 +49,7 @@ class SocketClient(
     private val isConnecting = java.util.concurrent.atomic.AtomicBoolean(false)
     private val isConnectedState = java.util.concurrent.atomic.AtomicBoolean(false)
     private val connectionGeneration = java.util.concurrent.atomic.AtomicLong(0)
+    private var heartbeatJob: Job? = null
     private data class IncomingStreamTransfer(
         val transferId: String,
         val fileIndex: Int,
@@ -94,7 +95,7 @@ class SocketClient(
             val sock = Socket().apply {
                 tcpNoDelay = true
                 keepAlive = true
-                soTimeout = 12000
+                soTimeout = 20000
                 sendBufferSize = 4 * 1024 * 1024
                 receiveBufferSize = 4 * 1024 * 1024
             }
@@ -308,6 +309,8 @@ class SocketClient(
         }
         val nextGen = connectionGeneration.incrementAndGet()
         Log.d("RapiDrop", "connection.disconnected gen=$gen nextGen=$nextGen")
+        heartbeatJob?.cancel()
+        heartbeatJob = null
         pendingInitiatorKeypair = null
         pendingInitiatorNonce = null
         activeIncomingTransfer?.let { transfer ->
@@ -357,6 +360,10 @@ class SocketClient(
             } catch (_: IOException) {
                 break
             } catch (_: java.security.GeneralSecurityException) {
+                break
+            } catch (_: kotlinx.coroutines.channels.ClosedSendChannelException) {
+                break
+            } catch (_: Exception) {
                 break
             }
         }
@@ -424,6 +431,28 @@ class SocketClient(
         } catch (_: IOException) {
         } catch (_: SecurityException) {}
     }
+    private fun startHeartbeat(gen: Long) {
+        heartbeatJob?.cancel()
+        heartbeatJob = CoroutineScope(Dispatchers.IO).launch {
+            while (isActive && connectionGeneration.get() == gen && socket?.isConnected == true) {
+                delay(4000)
+                if (connectionGeneration.get() != gen) break
+                val key = sessionKey ?: continue
+                val out = outputStream ?: continue
+                try {
+                    val (cipher, nonce, tag) = CryptoEngine.encrypt("PING".toByteArray(Charsets.UTF_8), key)
+                    val pingFrame = WireFrame(type = PacketType.PING, nonce = nonce, ciphertext = cipher, tag = tag)
+                    synchronized(out) {
+                        out.write(pingFrame.serialize())
+                        out.flush()
+                    }
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }
+    }
+
 
     private suspend fun processIncomingFrame(frame: WireFrame) {
         if (frame.type == PacketType.PING) {
@@ -497,6 +526,7 @@ class SocketClient(
                 if (isConnectedState.compareAndSet(false, true)) {
                     onConnectionStateChanged(true)
                 }
+                startHeartbeat(connectionGeneration.get())
                 sendDeviceInfo()
             }
             PacketType.DEVICE_INFO -> {
@@ -504,6 +534,7 @@ class SocketClient(
                 if (isConnectedState.compareAndSet(false, true)) {
                     onConnectionStateChanged(true)
                 }
+                startHeartbeat(connectionGeneration.get())
                 val jsonStr = String(decrypted, Charsets.UTF_8)
                 val json = try { JSONObject(jsonStr) } catch (_: Exception) { JSONObject() }
                 val deviceName = json.optString("deviceName").takeIf { it.isNotBlank() } ?: "Device"
@@ -631,7 +662,11 @@ class SocketClient(
                         transfer.digest.update(payload)
                         transfer.bytesReceived += chunkPayloadLength
                         transfer.nextChunkIndex += 1L
-                        transfer.writeChannel.send(payload)
+                        try {
+                            transfer.writeChannel.send(payload)
+                        } catch (_: kotlinx.coroutines.channels.ClosedSendChannelException) {
+                            return
+                        }
                         onTransferProgress?.invoke(
                             transfer.transferId,
                             transfer.fileName,

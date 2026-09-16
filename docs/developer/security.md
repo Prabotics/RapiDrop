@@ -64,8 +64,9 @@ All platforms execute identical deterministic test vectors:
 | :--- | :--- | :--- |
 | **Clipboard Content** | Passive LAN eavesdropping | AES-256-GCM encryption with unique random nonces per frame. |
 | **Pairing Integrity** | Man-in-the-Middle (MITM) | X25519 key agreement with Short Authentication String (SAS) verification. |
+| **Handshake Replay** | Replaying captured pairing frames | 60-second timestamp freshness window (`|now - frame.timestamp| <= 60000ms`). |
 | **Session Keys** | Key compromise / replay | Fresh ephemeral keypairs generated per connection; nonces never reused. |
-| **Credentials / Passwords** | Unintended clipboard sync | Automatic suppression of transient password manager clips. |
+| **Credentials / Passwords** | Unintended clipboard sync | Automatic suppression of transient password manager clips across macOS (`org.nspasteboard.TransientType`) and Windows (`CanIncludeInClipboardHistory=0`, `ExcludeClipboardContentFromMonitorProcessing`, `Clipboard Viewer Ignore`). |
 | **File Storage** | Path traversal attacks | Strict `sanitizeRelativePath` and directory containment checks. |
 | **File Data** | Chunk tampering / corruption | Mandatory SHA-256 digest verification before finalizing downloads. |
 

@@ -49,6 +49,12 @@ data class WireFrame(
         const val DEFAULT_CLIENT_PORT: Int = 58241
         const val SERVICE_TYPE: String = "_clipsync._tcp"
         const val CLIENT_SERVICE_TYPE: String = "_clipsync-cli._tcp"
+        const val INACTIVITY_TIMEOUT_MS: Long = 16000L
+        const val WATCHDOG_INTERVAL_MS: Long = 5000L
+        const val HEARTBEAT_INTERVAL_MS: Long = 4000L
+        const val PAIRING_INVITE_TIMEOUT_MS: Long = 30000L
+        const val MAX_IN_FLIGHT_CHUNKS: Int = 4
+        const val CHUNK_HEADER_SIZE: Int = 28
         fun deserialize(bytes: ByteArray): WireFrame? {
             if (bytes.size < HEADER_SIZE + AUTH_TAG_SIZE) return null
 

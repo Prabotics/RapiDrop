@@ -28,6 +28,8 @@ class NsdDiscovery(
     private var isDiscovering = false
     private val resolveQueue = ConcurrentLinkedQueue<NsdServiceInfo>()
     private val isResolving = AtomicBoolean(false)
+    private val resolveTimeoutHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var resolveTimeoutRunnable: Runnable? = null
     private val resolvedServices = ConcurrentHashMap<String, DiscoveredDevice>()
     private var registrationListener: NsdManager.RegistrationListener? = null
     private var isRegistered = false
@@ -115,6 +117,8 @@ class NsdDiscovery(
         serverDiscoveryListener = null
         clientDiscoveryListener = null
         isDiscovering = false
+        resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+        resolveTimeoutRunnable = null
         resolveQueue.clear()
         isResolving.set(false)
         resolvedServices.clear()
@@ -230,10 +234,11 @@ class NsdDiscovery(
 
         val resolveListener = object : NsdManager.ResolveListener {
             override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
+                resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+                resolveTimeoutRunnable = null
                 isResolving.set(false)
                 processNextResolve()
             }
-
             override fun onServiceResolved(info: NsdServiceInfo) {
                 val rawHost = info.host?.hostAddress?.removePrefix("::ffff:")?.substringBefore("%")
                 val txtIp = info.attributes["ip"]?.let { String(it, Charsets.UTF_8) }?.removePrefix("::ffff:")?.substringBefore("%")
@@ -249,14 +254,27 @@ class NsdDiscovery(
                     resolvedServices[serviceKey] = device
                     updateMergedDevices()
                 }
+                resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+                resolveTimeoutRunnable = null
                 isResolving.set(false)
                 processNextResolve()
             }
         }
+        resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+        val timeoutRunnable = Runnable {
+            if (isResolving.compareAndSet(true, false)) {
+                Log.w("RapiDrop", "mDNS resolve timed out, unlocking queue")
+                processNextResolve()
+            }
+        }
+        resolveTimeoutRunnable = timeoutRunnable
+        resolveTimeoutHandler.postDelayed(timeoutRunnable, 6000L)
 
         try {
             nsdManager.resolveService(next, resolveListener)
         } catch (_: Exception) {
+            resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+            resolveTimeoutRunnable = null
             isResolving.set(false)
             processNextResolve()
         }

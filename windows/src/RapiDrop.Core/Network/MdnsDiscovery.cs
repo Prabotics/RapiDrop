@@ -237,7 +237,9 @@ public sealed class MdnsDiscovery : IDisposable
             string sName = ptr.DomainName.ToString().TrimEnd('.');
             if (sName.Contains("_clipsync", StringComparison.OrdinalIgnoreCase))
             {
+                if (ptr.DomainName.Labels.Count == 0) continue;
                 string instanceName = ptr.DomainName.Labels[0];
+                if (string.IsNullOrEmpty(instanceName)) continue;
                 touchedInstances.Add(instanceName);
                 var dev = _devices.GetOrAdd(instanceName, n => new DiscoveredDevice(n));
                 dev.LastSeen = DateTime.UtcNow;
@@ -265,7 +267,9 @@ public sealed class MdnsDiscovery : IDisposable
             string sName = srv.Name.ToString().TrimEnd('.');
             if (sName.Contains("_clipsync", StringComparison.OrdinalIgnoreCase))
             {
+                if (srv.Name.Labels.Count == 0) continue;
                 string instanceName = srv.Name.Labels[0];
+                if (string.IsNullOrEmpty(instanceName)) continue;
                 touchedInstances.Add(instanceName);
                 var dev = _devices.GetOrAdd(instanceName, n => new DiscoveredDevice(n));
                 dev.Port = srv.Port;
@@ -298,7 +302,9 @@ public sealed class MdnsDiscovery : IDisposable
             if (sName.Contains("_clipsync", StringComparison.OrdinalIgnoreCase) ||
                 sName.Contains("_device-info", StringComparison.OrdinalIgnoreCase))
             {
+                if (txt.Name.Labels.Count == 0) continue;
                 string instanceName = txt.Name.Labels[0];
+                if (string.IsNullOrEmpty(instanceName)) continue;
                 touchedInstances.Add(instanceName);
                 var dev = _devices.GetOrAdd(instanceName, n => new DiscoveredDevice(n));
                 dev.LastSeen = DateTime.UtcNow;
@@ -332,7 +338,7 @@ public sealed class MdnsDiscovery : IDisposable
 
         foreach (var dev in _devices.Values)
         {
-            if (dev.DeviceType == "unknown")
+            if (dev != null && dev.DeviceType == "unknown" && !string.IsNullOrEmpty(dev.Name))
             {
                 if (dev.Name.Contains("mac", StringComparison.OrdinalIgnoreCase))
                 {
@@ -367,25 +373,36 @@ public sealed class MdnsDiscovery : IDisposable
             Task.Delay(150, token).ContinueWith(t =>
             {
                 if (t.IsCanceled) return;
-                DispatchDevicesUpdated();
+                try
+                {
+                    DispatchDevicesUpdated();
+                }
+                catch { }
             }, TaskScheduler.Default);
         }
     }
 
     private void DispatchDevicesUpdated()
     {
-        var localSubnets = GetLocalSubnets();
+        try
+        {
+            var localSubnets = GetLocalSubnets();
 
-        var validDevices = _devices.Values
-            .Where(d => !string.IsNullOrEmpty(d.Host) && d.Port > 0 && !IsSelf(d.Name, d.Host, d.Id))
-            .GroupBy(d => !string.IsNullOrEmpty(d.Id) ? d.Id : d.Name.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.OrderByDescending(d => IsOnSubnet(d.Host, localSubnets))
-                          .ThenByDescending(d => d.LastSeen)
-                          .First())
-            .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+            var validDevices = _devices.Values
+                .Where(d => d != null && !string.IsNullOrEmpty(d.Host) && d.Port > 0 && !string.IsNullOrEmpty(d.Name) && !IsSelf(d.Name, d.Host, d.Id))
+                .GroupBy(d => !string.IsNullOrEmpty(d.Id) ? d.Id : (d.Name?.Trim() ?? ""), StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.OrderByDescending(d => IsOnSubnet(d.Host, localSubnets))
+                              .ThenByDescending(d => d.LastSeen)
+                              .First())
+                .OrderBy(d => d.Name ?? "", StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
 
-        DevicesUpdated?.Invoke(validDevices);
+            DevicesUpdated?.Invoke(validDevices);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"DispatchDevicesUpdated error: {ex.Message}");
+        }
     }
     private bool IsSelf(string instanceName, string host, string id = "")
     {
@@ -401,7 +418,7 @@ public sealed class MdnsDiscovery : IDisposable
         }
 
         string localMachine = Environment.MachineName;
-        if (!string.IsNullOrEmpty(localMachine) &&
+        if (!string.IsNullOrEmpty(localMachine) && !string.IsNullOrEmpty(instanceName) &&
             instanceName.Contains(localMachine, StringComparison.OrdinalIgnoreCase))
         {
             return true;

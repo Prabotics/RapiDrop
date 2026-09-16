@@ -32,6 +32,12 @@ public struct WireFrame: Sendable, Equatable {
   public static let defaultClientPort: UInt16 = 58241
   public static let serviceType: String = "_clipsync._tcp"
   public static let clientServiceType: String = "_clipsync-cli._tcp"
+  public static let inactivityTimeoutMs: UInt64 = 16000
+  public static let watchdogIntervalMs: UInt64 = 5000
+  public static let heartbeatIntervalMs: UInt64 = 4000
+  public static let pairingInviteTimeoutMs: UInt64 = 30000
+  public static let maxInFlightChunks: Int = 4
+  public static let chunkHeaderSize: Int = 28
   public let type: PacketType
   public let timestamp: UInt64
   public let nonce: Data

@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import ImageIO
 
 struct InteractiveCardButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
@@ -1445,7 +1446,7 @@ public struct MenuBarView: View {
           if let raw = clip.rawData { return NSImage(data: raw) }
           if let name = clip.fileName {
             let fileURL = appState.mediaFolderURL.appendingPathComponent(name)
-            if let data = try? Data(contentsOf: fileURL) { return NSImage(data: data) }
+            if let img = NSImage(contentsOf: fileURL) { return img }
           }
           return nil
         }()
@@ -1650,17 +1651,16 @@ final class ThumbnailCache: @unchecked Sendable {
     if let cached = cache.object(forKey: key) {
       return cached
     }
-    guard let rawData, let original = NSImage(data: rawData) else { return nil }
-    let targetSize = NSSize(width: 40, height: 40)
-    let thumb = NSImage(size: targetSize)
-    thumb.lockFocus()
-    original.draw(
-      in: NSRect(origin: .zero, size: targetSize),
-      from: NSRect(origin: .zero, size: original.size),
-      operation: .copy,
-      fraction: 1.0
-    )
-    thumb.unlockFocus()
+    guard let rawData else { return nil }
+    guard let source = CGImageSourceCreateWithData(rawData as CFData, nil) else { return nil }
+    let options: [CFString: Any] = [
+      kCGImageSourceCreateThumbnailFromImageAlways: true,
+      kCGImageSourceShouldCacheImmediately: true,
+      kCGImageSourceCreateThumbnailWithTransform: true,
+      kCGImageSourceThumbnailMaxPixelSize: 80
+    ]
+    guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+    let thumb = NSImage(cgImage: cgImage, size: NSSize(width: 40, height: 40))
     cache.setObject(thumb, forKey: key)
     return thumb
   }

@@ -122,3 +122,29 @@ Files are streamed in discrete 1 MB (`1,048,576` bytes) slices:
      "reason": "user_cancelled"
    }
    ```
+
+## 5. Protocol Constants & Flow Control
+
+All protocol timeouts, window limits, and constants are single-sourced on `WireFrame`:
+
+| Constant | Value | Description |
+| :--- | :---: | :--- |
+| `DEFAULT_PORT` | `58240` | Default listening TCP port for server sockets |
+| `DEFAULT_CLIENT_PORT` | `58241` | Default listening TCP port for reverse client sockets |
+| `SERVICE_TYPE` | `_clipsync._tcp` | Primary mDNS service advertisement type |
+| `CLIENT_SERVICE_TYPE` | `_clipsync-cli._tcp` | Secondary mDNS service advertisement type |
+| `MAX_PAYLOAD_SIZE` | `104,857,600` (100 MB) | Strict upper bound on single non-streamed frames |
+| `STREAMING_CHUNK_SIZE` | `1,048,576` (1 MB) | Fixed slice size for `FILE_CHUNK` transmissions |
+| `CHUNK_HEADER_SIZE` | `28` Bytes | Binary header prefixing each raw chunk payload |
+| `MAX_IN_FLIGHT_CHUNKS` | `4` | Maximum unacknowledged chunks allowed in pipelined flow control |
+| `INACTIVITY_TIMEOUT_MS` | `16,000` ms | Connection drop threshold if no frame or heartbeat arrives |
+| `WATCHDOG_INTERVAL_MS` | `5,000` ms | Interval for connection health and socket watchdog checks |
+| `HEARTBEAT_INTERVAL_MS` | `4,000` ms | Periodic `PING` frame transmission interval |
+| `PAIRING_INVITE_TIMEOUT_MS` | `30,000` ms | Timeout before unaccepted pairing invites expire |
+
+## 6. Replay Defense & Timestamp Freshness
+
+To prevent captured handshake packets from being replayed on local subnets:
+
+- Handshake frames (`PAIR_INVITE` and `PAIR_ACCEPT`) validate the 8-byte Unix timestamp in the binary header.
+- Frames with `|now - frame.timestamp| > 60,000` ms (60 seconds) are dropped immediately and the socket connection is aborted.

@@ -7,8 +7,10 @@ import com.prabotics.rapidrop.security.HandshakeKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.IOException
@@ -31,10 +33,13 @@ class ClientSocketServer(
 ) {
     private var serverSocket: ServerSocket? = null
     private var serverJob: Job? = null
+    private val clientSemaphore = Semaphore(8)
 
     fun start() {
         stop()
-        serverJob = scope.launch(Dispatchers.IO) {
+        val serverSupervisor = SupervisorJob(scope.coroutineContext[Job])
+        val serverScope = CoroutineScope(Dispatchers.IO + serverSupervisor)
+        serverJob = serverScope.launch {
             try {
                 val server = ServerSocket().apply {
                     reuseAddress = true
@@ -43,8 +48,16 @@ class ClientSocketServer(
                 serverSocket = server
                 while (isActive && !server.isClosed) {
                     val client = server.accept()
-                    scope.launch(Dispatchers.IO) {
-                        handleClient(client)
+                    serverScope.launch {
+                        if (clientSemaphore.tryAcquire()) {
+                            try {
+                                handleClient(client)
+                            } finally {
+                                clientSemaphore.release()
+                            }
+                        } else {
+                            try { client.close() } catch (_: IOException) {}
+                        }
                     }
                 }
             } catch (_: IOException) {
@@ -72,15 +85,17 @@ class ClientSocketServer(
 
             if (readFully(input, lengthBuffer, 0, 4)) {
                 val payloadLength = ByteBuffer.wrap(lengthBuffer).order(ByteOrder.BIG_ENDIAN).int
-                if (payloadLength >= WireFrame.AUTH_TAG_SIZE && payloadLength <= WireFrame.MAX_PAYLOAD_SIZE) {
+                val maxHandshakePayload = 65536
+                if (payloadLength >= WireFrame.AUTH_TAG_SIZE && payloadLength <= maxHandshakePayload) {
                     val remainingSize = (WireFrame.HEADER_SIZE - 4) + payloadLength
                     val fullFrameBytes = ByteArray(4 + remainingSize)
                     System.arraycopy(lengthBuffer, 0, fullFrameBytes, 0, 4)
                     if (readFully(input, fullFrameBytes, 4, remainingSize)) {
                         val frame = WireFrame.deserialize(fullFrameBytes) ?: return@withContext
+                        val now = System.currentTimeMillis()
+                        if (Math.abs(now - frame.timestamp) > 60000L) return@withContext
                         when (frame.type) {
                             PacketType.PAIR_INVITE -> {
-                                android.util.Log.d("RapiDrop", "pairing.invite_received")
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)
                                 val json = try { JSONObject(jsonStr) } catch (_: Exception) { return@withContext }
                                 val version = json.optInt("version", 1)

@@ -15,6 +15,12 @@ public sealed class WireFrame
     public const int AuthTagSize = 16;
     public const int NonceSize = 12;
     public const int StreamingChunkSize = 1_048_576;
+    public const long InactivityTimeoutMs = 16000L;
+    public const long WatchdogIntervalMs = 5000L;
+    public const long HeartbeatIntervalMs = 4000L;
+    public const long PairingInviteTimeoutMs = 30000L;
+    public const int MaxInFlightChunks = 4;
+    public const int ChunkHeaderSize = 28;
 
     public PacketType Type { get; }
     public ulong Timestamp { get; }

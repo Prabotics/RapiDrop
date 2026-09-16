@@ -154,7 +154,8 @@ public final class NetworkEngine: @unchecked Sendable {
   public var onDiscoveredDevicesChanged: (@Sendable ([DiscoveredClientDevice]) -> Void)?
   public weak var delegate: NetworkEngineDelegate?
   public var downloadFolderURL: URL =
-    FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+    FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+      ?? FileManager.default.temporaryDirectory
   public func uniqueDestinationURL(for url: URL) -> URL {
     var candidate = url
     let ext = url.pathExtension
@@ -200,6 +201,22 @@ public final class NetworkEngine: @unchecked Sendable {
   private var activeIncomingTransfer: IncomingStreamTransfer?
 
   public init() {}
+
+  deinit {
+    self.watchdogTimer?.cancel()
+    self.watchdogTimer = nil
+    for connection in self.activeConnections {
+      connection.cancel()
+    }
+    self.activeConnections.removeAll()
+    self.listener?.cancel()
+    self.listener = nil
+    self.clientBrowser?.cancel()
+    self.clientBrowser = nil
+    self.serverBrowser?.cancel()
+    self.serverBrowser = nil
+    self.pathMonitor.cancel()
+  }
 
   public func setSessionKey(_ key: SymmetricKey?) {
     queue.async { [weak self] in
@@ -521,6 +538,8 @@ public final class NetworkEngine: @unchecked Sendable {
   public func stop() {
     queue.async { [weak self] in
       guard let self else { return }
+      self.watchdogTimer?.cancel()
+      self.watchdogTimer = nil
       if let transfer = self.activeIncomingTransfer {
         try? transfer.fileHandle.close()
         try? FileManager.default.removeItem(at: transfer.partURL)
@@ -1261,7 +1280,6 @@ private actor SendWindow {
       waiters.append(continuation)
     }
     if let error = firstError {
-      release()
       throw error
     }
   }
@@ -1269,13 +1287,21 @@ private actor SendWindow {
   func release(error: Error? = nil) {
     if let error, firstError == nil {
       firstError = error
+      let remaining = waiters
+      waiters.removeAll()
+      for w in remaining {
+        w.resume()
+      }
     }
-    inFlight -= 1
-    if !waiters.isEmpty {
+    if inFlight > 0 {
+      inFlight -= 1
+    }
+    if firstError == nil && !waiters.isEmpty {
       inFlight += 1
       let next = waiters.removeFirst()
       next.resume()
-    } else if inFlight == 0 {
+    }
+    if inFlight == 0 {
       let drained = emptyWaiters
       emptyWaiters.removeAll()
       for w in drained {
@@ -1285,10 +1311,10 @@ private actor SendWindow {
   }
 
   func waitUntilDrained() async throws {
-    if let error = firstError {
-      throw error
-    }
     if inFlight == 0 {
+      if let error = firstError {
+        throw error
+      }
       return
     }
     await withCheckedContinuation { continuation in
@@ -1309,8 +1335,12 @@ private actor SendWindow {
     transferId: String,
     onProgress: (@Sendable (Int64) -> Void)? = nil
   ) async throws {
-    guard let key = self.sessionKey, let connection = self.activeConnections.first else {
-      throw CryptoError.encryptionFailed
+    let (key, connection): (SymmetricKey, NWConnection) = try queue.sync {
+      guard let k = self.sessionKey, let c = self.activeConnections.first else {
+        throw CryptoError.encryptionFailed
+      }
+      self.lastActivityTimestamp = Date()
+      return (k, c)
     }
     guard let fileValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
       let fileSize = fileValues.fileSize
@@ -1393,6 +1423,9 @@ private actor SendWindow {
 
       chunkIndex += 1
       bytesSentForFile += Int64(rawChunk.count)
+      queue.async { [weak self] in
+        self?.lastActivityTimestamp = Date()
+      }
       onProgress?(bytesSentForFile)
     }
 
@@ -1417,7 +1450,11 @@ private actor SendWindow {
   }
 
   public func sendCancelTransfer(transferId: String, reason: String = "user_cancelled") async {
-    guard let key = self.sessionKey, let connection = self.activeConnections.first else { return }
+    let target = queue.sync { () -> (SymmetricKey, NWConnection)? in
+      guard let key = self.sessionKey, let connection = self.activeConnections.first else { return nil }
+      return (key, connection)
+    }
+    guard let (key, connection) = target else { return }
     let cancelJson: [String: Any] = [
       "transferId": transferId,
       "reason": reason
@@ -1434,16 +1471,19 @@ private actor SendWindow {
   }
 
   public func cancelIncomingTransfer() {
-    if let transfer = self.activeIncomingTransfer {
-      let handle = transfer.fileHandle
-      let part = transfer.partURL
-      ioQueue.async {
-        try? handle.close()
-        try? FileManager.default.removeItem(at: part)
+    queue.async { [weak self] in
+      guard let self else { return }
+      if let transfer = self.activeIncomingTransfer {
+        let handle = transfer.fileHandle
+        let part = transfer.partURL
+        self.ioQueue.async {
+          try? handle.close()
+          try? FileManager.default.removeItem(at: part)
+        }
+        self.activeIncomingTransfer = nil
+        let tid = transfer.transferId
+        self.delegate?.networkEngineDidCancelTransfer(self, transferId: tid, reason: .userCancelled)
       }
-      self.activeIncomingTransfer = nil
-      let tid = transfer.transferId
-      delegate?.networkEngineDidCancelTransfer(self, transferId: tid, reason: .userCancelled)
     }
   }
 

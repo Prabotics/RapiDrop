@@ -10,3 +10,8 @@
 -keep class com.prabotics.rapidrop.network.DiscoveredDevice { *; }
 -keep class com.prabotics.rapidrop.network.WireFrame { *; }
 -keep class com.prabotics.rapidrop.network.PacketType { *; }
+-keep class com.prabotics.rapidrop.security.** { *; }
+-keep class com.prabotics.rapidrop.service.TransferProgress { *; }
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn java.lang.management.**
+-dontwarn javax.annotation.**

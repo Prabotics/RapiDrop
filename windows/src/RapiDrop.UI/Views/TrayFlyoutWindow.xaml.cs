@@ -536,13 +536,11 @@ public partial class TrayFlyoutWindow : Window
     {
         try
         {
-            GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-            GC.WaitForPendingFinalizers();
-            GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+            GC.Collect(2, GCCollectionMode.Aggressive, blocking: false, compacting: true);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                using var proc = System.Diagnostics.Process.GetCurrentProcess();
+                var proc = System.Diagnostics.Process.GetCurrentProcess();
                 EmptyWorkingSet(proc.Handle);
                 SetProcessWorkingSetSize(proc.Handle, (IntPtr)(-1), (IntPtr)(-1));
             }
@@ -1403,7 +1401,7 @@ public partial class TrayFlyoutWindow : Window
 
             Task.Delay(1000).ContinueWith(_ =>
             {
-                Dispatcher.Invoke(() => titleText.Text = clip.PreviewText);
+                try { Dispatcher.Invoke(() => titleText.Text = clip.PreviewText); } catch { }
             });
         };
 
@@ -1643,12 +1641,16 @@ public partial class TrayFlyoutWindow : Window
                     IconSendMediaPath.SetResourceReference(WpfPath.FillProperty, "BrushPulseText");
                     Task.Delay(1200).ContinueWith(_ =>
                     {
-                        Dispatcher.Invoke(() =>
+                        try
                         {
-                            TxtSendMedia.Text = "Send Media";
-                            TxtSendMedia.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
-                            IconSendMediaPath.SetResourceReference(WpfPath.FillProperty, "BrushBadgeMediaFg");
-                        });
+                            Dispatcher.Invoke(() =>
+                            {
+                                TxtSendMedia.Text = "Send Media";
+                                TxtSendMedia.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
+                                IconSendMediaPath.SetResourceReference(WpfPath.FillProperty, "BrushBadgeMediaFg");
+                            });
+                        }
+                        catch { }
                     });
                 });
             }
@@ -1793,12 +1795,16 @@ public partial class TrayFlyoutWindow : Window
             IconPushClipboardPath.SetResourceReference(WpfPath.FillProperty, "BrushPulseText");
             Task.Delay(1200).ContinueWith(_ =>
             {
-                Dispatcher.Invoke(() =>
+                try
                 {
-                    TxtPushClipboard.Text = "Push Clipboard";
-                    TxtPushClipboard.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
-                    IconPushClipboardPath.SetResourceReference(WpfPath.FillProperty, "BrushBadgeClipFg");
-                });
+                    Dispatcher.Invoke(() =>
+                    {
+                        TxtPushClipboard.Text = "Push Clipboard";
+                        TxtPushClipboard.SetResourceReference(TextBlock.ForegroundProperty, "BrushTextPrimary");
+                        IconPushClipboardPath.SetResourceReference(WpfPath.FillProperty, "BrushBadgeClipFg");
+                    });
+                }
+                catch { }
             });
         }
     }

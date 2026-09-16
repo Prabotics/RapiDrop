@@ -49,6 +49,19 @@ public partial class App : WpfApplication
         catch { }
     }
 
+    private static void LogDiagnostic(string source, Exception? ex)
+    {
+        try
+        {
+            string msg = $"[{DateTime.UtcNow:O}] WARNING {source}: {ex}\n";
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string dir = System.IO.Path.Combine(appData, "RapiDrop");
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), msg);
+        }
+        catch { }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>
@@ -62,7 +75,7 @@ public partial class App : WpfApplication
         };
         TaskScheduler.UnobservedTaskException += (s, args) =>
         {
-            LogFatalError("TaskScheduler.UnobservedTaskException", args.Exception);
+            LogDiagnostic("TaskScheduler.UnobservedTaskException", args.Exception);
             args.SetObserved();
         };
 
@@ -121,6 +134,7 @@ public partial class App : WpfApplication
         _tray.Initialize();
         _clipboard.Start();
 
+        _network.LocalDeviceId = _store.Config.DeviceId;
         _network.Start(
             _store.Config.PairedPeerName,
             _store.Config.PairedPeerHost,

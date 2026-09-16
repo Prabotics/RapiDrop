@@ -18,19 +18,17 @@ public static class UpdateChecker
 {
     public const string CurrentVersion = "1.0.0";
     private const string GitHubReleasesUrl = "https://api.github.com/repos/Prabotics/RapiDrop/releases/latest";
+    private static readonly Lazy<HttpClient> _sharedClient = new(() =>
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        client.DefaultRequestHeaders.Add("User-Agent", $"RapiDrop/{CurrentVersion}");
+        client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+        return client;
+    });
 
     public static async Task<UpdateCheckResult> CheckForUpdatesAsync(string? storedEtag = null, HttpClient? httpClient = null)
     {
-        bool disposeClient = false;
-        var client = httpClient;
-        if (client == null)
-        {
-            client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-            client.DefaultRequestHeaders.Add("User-Agent", $"RapiDrop/{CurrentVersion}");
-            client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            disposeClient = true;
-        }
-
+        var client = httpClient ?? _sharedClient.Value;
         if (!string.IsNullOrEmpty(storedEtag))
         {
             client.DefaultRequestHeaders.TryAddWithoutValidation("If-None-Match", storedEtag);
@@ -85,10 +83,6 @@ public static class UpdateChecker
         }
         finally
         {
-            if (disposeClient)
-            {
-                client.Dispose();
-            }
         }
     }
 

@@ -24,6 +24,11 @@ public final class PasteboardMonitor: @unchecked Sendable {
     self.lastChangeCount = pasteboard.changeCount
   }
 
+  deinit {
+    self.timer?.cancel()
+    self.timer = nil
+  }
+
   public func setConnected(_ connected: Bool) {
     queue.async { [weak self] in
       guard let self else { return }
@@ -63,13 +68,51 @@ public final class PasteboardMonitor: @unchecked Sendable {
   }
 
   private func poll() {
-    let currentCount = DispatchQueue.main.sync { pasteboard.changeCount }
+    let currentCount = pasteboard.changeCount
     guard currentCount != lastChangeCount else { return }
 
     lastChangeCount = currentCount
 
-    if let item = readCurrentClip() {
-      onClipCaptured?(item)
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      guard !self.hasSensitiveTypes() else { return }
+
+      if let stringValue = self.pasteboard.string(forType: .string), !stringValue.isEmpty {
+        let item: ClipItem
+        if let url = URL(string: stringValue), url.scheme != nil, url.host != nil {
+          item = ClipItem(type: .url, textContent: stringValue)
+        } else {
+          item = ClipItem(type: .text, textContent: stringValue)
+        }
+        self.onClipCaptured?(item)
+        return
+      }
+
+      if let imageData = self.extractImageData() {
+        self.onClipCaptured?(ClipItem(type: .image, rawData: imageData))
+        return
+      }
+
+      if let urls = self.pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL],
+         let firstURL = urls.first, firstURL.isFileURL {
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue {
+          if let attributes = try? FileManager.default.attributesOfItem(atPath: firstURL.path),
+             let fileSize = attributes[.size] as? Int,
+             fileSize > 0, fileSize <= WireFrame.maxPayloadSize {
+            let ext = firstURL.pathExtension.lowercased()
+            let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "heic", "tiff", "bmp"]
+            let fileName = firstURL.lastPathComponent
+            let isImage = imageExtensions.contains(ext)
+
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+              guard let data = try? Data(contentsOf: firstURL) else { return }
+              let clip = ClipItem(type: isImage ? .image : .file, fileName: fileName, rawData: data)
+              self?.onClipCaptured?(clip)
+            }
+          }
+        }
+      }
     }
   }
 

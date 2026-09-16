@@ -79,9 +79,14 @@ fun ImageLightboxDialog(
 
     val bitmap = remember(raw) {
         try {
-            BitmapFactory.decodeByteArray(raw, 0, raw.size)
-        } catch (_: Exception) {
             ImageMetadataHelper.decodeSampledBitmap(raw, 2048, 2048)
+                ?: BitmapFactory.decodeByteArray(raw, 0, raw.size)
+        } catch (_: OutOfMemoryError) {
+            try {
+                ImageMetadataHelper.decodeSampledBitmap(raw, 1024, 1024)
+            } catch (_: Throwable) { null }
+        } catch (_: Exception) {
+            null
         }
     } ?: return
 

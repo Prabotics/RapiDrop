@@ -46,7 +46,13 @@ if [ -d "$SCRIPT_DIR/Resources" ]; then
   cp -R "$SCRIPT_DIR/Resources/"* "$RESOURCES_DIR/"
 fi
 
-codesign --force --deep --sign - "$APP_DIR"
+if [ -n "$MACOS_SIGNING_IDENTITY" ]; then
+  codesign --force --options runtime --sign "$MACOS_SIGNING_IDENTITY" "$MACOS_DIR/RapiDrop"
+  codesign --force --options runtime --sign "$MACOS_SIGNING_IDENTITY" "$APP_DIR"
+else
+  codesign --force --options runtime --sign - "$MACOS_DIR/RapiDrop"
+  codesign --force --options runtime --sign - "$APP_DIR"
+fi
 if [ "$BUILD_ZIP" = true ]; then
   ZIP_PATH="$SCRIPT_DIR/RapiDrop-macOS.zip"
   rm -f "$ZIP_PATH"

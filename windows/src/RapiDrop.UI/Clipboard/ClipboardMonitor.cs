@@ -113,9 +113,25 @@ public sealed class ClipboardMonitor : IDisposable
             return true;
         if (FormatViewerIgnore != 0 && Win32Clipboard.IsClipboardFormatAvailable(FormatViewerIgnore))
             return true;
+
         if (FormatCanIncludeInHistory != 0 && Win32Clipboard.IsClipboardFormatAvailable(FormatCanIncludeInHistory))
         {
-            return false;
+            if (Win32Clipboard.OpenClipboard(IntPtr.Zero))
+            {
+                try
+                {
+                    IntPtr hData = Win32Clipboard.GetClipboardData(FormatCanIncludeInHistory);
+                    if (hData != IntPtr.Zero)
+                    {
+                        byte val = Marshal.ReadByte(hData);
+                        if (val == 0) return true;
+                    }
+                }
+                finally
+                {
+                    Win32Clipboard.CloseClipboard();
+                }
+            }
         }
 
         return false;
@@ -198,10 +214,12 @@ public sealed class ClipboardMonitor : IDisposable
 
     public static ClipItem? ReadPrimaryClip()
     {
-        try
+        for (int attempt = 0; attempt < 3; attempt++)
         {
-            if (WpfClipboard.ContainsText())
+            try
             {
+                if (WpfClipboard.ContainsText())
+                {
                 string text = WpfClipboard.GetText(WpfTextDataFormat.UnicodeText);
                 if (string.IsNullOrWhiteSpace(text)) return null;
 
@@ -247,9 +265,16 @@ public sealed class ClipboardMonitor : IDisposable
                 }
             }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to read primary clip: {ex.Message}");
+            catch (COMException)
+            {
+                if (attempt == 2) break;
+                Thread.Sleep(50 * (attempt + 1));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to read primary clip: {ex.Message}");
+                break;
+            }
         }
 
         return null;

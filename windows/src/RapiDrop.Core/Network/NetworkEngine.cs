@@ -132,21 +132,32 @@ public sealed class NetworkEngine : IDisposable
         _mdns = new MdnsDiscovery();
         _mdns.DevicesUpdated += devices =>
         {
-            if (!_isConnected && _sessionKey != null && (!string.IsNullOrEmpty(_pairedPeerId) || !string.IsNullOrEmpty(_pairedPeerName)))
+            try
             {
-                var match = devices.FirstOrDefault(d =>
-                    (!string.IsNullOrEmpty(_pairedPeerId) && !string.IsNullOrEmpty(d.Id) && string.Equals(d.Id, _pairedPeerId, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(_pairedPeerName) && string.Equals(d.Name, _pairedPeerName, StringComparison.OrdinalIgnoreCase)));
-                if (match != null && !string.IsNullOrEmpty(match.Host))
+                if (devices != null && !_isConnected && _sessionKey != null && (!string.IsNullOrEmpty(_pairedPeerId) || !string.IsNullOrEmpty(_pairedPeerName)))
                 {
-                    _pairedHost = match.Host;
-                    if (match.Port > 0)
+                    var match = devices.FirstOrDefault(d =>
+                        d != null && (
+                        (!string.IsNullOrEmpty(_pairedPeerId) && !string.IsNullOrEmpty(d.Id) && string.Equals(d.Id, _pairedPeerId, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(_pairedPeerName) && !string.IsNullOrEmpty(d.Name) && string.Equals(d.Name, _pairedPeerName, StringComparison.OrdinalIgnoreCase))));
+                    if (match != null && !string.IsNullOrEmpty(match.Host))
                     {
-                        _pairedPort = match.Port;
+                        _pairedHost = match.Host;
+                        if (match.Port > 0)
+                        {
+                            _pairedPort = match.Port;
+                        }
                     }
                 }
+                if (devices != null)
+                {
+                    DiscoveredDevicesChanged?.Invoke(devices);
+                }
             }
-            DiscoveredDevicesChanged?.Invoke(devices);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling devices update: {ex.Message}");
+            }
         };
         NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
     }
@@ -267,11 +278,12 @@ public sealed class NetworkEngine : IDisposable
         ConnectionStateChanged?.Invoke(false, _pairedPeerName);
         Task.Run(async () =>
         {
+            TcpClient? client = null;
             try
             {
-                var client = new TcpClient();
+                client = new TcpClient();
                 ConfigureSocketOptimizations(client);
-                await client.ConnectAsync(target.Host, connectPort);
+                await client.ConnectAsync(target.Host, connectPort).ConfigureAwait(false);
                 AddActiveClient(client);
 
                 var desc = ConnectedDeviceInfo.Current();
@@ -280,8 +292,8 @@ public sealed class NetworkEngine : IDisposable
 
                 var (ciphertext, nonce, tag) = CryptoEngine.Encrypt(payload, sessionKeyToUse);
                 var frame = new WireFrame(PacketType.PairRequest, nonce, ciphertext, tag);
-                await SendFrameAsync(client, frame);
-                await SendDeviceInfoAsync(client, sessionKeyToUse);
+                await SendFrameAsync(client, frame).ConfigureAwait(false);
+                await SendDeviceInfoAsync(client, sessionKeyToUse).ConfigureAwait(false);
 
                 UpdateConnectionState(true, target.Name);
 
@@ -289,6 +301,12 @@ public sealed class NetworkEngine : IDisposable
             }
             catch (Exception ex)
             {
+                if (client != null)
+                {
+                    lock (_clientsLock) { _activeClients.Remove(client); }
+                    try { client.Close(); } catch { }
+                }
+                UpdateConnectionState(false, null);
                 System.Diagnostics.Debug.WriteLine($"Pairing failed to {target.Host}:{connectPort}: {ex.Message}");
             }
         });
@@ -651,9 +669,8 @@ public sealed class NetworkEngine : IDisposable
     {
         byte[] serialized = frame.Serialize();
         var stream = client.GetStream();
-        await stream.WriteAsync(serialized, 0, serialized.Length);
+        await stream.WriteAsync(serialized, 0, serialized.Length).ConfigureAwait(false);
     }
-
     private void StartServer(int port)
     {
         try
@@ -726,15 +743,15 @@ public sealed class NetworkEngine : IDisposable
 
     private async Task ReceiveLoopAsync(TcpClient client, CancellationToken ct)
     {
-        NetworkStream stream = client.GetStream();
-        byte[] headerBuffer = new byte[WireFrame.HeaderSize];
-
         try
         {
+            if (!client.Connected || client.Client == null) return;
+            NetworkStream stream = client.GetStream();
+            byte[] headerBuffer = new byte[WireFrame.HeaderSize];
+
             while (!ct.IsCancellationRequested && client.Connected)
             {
                 bool ok = await ReadExactBytesAsync(stream, headerBuffer, 0, WireFrame.HeaderSize, ct);
-                if (!ok) break;
 
                 uint payloadLength = BinaryPrimitives.ReadUInt32BigEndian(headerBuffer.AsSpan(0, 4));
                 if (payloadLength > WireFrame.MaxPayloadSize)
@@ -1239,7 +1256,7 @@ public sealed class NetworkEngine : IDisposable
         int bytesRead = 0;
         while (bytesRead < count)
         {
-            int chunk = await stream.ReadAsync(buffer.AsMemory(offset + bytesRead, count - bytesRead), ct);
+            int chunk = await stream.ReadAsync(buffer.AsMemory(offset + bytesRead, count - bytesRead), ct).ConfigureAwait(false);
             if (chunk == 0) return false;
             bytesRead += chunk;
         }
@@ -1463,6 +1480,8 @@ public sealed class NetworkEngine : IDisposable
     {
         NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
         Stop();
+        _cts?.Dispose();
+        _cts = null;
         _mdns.Dispose();
     }
 }

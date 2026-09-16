@@ -297,8 +297,12 @@ class SyncService : Service() {
                     val clip = ClipItem(type = ClipContentType.FILE, fileName = files.firstOrNull()?.first ?: "File", rawData = null)
                     addRecentClip(clip)
                 } finally {
+                    for (item in files) {
+                        try { item.third.close() } catch (_: Exception) {}
+                    }
                     activeTransferProgress.value = null
                     s.releaseWakeLock()
+                    s.releaseWifiLock()
                 }
             }
         }
@@ -506,6 +510,7 @@ class SyncService : Service() {
         socketClient.onTransferProgress = { transferId, fileName, bytes, total, index, totalFiles, isComplete ->
             if (isComplete) {
                 releaseWakeLock()
+                releaseWifiLock()
                 activeTransferProgress.value = null
                 rxSmoothedSpeed = 0.0
                 currentRxTransferId = null
@@ -545,6 +550,7 @@ class SyncService : Service() {
         }
         socketClient.onTransferCancelled = { _, reason ->
             releaseWakeLock()
+            releaseWifiLock()
             activeTransferProgress.value = null
         }
 

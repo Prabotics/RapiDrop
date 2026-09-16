@@ -66,13 +66,18 @@ object ClipboardManagerHelper {
                 val mimeType = context.contentResolver.getType(uri)
                 if (mimeType?.startsWith("image/") == true) {
                     try {
-                        val stream = context.contentResolver.openInputStream(uri)
-                        val bytes = stream?.use { it.readBytes() }
-                        if (bytes != null && bytes.isNotEmpty()) {
-                            return ClipItem(type = ClipContentType.IMAGE, rawData = bytes)
+                        val descriptor = try { context.contentResolver.openFileDescriptor(uri, "r") } catch (_: Exception) { null }
+                        val size = descriptor?.statSize ?: 0L
+                        descriptor?.close()
+                        if (size in 1..com.prabotics.rapidrop.network.WireFrame.MAX_PAYLOAD_SIZE) {
+                            val stream = context.contentResolver.openInputStream(uri)
+                            val bytes = stream?.use { it.readBytes() }
+                            if (bytes != null && bytes.isNotEmpty()) {
+                                return ClipItem(type = ClipContentType.IMAGE, rawData = bytes)
+                            }
                         }
                     } catch (_: java.io.IOException) {
-                    } catch (_: SecurityException) {}
+                    } catch (_: SecurityException) {} catch (_: OutOfMemoryError) {}
                 }
             }
         }

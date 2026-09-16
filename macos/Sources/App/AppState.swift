@@ -679,7 +679,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
             showToast("Downloading \(release.tagName)...")
             do {
               let (tempUrl, _) = try await URLSession.shared.download(from: downloadUrl)
-              let downloadsDir = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+              let downloadsDir = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+                ?? FileManager.default.temporaryDirectory
               let destUrl = downloadsDir.appendingPathComponent("RapiDrop-\(release.tagName).\(release.assetExt)")
               try? FileManager.default.removeItem(at: destUrl)
               try FileManager.default.moveItem(at: tempUrl, to: destUrl)
