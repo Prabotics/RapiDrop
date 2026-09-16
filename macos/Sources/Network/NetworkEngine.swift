@@ -1,5 +1,5 @@
 @preconcurrency import CryptoKit
-extension SymmetricKey: @unchecked Sendable {}
+extension SymmetricKey: @retroactive @unchecked Sendable {}
 import Foundation
 import Network
 

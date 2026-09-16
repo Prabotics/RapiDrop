@@ -46,7 +46,7 @@ if [ -d "$SCRIPT_DIR/Resources" ]; then
   cp -R "$SCRIPT_DIR/Resources/"* "$RESOURCES_DIR/"
 fi
 
-if [ -n "$MACOS_SIGNING_IDENTITY" ]; then
+if [ -n "${MACOS_SIGNING_IDENTITY:-}" ]; then
   codesign --force --options runtime --sign "$MACOS_SIGNING_IDENTITY" "$MACOS_DIR/RapiDrop"
   codesign --force --options runtime --sign "$MACOS_SIGNING_IDENTITY" "$APP_DIR"
 else
