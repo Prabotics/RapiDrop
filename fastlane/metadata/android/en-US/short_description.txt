@@ -1,0 +1,1 @@
+Decentralized peer-to-peer clipboard and file synchronization over local Wi-Fi.
