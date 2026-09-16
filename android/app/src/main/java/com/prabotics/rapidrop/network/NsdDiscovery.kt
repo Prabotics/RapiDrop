@@ -126,10 +126,14 @@ class NsdDiscovery(
         updateMergedDevices()
         if (isDiscovering) {
             serverDiscoveryListener?.let {
-                try { nsdManager.stopServiceDiscovery(it) } catch (_: Exception) {}
+                try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+                    Log.w("RapiDrop", "Failed to stop server discovery during restart", e)
+                }
             }
             clientDiscoveryListener?.let {
-                try { nsdManager.stopServiceDiscovery(it) } catch (_: Exception) {}
+                try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+                    Log.w("RapiDrop", "Failed to stop client discovery during restart", e)
+                }
             }
             serverDiscoveryListener = null
             clientDiscoveryListener = null

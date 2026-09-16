@@ -928,6 +928,11 @@ public sealed class NetworkEngine : IDisposable
                 string targetHost = !string.IsNullOrEmpty(host) ? host.Replace("::ffff:", "") : remoteIp;
                 var target = new DiscoveredDevice(fromDeviceName, targetHost, port);
                 string status = doc.RootElement.TryGetProperty("status", out var stEl) ? stEl.GetString() ?? "accepted" : "accepted";
+                if (string.IsNullOrEmpty(sasCode))
+                {
+                    PairDeclinedReceived?.Invoke("Key exchange failed during handshake");
+                    return;
+                }
                 if (status == "offered")
                 {
                     PairOfferReceived?.Invoke(target, sasCode);
@@ -1098,6 +1103,7 @@ public sealed class NetworkEngine : IDisposable
                     string basePrefix = canonicalDownload.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
                     if (!canonicalDest.StartsWith(basePrefix, StringComparison.OrdinalIgnoreCase) && !string.Equals(canonicalDest, canonicalDownload, StringComparison.OrdinalIgnoreCase))
                     {
+                        TransferCancelled?.Invoke(transferId);
                         break;
                     }
                     string fullDest = GetUniqueDestinationPath(canonicalDest);
@@ -1111,7 +1117,11 @@ public sealed class NetworkEngine : IDisposable
                     _activeIncomingTransfer = new IncomingStreamTransfer(transferId, fileIndex, totalFiles, Path.GetFileName(fullDest), relativePath, fileSize, totalBytes, fullDest);
                     TransferProgressUpdated?.Invoke(transferId, Path.GetFileName(fullDest), 0, totalBytes, fileIndex, totalFiles, false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceWarning("FileStart setup failed: {0}", ex.Message);
+                    TransferCancelled?.Invoke("");
+                }
                 break;
 
             case PacketType.FileChunk:

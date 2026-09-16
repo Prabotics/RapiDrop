@@ -1,8 +1,11 @@
-RapiDrop is a decentralized, zero-cloud peer-to-peer clipboard and file synchronization app for Android, macOS, and Windows.
+RapiDrop syncs your clipboard and files directly between your Android, macOS, and Windows devices — no cloud, no accounts, no sign-up.
+
+Everything stays on your local Wi-Fi network. Nothing leaves your home or office.
 
 Features:
-• Instant Clipboard Sync: Synchronize copied text, web links, and images between paired devices on your local network.
-• Direct File Streaming: Send files of any size directly device-to-device with end-to-end encryption and streaming SHA-256 integrity verification.
-• End-to-End Encryption: All communications use Curve25519 ECDH key exchange, numeric SAS verification, and per-packet AES-256-GCM encryption.
-• Zero Cloud & Zero Telemetry: Operates strictly over your local Wi-Fi subnet using mDNS service discovery (_clipsync._tcp). No accounts, no external servers, and no trackers.
-• Open Source: Fully auditable under the MIT license.
+
+• Clipboard Sync — Copy on one device, paste on another. Text, links, and images sync instantly.
+• File Transfer — Send files of any size, direct device-to-device. No upload limits.
+• End-to-End Encrypted — Every transfer is encrypted and verified. No server ever touches your data.
+• Zero Tracking — No accounts, no analytics, no external servers. Works fully offline.
+• Open Source — MIT licensed. Fully auditable at any time.

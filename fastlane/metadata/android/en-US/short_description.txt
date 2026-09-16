@@ -1,1 +1,1 @@
-Decentralized peer-to-peer clipboard and file synchronization over local Wi-Fi.
+Sync clipboard and files between devices over Wi-Fi. No cloud, no accounts.

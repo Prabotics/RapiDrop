@@ -56,7 +56,7 @@ android {
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
             } else {
-                signingConfigs.getByName("debug")
+                null
             }
         }
     }
@@ -72,6 +72,10 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 

@@ -145,7 +145,6 @@ class SyncService : Service() {
         val activeTransferProgress = MutableStateFlow<TransferProgress?>(null)
         var lastReceivedClipHash: Int = 0
         @androidx.annotation.VisibleForTesting
-        @Deprecated("Use bound service or flows")
         var instance: SyncService? = null
             private set
 

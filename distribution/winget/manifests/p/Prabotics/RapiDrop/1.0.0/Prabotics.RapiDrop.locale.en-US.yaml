@@ -10,8 +10,8 @@ PackageName: RapiDrop
 PackageUrl: https://github.com/Prabotics/RapiDrop
 License: MIT
 LicenseUrl: https://github.com/Prabotics/RapiDrop/blob/main/LICENSE
-ShortDescription: Decentralized local-network peer-to-peer clipboard and file synchronization app.
-Description: RapiDrop is a decentralized, zero-cloud peer-to-peer clipboard and file synchronization app for Windows, macOS, and Android. It operates strictly over the local Wi-Fi subnet using mDNS service discovery and AES-256-GCM encrypted TCP sockets.
+ShortDescription: Sync clipboard and files between devices over local Wi-Fi. No cloud, no accounts.
+Description: RapiDrop syncs your clipboard and files directly between Windows, macOS, and Android devices over your local Wi-Fi network. No cloud account, no sign-up, and no data ever leaves your network. Transfers are end-to-end encrypted and verified. Fully open source under the MIT license.
 Tags:
   - clipboard
   - clipboard-sync
