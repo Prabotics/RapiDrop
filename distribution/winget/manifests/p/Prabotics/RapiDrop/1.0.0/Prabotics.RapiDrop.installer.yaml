@@ -5,13 +5,13 @@ PackageVersion: 1.0.0
 InstallerType: portable
 Commands:
   - RapiDrop
-ReleaseDate: 2026-09-15
+ReleaseDate: 2026-09-16
 Installers:
   - Architecture: x64
     InstallerUrl: https://github.com/Prabotics/RapiDrop/releases/download/v1.0.0/RapiDrop-Standalone-x64.exe
-    InstallerSha256: 3014CF2B7BAD0EBAE5038C79C44B37A36B8E7DE618952B5842E03A8E486D15BC
+    InstallerSha256: 08033D810039923865DCD5EE091F9A987D744F30380F71E88FBF6351D32886E1
   - Architecture: arm64
     InstallerUrl: https://github.com/Prabotics/RapiDrop/releases/download/v1.0.0/RapiDrop-Standalone-arm64.exe
-    InstallerSha256: 5B0188970654D7441E353805DDABA5CF0CC6C203E07672ABCC7500DF323A2B19
+    InstallerSha256: A9ECC28363A80BCF613CD6DC8DB4B564AD24398545912B6226F5326860C74F5D
 ManifestType: installer
 ManifestVersion: 1.9.0
