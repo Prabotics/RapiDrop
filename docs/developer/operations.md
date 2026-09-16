@@ -48,9 +48,12 @@ graph TD
 | `RapiDrop-macOS.dmg` | macOS | Drag-and-drop disk image with `/Applications` symlink |
 | `RapiDrop-macOS.zip` | macOS | Compressed `.app` application bundle archive |
 | `RapiDrop.apk` | Android | Universal release APK (minified with R8) |
-| `RapiDrop-Standalone.exe` | Windows | Self-contained single-file binary with embedded .NET runtime |
-| `RapiDrop.exe` | Windows | Lightweight single-file binary for machines with .NET 10 installed |
-| `RapiDrop-Windows-x64.zip` | Windows | Compressed Windows distribution archive |
+| `RapiDrop-Standalone-x64.exe` | Windows | Self-contained single-file compressed binary (Intel / AMD) |
+| `RapiDrop-Standalone-arm64.exe` | Windows | Self-contained single-file compressed binary (ARM64 / Copilot+) |
+| `RapiDrop-x64.exe` | Windows | Framework-dependent single-file binary (.NET 10 runtime required) |
+| `RapiDrop-arm64.exe` | Windows | Framework-dependent single-file binary (.NET 10 runtime required) |
+| `RapiDrop-Windows-x64.zip` | Windows | Compressed Windows x64 distribution archive |
+| `RapiDrop-Windows-arm64.zip` | Windows | Compressed Windows ARM64 distribution archive |
 | `SHA256SUMS.txt` | All | Cryptographic SHA-256 integrity digests for all artifacts |
 
 ### Triggering a Release
@@ -79,13 +82,12 @@ cd android
 ```
 Output: `android/app/build/outputs/apk/release/app-release.apk`.
 
-### Windows
-```bash
 cd windows
 
-# Self-contained (no .NET runtime installation required by end user)
-dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained true
+# Self-contained compressed standalone binary (x64 / arm64)
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --self-contained true
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-arm64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --self-contained true
 
-# Framework-dependent (smaller executable size)
-dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true --self-contained false
-```
+# Framework-dependent binary (.NET 10 runtime required)
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained false
+dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-arm64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained false
