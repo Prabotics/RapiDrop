@@ -1,0 +1,4 @@
+- Decentralized local-network peer-to-peer clipboard and file synchronization.
+- End-to-end encryption with Curve25519 ECDH and AES-256-GCM.
+- Streaming file transfer with SHA-256 integrity verification.
+- Zero cloud servers, trackers, or analytics.
