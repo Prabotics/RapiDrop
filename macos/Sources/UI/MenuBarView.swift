@@ -402,10 +402,9 @@ public struct MenuBarView: View {
             .padding(.leading, AppSpacing.spacing12)
 
           HStack {
-            Text("Sounds")
+            Text("Sound Effects")
               .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
-
             Spacer()
 
             Toggle(
@@ -430,10 +429,9 @@ public struct MenuBarView: View {
               .padding(.leading, AppSpacing.spacing12)
 
             HStack {
-              Text("Start at Login")
+              Text("Open at Login")
                 .font(AppTypography.bodySecondary.weight(.medium))
                 .foregroundColor(AppColors.textPrimary)
-
               Spacer()
 
               Toggle(
@@ -463,17 +461,16 @@ public struct MenuBarView: View {
       }
 
       VStack(alignment: .leading, spacing: 5) {
-        Text("STORAGE")
+        Text("TRANSFERS")
           .font(.system(size: 10, weight: .semibold))
           .foregroundColor(AppColors.textMuted)
           .padding(.horizontal, AppSpacing.spacing4)
 
         VStack(spacing: 0) {
           HStack {
-            Text("Save To")
+            Text("Save Media To")
               .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
-
             Spacer()
 
             storageSegmentedPicker
@@ -488,9 +485,8 @@ public struct MenuBarView: View {
 
           HStack(spacing: 8) {
             Image(systemName: "folder.fill")
-              .font(.system(size: 14))
-              .foregroundColor(appState.mediaDestinationMode == .clipboardOnly ? AppColors.textMuted : AppColors.accent)
-
+              .font(.system(size: 13))
+              .foregroundColor(AppColors.textSecondary)
             Text((appState.mediaFolderURL.path as NSString).abbreviatingWithTildeInPath)
               .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(appState.mediaDestinationMode == .clipboardOnly ? AppColors.textSecondary : AppColors.textPrimary)
@@ -500,17 +496,17 @@ public struct MenuBarView: View {
 
             Spacer()
 
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
               Button(action: {
                 let folder = appState.mediaFolderURL
                 try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 NSWorkspace.shared.open(folder)
               }) {
                 Text("Open")
-                  .font(.system(size: 10, weight: .medium))
+                  .font(.system(size: 9.5, weight: .medium))
                   .foregroundColor(AppColors.textSecondary)
-                  .padding(.horizontal, 8)
-                  .frame(height: 24)
+                  .padding(.horizontal, 6)
+                  .frame(height: 20)
                   .background(
                     RoundedRectangle(cornerRadius: AppRadius.small)
                       .fill(AppColors.surfaceHover(colorScheme))
@@ -521,10 +517,10 @@ public struct MenuBarView: View {
 
               Button(action: { selectCustomFolder() }) {
                 Text("Change")
-                  .font(.system(size: 10, weight: .medium))
+                  .font(.system(size: 9.5, weight: .medium))
                   .foregroundColor(AppColors.textSecondary)
-                  .padding(.horizontal, 8)
-                  .frame(height: 24)
+                  .padding(.horizontal, 6)
+                  .frame(height: 20)
                   .background(
                     RoundedRectangle(cornerRadius: AppRadius.small)
                       .fill(AppColors.surfaceHover(colorScheme))
@@ -645,7 +641,7 @@ public struct MenuBarView: View {
     let modes: [(MediaDestinationMode, String)] = [
       (.both, "Both"),
       (.folderOnly, "Folder"),
-      (.clipboardOnly, "Clipboard")
+      (.clipboardOnly, "Clip")
     ]
 
     return HStack(spacing: 0) {
@@ -656,16 +652,16 @@ public struct MenuBarView: View {
           }
         }) {
           Text(label)
-            .font(.system(size: 11, weight: appState.mediaDestinationMode == mode ? .semibold : .medium))
+            .font(.system(size: 10, weight: appState.mediaDestinationMode == mode ? .semibold : .medium))
             .foregroundColor(appState.mediaDestinationMode == mode ? AppColors.textPrimary : AppColors.textMuted)
             .frame(maxWidth: .infinity)
-            .frame(height: 22)
+            .frame(height: 18)
             .contentShape(Rectangle())
             .background {
               if appState.mediaDestinationMode == mode {
                 RoundedRectangle(cornerRadius: AppRadius.small)
                   .fill(colorScheme == .dark ? Color.white.opacity(0.18) : Color.white)
-                  .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.12), radius: 1.5, x: 0, y: 1)
+                  .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.12), radius: 1, x: 0, y: 0.5)
                   .matchedGeometryEffect(id: "STORAGE_SEGMENT_INDICATOR", in: storageSegmentNamespace)
               }
             }
@@ -674,7 +670,7 @@ public struct MenuBarView: View {
       }
     }
     .padding(2)
-    .frame(width: 196, height: 26)
+    .frame(width: 160, height: 22)
     .background(
       RoundedRectangle(cornerRadius: AppRadius.medium)
         .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
