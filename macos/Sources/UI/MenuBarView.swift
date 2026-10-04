@@ -589,10 +589,18 @@ public struct MenuBarView: View {
         .foregroundColor(AppColors.textSecondary)
 
       if appState.unpairedDiscoveredDevices.isEmpty {
-        VStack(spacing: AppSpacing.spacing6) {
-          Image(systemName: "wifi")
-            .font(.system(size: 16))
-            .foregroundColor(AppColors.textMuted)
+        VStack(spacing: AppSpacing.spacing8) {
+          ZStack {
+            Circle()
+              .fill(AppColors.surfaceHover(colorScheme))
+              .frame(width: 36, height: 36)
+
+            Image(systemName: "wifi")
+              .font(.system(size: 16, weight: .medium))
+              .foregroundColor(AppColors.textSecondary)
+          }
+          .padding(.bottom, 2)
+
           Text("No devices found")
             .font(AppTypography.bodySecondary.weight(.medium))
             .foregroundColor(AppColors.textSecondary)
