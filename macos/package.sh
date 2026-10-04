@@ -3,6 +3,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+if [ -z "${DEVELOPER_DIR:-}" ] && [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+  if xcode-select -p 2>/dev/null | grep -q "CommandLineTools"; then
+    export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+  fi
+fi
 
 BUILD_DMG=true
 BUILD_ZIP=true

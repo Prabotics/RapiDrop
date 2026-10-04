@@ -311,22 +311,21 @@ public struct MenuBarView: View {
       Spacer()
 
       Menu {
-        Button(appState.showSyncHistory ? "Pause Clip History" : "Resume Clip History") {
-          appState.showSyncHistory.toggle()
-        }
+        Toggle(
+          "Clip History",
+          isOn: $appState.showSyncHistory
+        )
 
-        Divider()
-
-        Menu("Media Storage") {
-          Picker("Destination", selection: $appState.mediaDestinationMode) {
+        Menu("Storage") {
+          Picker("Save To", selection: $appState.mediaDestinationMode) {
             Text("Both").tag(MediaDestinationMode.both)
-            Text("Folder Only").tag(MediaDestinationMode.folderOnly)
-            Text("Clipboard Only").tag(MediaDestinationMode.clipboardOnly)
+            Text("Folder").tag(MediaDestinationMode.folderOnly)
+            Text("Clipboard").tag(MediaDestinationMode.clipboardOnly)
           }
 
           Divider()
 
-          Button("Open Received Folder in Finder") {
+          Button("Open in Finder") {
             let folder = appState.mediaFolderURL
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             NSWorkspace.shared.open(folder)
@@ -337,8 +336,10 @@ public struct MenuBarView: View {
           }
         }
 
+        Divider()
+
         Toggle(
-          "Sound Effects",
+          "Sounds",
           isOn: Binding(
             get: { appState.isSoundEnabled },
             set: { appState.setSoundEnabled($0) }
@@ -346,7 +347,7 @@ public struct MenuBarView: View {
 
         if #available(macOS 13.0, *) {
           Toggle(
-            "Launch at Login",
+            "Start at Login",
             isOn: Binding(
               get: { appState.isLaunchAtLogin },
               set: { _ in appState.toggleLaunchAtLogin() }
@@ -359,19 +360,18 @@ public struct MenuBarView: View {
           appState.checkForUpdates()
         }
 
-        Button("GitHub Repository") {
+        Button("GitHub") {
           if let url = URL(string: "https://github.com/Prabotics/RapiDrop") {
             NSWorkspace.shared.open(url)
           }
         }
 
-        Button("Report an Issue...") {
+        Button("Report Issue...") {
           if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues")
           {
             NSWorkspace.shared.open(url)
           }
         }
-
         Divider()
 
         Button("Quit RapiDrop") {
@@ -593,10 +593,10 @@ public struct MenuBarView: View {
           Image(systemName: "wifi")
             .font(.system(size: 16))
             .foregroundColor(AppColors.textMuted)
-          Text("No nearby devices found")
+          Text("No devices found")
             .font(AppTypography.bodySecondary.weight(.medium))
             .foregroundColor(AppColors.textSecondary)
-          Text("Make sure RapiDrop is open on your other device and connected to the same Wi-Fi network.")
+          Text("Open RapiDrop on other device on same Wi-Fi.")
             .font(AppTypography.metadata)
             .foregroundColor(AppColors.textMuted)
             .multilineTextAlignment(.center)
@@ -1118,7 +1118,7 @@ public struct MenuBarView: View {
               Text("No clipboard history")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
-              Text("Items you copy or receive will appear here.")
+              Text("Copied items will appear here.")
                 .foregroundColor(.secondary.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)

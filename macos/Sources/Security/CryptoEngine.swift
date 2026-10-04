@@ -179,6 +179,10 @@ public struct CryptoEngine: Sendable {
     var attributes = query
     attributes[kSecValueData as String] = data
     attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    var access: SecAccess?
+    if SecAccessCreate("RapiDrop" as CFString, nil, &access) == errSecSuccess, let access = access {
+      attributes[kSecAttrAccess as String] = access
+    }
     SecItemAdd(attributes as CFDictionary, nil)
   }
 

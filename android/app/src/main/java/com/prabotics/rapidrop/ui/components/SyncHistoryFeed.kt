@@ -456,14 +456,14 @@ private fun EmptyHistoryCard() {
         }
 
         Text(
-            text = "No clipboard history yet",
+            text = "No clipboard history",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
 
         Text(
-            text = "Items you copy or files you receive will appear here automatically.",
+            text = "Copied items will appear here.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

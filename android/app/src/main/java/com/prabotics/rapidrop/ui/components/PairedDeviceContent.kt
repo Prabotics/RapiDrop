@@ -487,7 +487,7 @@ fun PairedDeviceContent(
                             }
                         }
                         Text(
-                            text = "No transfers yet. Shared clips and files will appear here.",
+                            text = "No transfers yet. Shared items will appear here.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

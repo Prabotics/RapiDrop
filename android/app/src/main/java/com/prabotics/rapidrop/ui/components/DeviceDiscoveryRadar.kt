@@ -348,14 +348,14 @@ private fun EmptyDiscoveryState() {
             )
 
             Text(
-                text = "No nearby devices",
+                text = "No devices found",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = "Make sure RapiDrop is open on your other device and connected to the same Wi-Fi network.",
+                text = "Open RapiDrop on other device on same Wi-Fi.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
