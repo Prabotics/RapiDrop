@@ -17,8 +17,6 @@ body:
         - 'macOS (Apple Silicon - M1/M2/M3/M4)'
         - 'macOS (Intel x86_64)'
         - 'Android (Phone / Tablet)'
-        - 'Windows 11 (x64)'
-        - 'Windows 10 (x64)'
         - 'Multi-Platform Sync Issue'
     validations:
       required: true

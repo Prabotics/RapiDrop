@@ -3,9 +3,9 @@
 [![CI](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml/badge.svg)](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Prabotics/RapiDrop?include_prereleases&label=release&color=emerald)](https://github.com/Prabotics/RapiDrop/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Android%20%7C%20Windows-lightgrey.svg)](#supported-platforms)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Android-lightgrey.svg)](#supported-platforms)
 
-> Fast, private, peer-to-peer clipboard synchronization and local file sharing between macOS, Android, and Windows.
+> Fast, private, peer-to-peer clipboard synchronization and local file sharing between macOS and Android.
 
 **RapiDrop** connects your devices directly over local Wi-Fi using end-to-end encrypted TCP connections. Your data never leaves your local network: zero cloud servers, zero telemetry, zero accounts, and zero third-party relays.
 
@@ -16,9 +16,7 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 | Platform | Download | Requirements |
 | :--- | :--- | :--- |
 | **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) | macOS 14.0+ (Universal Apple Silicon & Intel) |
-| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29–35+, ARM64 & x86_64) |
-| **Windows (x64)** | [`RapiDrop-Standalone-x64.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone-x64.exe) | Windows 10/11 (Intel / AMD 64-bit) |
-| **Windows (ARM64)** | [`RapiDrop-Standalone-arm64.exe`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-Standalone-arm64.exe) | Windows 11 on ARM (Copilot+ PCs / Parallels) |
+| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29-35+, ARM64 & x86_64) |
 
 > Looking for portable ZIP archives (`.zip`) or cryptographic checksums? Visit the [Latest Release Page](https://github.com/Prabotics/RapiDrop/releases/latest).
 
@@ -37,10 +35,6 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 2. Open the app and allow notification permission so background sync stays active.
 3. (Optional) Add the **RapiDrop** tile to your Quick Settings notification shade for instant one-tap sharing.
 
-### Windows
-1. Download **`RapiDrop-Standalone-x64.exe`** (for standard Intel/AMD PCs) or **`RapiDrop-Standalone-arm64.exe`** (for ARM64 PCs like Snapdragon Copilot+ or Parallels on Mac).
-2. Run the executable. It opens directly and docks into your system tray notification area (near the clock).
-3. Click the RapiDrop icon in the tray to discover nearby devices, inspect clips, or adjust settings.
 ## Key Highlights
 
 * **Instant Clipboard Sync**: Copy text, links, or screenshots on one device and paste them on another in milliseconds.
@@ -56,7 +50,6 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 | :--- | :--- | :--- |
 | **macOS** | Swift 6 / Apple `Network.framework` | Menu Bar Accessory (`LSUIElement`) & `NSPasteboard` 400ms polling |
 | **Android** | Kotlin 2.0 / Jetpack Compose | `connectedDevice` Foreground Service & MediaStore Scoped Storage |
-| **Windows** | C# 13 / .NET 10 / Win32 (x64 & ARM64) | System Tray Flyout & Win32 Clipboard Format Listener |
 ## Documentation
 
 ### For Users
@@ -68,7 +61,6 @@ Download the latest pre-compiled binaries from [GitHub Releases](https://github.
 * [Troubleshooting](docs/user/troubleshooting.md): Common connection questions.
 
 ### For Developers
-* [Developer Setup & Build Guide](docs/developer/setup.md): Prerequisites and toolchains.
 * [Architecture Overview](docs/developer/architecture.md): Component breakdown and data flows.
 * [Wire Protocol Specification](docs/developer/protocol.md): 28-byte framing, opcodes, and chunk format.
 * [Cryptographic Specification](docs/developer/security.md): X25519, HKDF-SHA256, and AES-256-GCM.
@@ -98,18 +90,6 @@ cd android
 # Assemble release APK
 ./gradlew assembleRelease
 ```
-
-### Windows
-```bash
-cd windows
-
-# Run unit tests
-dotnet test tests/RapiDrop.Tests/RapiDrop.Tests.csproj -f net10.0
-
-# Build release executable (x64 for Intel/AMD, arm64 for Copilot+/Parallels)
-dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --self-contained true
-dotnet publish src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-arm64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --self-contained true
-
 ## License
 
 RapiDrop is open-source software licensed under the [MIT License](LICENSE).

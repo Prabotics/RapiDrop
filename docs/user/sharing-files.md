@@ -1,6 +1,6 @@
 # Sharing Files
 
-RapiDrop allows you to send documents, photos, videos, and large archives directly between your devices over local Wi-Fi at maximum network speed.
+You can send documents, photos, videos, and archives directly between your devices over local Wi-Fi.
 
 ## How to Send Files
 
@@ -12,10 +12,6 @@ RapiDrop allows you to send documents, photos, videos, and large archives direct
 * **In-App Action**: Tap **Send Files** on the main screen to open the system file picker.
 * **System Share Sheet**: In any file manager or gallery app, select your files, tap **Share**, and choose **RapiDrop**.
 
-### On Windows
-* **Drag and Drop**: Drag files onto the RapiDrop taskbar flyout window.
-* **Send Button**: Click **Send File...** to select files from File Explorer.
-
 ## Transfer Progress & Management
 
 * **Live Progress**: While files are transferring, both sender and receiver display a progress card showing filename, transferred megabytes, transfer speed, and percentage.
@@ -25,7 +21,6 @@ RapiDrop allows you to send documents, photos, videos, and large archives direct
 ## Where Files Are Saved
 
 * **macOS**: `~/Downloads/RapiDrop/`
-* **Windows**: `C:\Users\<Username>\Downloads\RapiDrop\`
 * **Android**: `Downloads/RapiDrop/` (accessible in the Files app and system gallery)
 
 In Settings, you can configure **Media Destination Mode** to choose whether received media is saved to the Downloads folder, copied to the clipboard, or both.

@@ -8,7 +8,7 @@ RapiDrop uses pure platform-native frameworks on each operating system to achiev
 * **UI**: AppKit `NSStatusItem` / Menu Bar Extra with SwiftUI popover
 * **Networking**: Apple `Network.framework` (`NWListener`, `NWBrowser`, `NWConnection`)
 * **Security**: Apple `CryptoKit` (`Curve25519`, `AES.GCM`, `HKDF<SHA256>`) & Apple Keychain Services
-* **Clipboard**: `NSPasteboard` change count polling (1.5s active / 3.0s background)
+* **Clipboard**: `NSPasteboard` change count polling (400ms connected / 1500ms idle)
 
 ### Directory Layout
 ```text
@@ -44,28 +44,9 @@ android/app/src/main/java/com/prabotics/rapidrop/
 └── preference/                       # PreferencesManager (rapidrop_secure_prefs)
 ```
 
-## 3. Windows Platform Architecture
-
-* **Language**: C# / .NET 10.0
-* **UI**: WPF & XAML Fluent System Tray Flyout
-* **Networking**: Asynchronous `System.Net.Sockets.TcpClient` / `TcpListener` & DNS-SD
-* **Security**: `System.Security.Cryptography.AesGcm` & C# RFC 7748 `Curve25519` & Windows DPAPI
-* **Clipboard**: Win32 `AddClipboardFormatListener` / `WM_CLIPBOARDUPDATE`
-
-### Directory Layout
-```text
-windows/
-├── RapiDrop.sln                      # Visual Studio solution
-├── src/
-│   ├── RapiDrop.Core/                # NetworkEngine, WireFrame, MdnsDiscovery, CryptoEngine
-│   └── RapiDrop.UI/                  # TrayFlyoutWindow, Theme, Win32Clipboard
-└── tests/RapiDrop.Tests/             # WireFrameTests, CryptoEngineTests
-```
-
-## 4. Native Visual Foundation & Token Architecture
+## 3. Native Visual Foundation & Token Architecture
 
 | Platform | Foundation & Token Locations | Key Visual Principles |
 | :--- | :--- | :--- |
 | **macOS** | `macos/Sources/UI/Theme/AppTheme.swift` | Semantic system colors (`AppColors`), SF Pro typography hierarchy (`AppTypography`), standard spacing scale (`AppSpacing`), and native corner radii (`AppRadius`). |
 | **Android** | `android/app/src/main/java/com/prabotics/rapidrop/ui/theme/` (`Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`) | Material 3 color schemes (`LightColorScheme`, `DarkColorScheme`), dynamic color integration on Android 12+, semantic `LocalStatusColors`, Inter/JetBrains Mono typography tokens, and standard `Spacing`/`TouchTarget` scales. |
-| **Windows** | `windows/src/RapiDrop.UI/Theme/` (`Palette.xaml`, `Controls.xaml`, `ThemeManager.cs`) | Fluent-compatible XAML resources (`BrushCanvas`, `BrushCard`, `BrushStatusConnected`, `BrushSurfaceSubtle`), Segoe UI Variable typography, standard corner radii, and smooth light/dark palette transitions. |

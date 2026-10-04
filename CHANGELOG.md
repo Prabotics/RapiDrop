@@ -1,9 +1,5 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [1.0.0] - 2026-09-16
 
 ### Networking & Protocol
@@ -20,11 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Material 3 user interface provides radar discovery, sync history, and paired device management.
 - Foreground service maintains local network connectivity while Android is in standby mode.
 - Quick settings tile and share sheet integration allow one-tap clipboard pushes from any app.
-
-### Windows
-- Windows Presentation Foundation client runs from the system tray with high-DPI monitor support.
-- Native Win32 clipboard format listener captures clipboard updates with retry backoff.
-- Single-file portable executables run directly on 64-bit Intel, AMD, and ARM64 processors.
 
 ### Security & Privacy
 - Curve25519 key agreement derives per-session encryption keys with 6-digit numeric verification codes.

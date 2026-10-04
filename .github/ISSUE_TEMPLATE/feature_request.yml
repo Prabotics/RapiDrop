@@ -40,5 +40,5 @@ body:
       options:
         - label: This proposed feature can operate entirely peer-to-peer over the local subnet without third-party servers or telemetry.
           required: true
-        - label: This feature respects native system design guidelines (macOS HIG, Material 3, Windows Fluent).
+        - label: This feature respects native system design guidelines (macOS HIG, Material 3).
           required: true

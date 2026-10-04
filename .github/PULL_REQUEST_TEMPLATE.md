@@ -6,7 +6,6 @@ Provide a concise summary of the changes made and the motivation behind them.
 
 - [ ] macOS (`macos/`)
 - [ ] Android (`android/`)
-- [ ] Windows (`windows/`)
 - [ ] Protocol & Networking (`WireFrame`)
 - [ ] Documentation, Scripts & CI (`.github/`, `docs/`)
 
@@ -27,5 +26,4 @@ Provide a concise summary of the changes made and the motivation behind them.
 - [ ] **Local Verification Passed**:
   - macOS: `swift test --package-path macos`
   - Android: `cd android && ./gradlew test`
-  - Windows: `dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -f net10.0`
 - [ ] **Clean Working Tree**: No untracked build artifacts (`.DS_Store`, `*.app`, `*.apk`, `.build/`, `bin/`, `obj/`).

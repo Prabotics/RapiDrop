@@ -100,24 +100,3 @@ jobs:
         if: always()
         run: rm -f ~/.android/rapidrop-release.jks
 
-  windows:
-    name: Windows Build & Test
-    needs: [hygiene-check]
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-
-      - name: Setup .NET 10.0
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore Dependencies
-        run: dotnet restore windows/RapiDrop.sln -r win-x64
-
-      - name: Run Windows Unit Tests
-        run: dotnet test windows/tests/RapiDrop.Tests/RapiDrop.Tests.csproj -c Release
-
-      - name: Build Single-File Release Executable
-        run: dotnet publish windows/src/RapiDrop.UI/RapiDrop.UI.csproj -f net10.0-windows -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained false

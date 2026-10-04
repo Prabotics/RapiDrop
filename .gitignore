@@ -29,27 +29,13 @@ captures/
 *.ap_
 *.dex
 
-.vs/
-**/.vs/
-bin/
-**/bin/
-obj/
-**/obj/
-TestResults/
-**/TestResults/
-*.user
-*.suo
-
 .idea/
 .vscode/
 .fleet/
 .zed/
 *.iml
 
-
-
 *$py.class
-
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
@@ -69,13 +55,13 @@ ehthumbs_vista.db
 *.key
 .env*
 
-windows-publish/
 release-assets/
 raw-artifacts/
 .dmg-staging/
 *.sha256
 SHA256SUMS.txt
-*.pdb
+release-notes.md
+*.ipsw
 *.apk.idsig
 
 

@@ -18,14 +18,6 @@ updates:
         patterns:
           - "*"
 
-  - package-ecosystem: "nuget"
-    directory: "/windows"
-    schedule:
-      interval: "weekly"
-    groups:
-      nuget-dependencies:
-        patterns:
-          - "*"
 
   - package-ecosystem: "swift"
     directory: "/macos"

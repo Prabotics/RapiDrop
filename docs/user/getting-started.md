@@ -1,12 +1,11 @@
 # Getting Started with RapiDrop
 
-RapiDrop lets you seamlessly share files and synchronize your clipboard between your own devices over your local Wi-Fi network.
+RapiDrop shares files and synchronizes your clipboard between your own devices over your local Wi-Fi network.
 
 ## Supported Platforms
 
 * **macOS**: macOS 14+ (Apple Silicon & Intel)
 * **Android**: Android 10+ (API 29+)
-* **Windows**: Windows 10 & 11 (64-bit)
 
 ## How It Works
 
@@ -26,10 +25,6 @@ RapiDrop lets you seamlessly share files and synchronize your clipboard between 
 1. Install the RapiDrop APK.
 2. Grant Notification and Battery Optimization permissions when prompted so RapiDrop can sync reliably in the background.
 3. (Optional) Add the **RapiDrop Quick Settings Tile** to your notification shade for one-tap clipboard sharing.
-
-### Windows
-1. Download and run `RapiDrop.exe`.
-2. RapiDrop runs in your system tray. Click the tray icon to open the flyout window.
 
 ## Next Steps
 
