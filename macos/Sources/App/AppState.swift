@@ -436,6 +436,11 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .default)
   }
 
+  public func stop() {
+    monitor.stop()
+    network.stop()
+  }
+
   private func handleClipCaptured(_ item: ClipItem) {
     guard isConnected else { return }
     let contentHash = computeContentHash(for: item)

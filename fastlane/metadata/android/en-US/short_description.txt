@@ -1,1 +1,0 @@
-Sync clipboard and files between devices over Wi-Fi. No cloud, no accounts.

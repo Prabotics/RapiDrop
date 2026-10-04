@@ -85,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    appState.stop()
     NSWorkspace.shared.notificationCenter.removeObserver(self)
     DistributedNotificationCenter.default().removeObserver(self)
     if lockFileDescriptor >= 0 {
@@ -97,8 +98,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   private func setupStatusItem() {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     if let button = item.button {
+      button.target = self
+      button.action = #selector(statusBarButtonClicked(_:))
+      button.sendAction(on: [.leftMouseUp, .rightMouseUp])
       button.image = customMenuBarIcon(
         isConnected: appState.isConnected, isSyncing: appState.isSyncing)
+      button.setAccessibilityLabel(accessibilityLabelForStatus(
+        isConnected: appState.isConnected, isSyncing: appState.isSyncing))
       let dropView = StatusItemDropView(frame: button.bounds)
       dropView.autoresizingMask = [.width, .height]
       dropView.appDelegate = self
@@ -109,11 +115,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     Publishers.CombineLatest(appState.$isConnected, appState.$isSyncing)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] isConnected, isSyncing in
-        self?.statusItem?.button?.image = self?.customMenuBarIcon(
+        guard let self else { return }
+        self.statusItem?.button?.image = self.customMenuBarIcon(
           isConnected: isConnected, isSyncing: isSyncing)
+        self.statusItem?.button?.setAccessibilityLabel(self.accessibilityLabelForStatus(
+          isConnected: isConnected, isSyncing: isSyncing))
       }
       .store(in: &cancellables)
-
     appState.$incomingPairInvite
       .receive(on: DispatchQueue.main)
       .sink { [weak self] invite in
@@ -131,7 +139,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       appState.refreshDiscovery()
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
       popover.contentViewController?.view.window?.makeKey()
-      NSApp.activate(ignoringOtherApps: true)
+      if #available(macOS 14.0, *) {
+        NSApp.activate()
+      } else {
+        NSApp.activate(ignoringOtherApps: true)
+      }
     }
   }
   @objc private func showPopoverFromDistributedNotification() {
@@ -210,11 +222,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
 
   @objc func statusBarButtonClicked(_ sender: Any?) {
     guard let popover = popover, let button = statusItem?.button else { return }
+    if let event = NSApp.currentEvent, event.type == .rightMouseUp || event.modifierFlags.contains(.control) {
+      statusItemRightClicked(button)
+      return
+    }
     let now = ProcessInfo.processInfo.systemUptime
     if now - lastCloseTime < 0.25 {
       return
     }
-
     if popover.isShown {
       popover.performClose(sender)
     } else {
@@ -222,7 +237,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       appState.refreshDiscovery()
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
       popover.contentViewController?.view.window?.makeKey()
-      NSApp.activate(ignoringOtherApps: true)
+      if #available(macOS 14.0, *) {
+        NSApp.activate()
+      } else {
+        NSApp.activate(ignoringOtherApps: true)
+      }
     }
   }
   func statusItemRightClicked(_ button: NSButton) {
@@ -270,7 +289,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   }
   private func customMenuBarIcon(isConnected: Bool, isSyncing: Bool = false) -> NSImage {
     let size = NSSize(width: 20, height: 16)
-    if let image = Bundle.main.image(forResource: "tray_icon") ?? NSImage(named: "tray_icon") {
+    let loadedImage: NSImage? = NSImage(named: "tray_icon") ?? {
+      if let url = Bundle.main.url(forResource: "tray_icon", withExtension: "png") {
+        return NSImage(contentsOf: url)
+      }
+      return nil
+    }()
+    if let image = loadedImage {
       image.size = size
       image.isTemplate = true
       return image
@@ -279,6 +304,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     fallback.size = size
     fallback.isTemplate = true
     return fallback
+  }
+
+  private func accessibilityLabelForStatus(isConnected: Bool, isSyncing: Bool) -> String {
+    if isSyncing {
+      return "RapiDrop, Syncing"
+    } else if isConnected {
+      return "RapiDrop, Connected"
+    } else {
+      return "RapiDrop, Disconnected"
+    }
   }
 
   nonisolated func userNotificationCenter(

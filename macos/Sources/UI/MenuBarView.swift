@@ -391,8 +391,14 @@ public struct MenuBarView: View {
   }
   private func brandmarkLogo(size: CGFloat = 20) -> some View {
     Group {
-      if let nsImg = Bundle.main.image(forResource: "popover_logo") ?? NSImage(named: "popover_logo") {
-        Image(nsImage: nsImg)
+      let nsImg: NSImage? = NSImage(named: "popover_logo") ?? {
+        if let url = Bundle.main.url(forResource: "popover_logo", withExtension: "png") {
+          return NSImage(contentsOf: url)
+        }
+        return nil
+      }()
+      if let image = nsImg {
+        Image(nsImage: image)
           .resizable()
           .interpolation(.high)
           .aspectRatio(contentMode: .fit)

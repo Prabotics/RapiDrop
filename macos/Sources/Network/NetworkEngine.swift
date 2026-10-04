@@ -349,7 +349,7 @@ public final class NetworkEngine: @unchecked Sendable {
         switch state {
         case .ready:
           break
-        case .failed:
+        case .failed, .waiting:
           self.queue.asyncAfter(deadline: .now() + 3) {
             self.setupListener()
           }
@@ -389,10 +389,13 @@ public final class NetworkEngine: @unchecked Sendable {
         for: .bonjour(type: Self.clientServiceType, domain: nil), using: browserParams)
       cBrowser.stateUpdateHandler = { [weak self] state in
         guard let self else { return }
-        if case .failed = state {
+        switch state {
+        case .failed, .waiting:
           self.queue.asyncAfter(deadline: .now() + 3) {
             self.restartBrowser()
           }
+        default:
+          break
         }
       }
       cBrowser.browseResultsChangedHandler = { [weak self] results, _ in
@@ -426,10 +429,13 @@ public final class NetworkEngine: @unchecked Sendable {
         for: .bonjour(type: Self.serviceType, domain: nil), using: browserParams)
       sBrowser.stateUpdateHandler = { [weak self] state in
         guard let self else { return }
-        if case .failed = state {
+        switch state {
+        case .failed, .waiting:
           self.queue.asyncAfter(deadline: .now() + 3) {
             self.restartBrowser()
           }
+        default:
+          break
         }
       }
       sBrowser.browseResultsChangedHandler = { [weak self] results, _ in
