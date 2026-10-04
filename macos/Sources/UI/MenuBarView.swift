@@ -36,6 +36,7 @@ public struct MenuBarView: View {
   @State private var showClearConfirmation: Bool = false
   @State private var isViewingHistory: Bool = false
   @State private var isViewingSettings: Bool = false
+  @Namespace private var storageSegmentNamespace
   public init(appState: AppState) {
     self.appState = appState
   }
@@ -194,8 +195,8 @@ public struct MenuBarView: View {
     .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.isPaired)
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: appState.mediaDestinationMode)
     .animation(
-      .spring(response: 0.35, dampingFraction: 0.8),
-      value: appState.unpairedDiscoveredDevices.isEmpty
+      .spring(response: 0.32, dampingFraction: 0.82),
+      value: appState.unpairedDiscoveredDevices
     )
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.transferErrorMessage)
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.toastMessage)
@@ -219,9 +220,6 @@ public struct MenuBarView: View {
           }
         }
       }
-    }
-    .onAppear {
-      appState.refreshDiscovery()
     }
     .confirmationDialog("Clear all recent clips?", isPresented: $showClearConfirmation, titleVisibility: .visible) {
       Button("Clear All", role: .destructive) {
@@ -341,7 +339,7 @@ public struct MenuBarView: View {
     VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
       HStack {
         Button(action: {
-          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+          withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             isViewingSettings = false
           }
         }) {
@@ -352,6 +350,12 @@ public struct MenuBarView: View {
               .font(AppTypography.bodySecondary.weight(.medium))
           }
           .foregroundColor(AppColors.textSecondary)
+          .padding(.horizontal, 8)
+          .frame(height: 26)
+          .background(
+            Capsule()
+              .fill(AppColors.surfaceHover(colorScheme))
+          )
         }
         .buttonStyle(InteractivePillButtonStyle())
         .accessibilityLabel("Back to Devices")
@@ -365,38 +369,45 @@ public struct MenuBarView: View {
         Spacer()
 
         Color.clear
-          .frame(width: 48, height: 16)
+          .frame(width: 48, height: 26)
       }
+      .padding(.bottom, 2)
 
-      Divider()
-
-      VStack(alignment: .leading, spacing: 4) {
+      VStack(alignment: .leading, spacing: 5) {
         Text("GENERAL")
-          .font(.system(size: 9, weight: .bold))
+          .font(.system(size: 10, weight: .semibold))
           .foregroundColor(AppColors.textMuted)
-          .padding(.horizontal, 4)
+          .padding(.horizontal, AppSpacing.spacing4)
 
-        VStack(spacing: 1) {
+        VStack(spacing: 0) {
           HStack {
             Text("Clip History")
-              .font(AppTypography.bodySecondary)
+              .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
+
             Spacer()
+
             Toggle("", isOn: $appState.showSyncHistory)
               .labelsHidden()
               .toggleStyle(.switch)
               .controlSize(.small)
               .tint(AppColors.accent)
           }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .frame(height: 34)
-          .background(AppColors.containerSubtle(colorScheme))
+          .padding(.horizontal, AppSpacing.spacing12)
+          .frame(height: 38)
+
+          Rectangle()
+            .fill(AppColors.surfaceBorder(colorScheme))
+            .frame(height: 0.5)
+            .padding(.leading, AppSpacing.spacing12)
 
           HStack {
             Text("Sounds")
-              .font(AppTypography.bodySecondary)
+              .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
+
             Spacer()
+
             Toggle(
               "",
               isOn: Binding(
@@ -409,16 +420,22 @@ public struct MenuBarView: View {
             .controlSize(.small)
             .tint(AppColors.accent)
           }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .frame(height: 34)
-          .background(AppColors.containerSubtle(colorScheme))
+          .padding(.horizontal, AppSpacing.spacing12)
+          .frame(height: 38)
 
           if #available(macOS 13.0, *) {
+            Rectangle()
+              .fill(AppColors.surfaceBorder(colorScheme))
+              .frame(height: 0.5)
+              .padding(.leading, AppSpacing.spacing12)
+
             HStack {
               Text("Start at Login")
-                .font(AppTypography.bodySecondary)
+                .font(AppTypography.bodySecondary.weight(.medium))
                 .foregroundColor(AppColors.textPrimary)
+
               Spacer()
+
               Toggle(
                 "",
                 isOn: Binding(
@@ -431,61 +448,69 @@ public struct MenuBarView: View {
               .controlSize(.small)
               .tint(AppColors.accent)
             }
-            .padding(.horizontal, AppSpacing.spacing10)
-            .frame(height: 34)
-            .background(AppColors.containerSubtle(colorScheme))
+            .padding(.horizontal, AppSpacing.spacing12)
+            .frame(height: 38)
           }
         }
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .fill(AppColors.surfaceCard(colorScheme))
+        )
+        .overlay(
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+        )
       }
-      VStack(alignment: .leading, spacing: 4) {
-        Text("STORAGE")
-          .font(.system(size: 9, weight: .bold))
-          .foregroundColor(AppColors.textMuted)
-          .padding(.horizontal, 4)
 
-        VStack(spacing: AppSpacing.spacing6) {
+      VStack(alignment: .leading, spacing: 5) {
+        Text("STORAGE")
+          .font(.system(size: 10, weight: .semibold))
+          .foregroundColor(AppColors.textMuted)
+          .padding(.horizontal, AppSpacing.spacing4)
+
+        VStack(spacing: 0) {
           HStack {
             Text("Save To")
-              .font(AppTypography.bodySecondary)
+              .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
+
             Spacer()
-            Picker("", selection: $appState.mediaDestinationMode) {
-              Text("Both").tag(MediaDestinationMode.both)
-              Text("Folder").tag(MediaDestinationMode.folderOnly)
-              Text("Clip").tag(MediaDestinationMode.clipboardOnly)
-            }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .frame(width: 170)
+
+            storageSegmentedPicker
           }
+          .padding(.horizontal, AppSpacing.spacing12)
+          .frame(height: 38)
 
-          Divider()
+          Rectangle()
+            .fill(AppColors.surfaceBorder(colorScheme))
+            .frame(height: 0.5)
+            .padding(.leading, AppSpacing.spacing12)
+
           HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-              Text(appState.mediaFolderURL.lastPathComponent)
-                .font(AppTypography.bodySecondary.weight(.medium))
-                .foregroundColor(AppColors.textPrimary)
-                .lineLimit(1)
-              Text(appState.mediaFolderURL.path)
-                .font(.system(size: 9))
-                .foregroundColor(AppColors.textMuted)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            }
+            Image(systemName: "folder.fill")
+              .font(.system(size: 14))
+              .foregroundColor(appState.mediaDestinationMode == .clipboardOnly ? AppColors.textMuted : AppColors.accent)
+
+            Text((appState.mediaFolderURL.path as NSString).abbreviatingWithTildeInPath)
+              .font(AppTypography.bodySecondary.weight(.medium))
+              .foregroundColor(appState.mediaDestinationMode == .clipboardOnly ? AppColors.textSecondary : AppColors.textPrimary)
+              .lineLimit(1)
+              .truncationMode(.middle)
+              .help(appState.mediaFolderURL.path)
 
             Spacer()
 
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
               Button(action: {
                 let folder = appState.mediaFolderURL
                 try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 NSWorkspace.shared.open(folder)
               }) {
-                Image(systemName: "folder")
-                  .font(.system(size: 11))
+                Text("Open")
+                  .font(.system(size: 10, weight: .medium))
                   .foregroundColor(AppColors.textSecondary)
-                  .frame(width: 24, height: 24)
+                  .padding(.horizontal, 8)
+                  .frame(height: 24)
                   .background(
                     RoundedRectangle(cornerRadius: AppRadius.small)
                       .fill(AppColors.surfaceHover(colorScheme))
@@ -495,10 +520,10 @@ public struct MenuBarView: View {
               .help("Open in Finder")
 
               Button(action: { selectCustomFolder() }) {
-                Text("Change...")
+                Text("Change")
                   .font(.system(size: 10, weight: .medium))
                   .foregroundColor(AppColors.textSecondary)
-                  .padding(.horizontal, 6)
+                  .padding(.horizontal, 8)
                   .frame(height: 24)
                   .background(
                     RoundedRectangle(cornerRadius: AppRadius.small)
@@ -506,75 +531,93 @@ public struct MenuBarView: View {
                   )
               }
               .buttonStyle(InteractivePillButtonStyle())
+              .help("Change download folder")
             }
           }
+          .padding(.horizontal, AppSpacing.spacing12)
+          .frame(height: 38)
+          .opacity(appState.mediaDestinationMode == .clipboardOnly ? 0.45 : 1.0)
+          .disabled(appState.mediaDestinationMode == .clipboardOnly)
         }
-        .padding(AppSpacing.spacing10)
         .background(
-          RoundedRectangle(cornerRadius: AppRadius.medium)
-            .fill(AppColors.containerSubtle(colorScheme))
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .fill(AppColors.surfaceCard(colorScheme))
+        )
+        .overlay(
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
         )
       }
-      VStack(alignment: .leading, spacing: 4) {
+
+      VStack(alignment: .leading, spacing: 5) {
         Text("ABOUT")
-          .font(.system(size: 9, weight: .bold))
+          .font(.system(size: 10, weight: .semibold))
           .foregroundColor(AppColors.textMuted)
-          .padding(.horizontal, 4)
-        VStack(spacing: 1) {
+          .padding(.horizontal, AppSpacing.spacing4)
+
+        VStack(spacing: 0) {
           HStack {
-            Text("RapiDrop")
+            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")")
               .font(AppTypography.bodySecondary.weight(.medium))
               .foregroundColor(AppColors.textPrimary)
+
             Spacer()
+
             Button(action: { appState.checkForUpdates() }) {
-              Text("Check for Updates...")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(AppColors.accent)
+              HStack(spacing: 4) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                  .font(.system(size: 9, weight: .semibold))
+                Text("Check for Updates")
+                  .font(.system(size: 10, weight: .medium))
+              }
+              .foregroundColor(AppColors.textSecondary)
+              .padding(.horizontal, 8)
+              .frame(height: 24)
+              .background(
+                Capsule()
+                  .fill(AppColors.surfaceHover(colorScheme))
+              )
             }
             .buttonStyle(InteractivePillButtonStyle())
           }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .frame(height: 32)
-          .background(AppColors.containerSubtle(colorScheme))
+          .padding(.horizontal, AppSpacing.spacing12)
+          .frame(height: 38)
 
-          HStack {
-            Button(action: {
-              if let url = URL(string: "https://github.com/Prabotics/RapiDrop") {
-                NSWorkspace.shared.open(url)
-              }
-            }) {
-              HStack(spacing: 4) {
-                Image(systemName: "arrow.up.right.square")
-                  .font(.system(size: 10))
-                Text("GitHub")
-                  .font(AppTypography.bodySecondary)
-              }
-              .foregroundColor(AppColors.textSecondary)
+          Rectangle()
+            .fill(AppColors.surfaceBorder(colorScheme))
+            .frame(height: 0.5)
+            .padding(.leading, AppSpacing.spacing12)
+
+          Button(action: {
+            if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues") {
+              NSWorkspace.shared.open(url)
             }
-            .buttonStyle(InteractivePillButtonStyle())
+          }) {
+            HStack {
+              Text("Report Issue")
+                .font(AppTypography.bodySecondary.weight(.medium))
+                .foregroundColor(AppColors.textPrimary)
 
-            Spacer()
+              Spacer()
 
-            Button(action: {
-              if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues") {
-                NSWorkspace.shared.open(url)
-              }
-            }) {
-              HStack(spacing: 4) {
-                Image(systemName: "exclamationmark.bubble")
-                  .font(.system(size: 10))
-                Text("Report Issue")
-                  .font(AppTypography.bodySecondary)
-              }
-              .foregroundColor(AppColors.textSecondary)
+              Image(systemName: "arrow.up.forward")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(AppColors.textMuted)
             }
-            .buttonStyle(InteractivePillButtonStyle())
+            .contentShape(Rectangle())
+            .padding(.horizontal, AppSpacing.spacing12)
+            .frame(height: 38)
           }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .frame(height: 32)
-          .background(AppColors.containerSubtle(colorScheme))
+          .buttonStyle(InteractiveCardButtonStyle())
         }
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .fill(AppColors.surfaceCard(colorScheme))
+        )
+        .overlay(
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+        )
       }
 
       Button(action: {
@@ -582,25 +625,60 @@ public struct MenuBarView: View {
       }) {
         HStack {
           Spacer()
-          Image(systemName: "power")
-            .font(.system(size: 11, weight: .semibold))
           Text("Quit RapiDrop")
             .font(AppTypography.bodySecondary.weight(.medium))
-          Text("⌘Q")
-            .font(.system(size: 10))
-            .foregroundColor(AppColors.textMuted)
+            .foregroundColor(AppColors.textSecondary)
           Spacer()
         }
-        .foregroundColor(AppColors.statusError)
-        .frame(height: 30)
+        .frame(height: 32)
         .background(
-          RoundedRectangle(cornerRadius: AppRadius.medium)
-            .fill(AppColors.statusError.opacity(colorScheme == .dark ? 0.12 : 0.08))
+          RoundedRectangle(cornerRadius: AppRadius.card)
+            .fill(AppColors.surfaceHover(colorScheme))
         )
       }
       .buttonStyle(InteractivePillButtonStyle())
       .keyboardShortcut("q", modifiers: .command)
     }
+  }
+
+  private var storageSegmentedPicker: some View {
+    let modes: [(MediaDestinationMode, String)] = [
+      (.both, "Both"),
+      (.folderOnly, "Folder"),
+      (.clipboardOnly, "Clipboard")
+    ]
+
+    return HStack(spacing: 0) {
+      ForEach(modes, id: \.0) { mode, label in
+        Button(action: {
+          withAnimation(.spring(response: 0.24, dampingFraction: 0.78)) {
+            appState.mediaDestinationMode = mode
+          }
+        }) {
+          Text(label)
+            .font(.system(size: 11, weight: appState.mediaDestinationMode == mode ? .semibold : .medium))
+            .foregroundColor(appState.mediaDestinationMode == mode ? AppColors.textPrimary : AppColors.textMuted)
+            .frame(maxWidth: .infinity)
+            .frame(height: 22)
+            .contentShape(Rectangle())
+            .background {
+              if appState.mediaDestinationMode == mode {
+                RoundedRectangle(cornerRadius: AppRadius.small)
+                  .fill(colorScheme == .dark ? Color.white.opacity(0.18) : Color.white)
+                  .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.12), radius: 1.5, x: 0, y: 1)
+                  .matchedGeometryEffect(id: "STORAGE_SEGMENT_INDICATOR", in: storageSegmentNamespace)
+              }
+            }
+        }
+        .buttonStyle(.plain)
+      }
+    }
+    .padding(2)
+    .frame(width: 196, height: 26)
+    .background(
+      RoundedRectangle(cornerRadius: AppRadius.medium)
+        .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
+    )
   }
   private func brandmarkLogo(size: CGFloat = 20) -> some View {
     Group {
@@ -829,6 +907,7 @@ public struct MenuBarView: View {
           RoundedRectangle(cornerRadius: AppRadius.medium)
             .fill(AppColors.containerSubtle(colorScheme))
         )
+        .transition(.opacity.combined(with: .scale(scale: 0.98)))
       } else {
         VStack(spacing: AppSpacing.spacing6) {
           ForEach(appState.unpairedDiscoveredDevices) { device in
@@ -884,6 +963,12 @@ public struct MenuBarView: View {
                   RoundedRectangle(cornerRadius: AppRadius.card)
                     .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
                 )
+            )
+            .transition(
+              .asymmetric(
+                insertion: .opacity.combined(with: .offset(y: 6)),
+                removal: .opacity.combined(with: .scale(scale: 0.96))
+              )
             )
           }
         }

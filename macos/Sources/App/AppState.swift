@@ -277,7 +277,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     self.network.onDiscoveredDevicesChanged = { [weak self] devices in
       DispatchQueue.main.async {
         guard let self else { return }
-        self.discoveredDevices = devices
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+          self.discoveredDevices = devices
+        }
         self.checkAutoReconnect(devices: devices)
       }
     }
@@ -289,7 +291,6 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   }
 
   public func refreshDiscovery() {
-    discoveredDevices.removeAll()
     network.restartBrowser()
   }
   public func selectDeviceForPairing(_ device: DiscoveredClientDevice) {
