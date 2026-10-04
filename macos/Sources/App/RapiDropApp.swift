@@ -4,13 +4,12 @@ import SwiftUI
 import UserNotifications
 
 @main
-struct RapiDropApp: App {
-  @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
-  var body: some Scene {
-    Settings {
-      EmptyView()
-    }
+enum RapiDropApp {
+  static func main() {
+    let app = NSApplication.shared
+    let delegate = AppDelegate()
+    app.delegate = delegate
+    _ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
   }
 }
 
@@ -155,8 +154,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     pop.behavior = .transient
     pop.animates = true
     pop.delegate = self
-    pop.contentSize = NSSize(width: 336, height: 500)
     let hosting = NSHostingController(rootView: MenuBarView(appState: appState))
+    hosting.sizingOptions = [.preferredContentSize]
     pop.contentViewController = hosting
     self.hostingController = hosting
     self.popover = pop

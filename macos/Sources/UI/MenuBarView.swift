@@ -35,12 +35,21 @@ public struct MenuBarView: View {
   @State private var syncToastDismissTask: Task<Void, Never>? = nil
   @State private var showClearConfirmation: Bool = false
   @State private var isViewingHistory: Bool = false
+  @State private var isViewingSettings: Bool = false
   public init(appState: AppState) {
     self.appState = appState
   }
   public var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      if isViewingHistory {
+      if isViewingSettings {
+        settingsSection
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+          )
+      } else if isViewingHistory {
         VStack(alignment: .leading, spacing: 12) {
           HStack {
             Button(action: {
@@ -56,7 +65,6 @@ public struct MenuBarView: View {
               }
               .foregroundColor(AppColors.textSecondary)
             }
-            .buttonStyle(InteractivePillButtonStyle())
             .accessibilityLabel("Back to Paired Device")
 
             Spacer()
@@ -80,8 +88,8 @@ public struct MenuBarView: View {
         }
         .transition(
           .asymmetric(
-            insertion: .opacity.combined(with: .offset(x: 14)),
-            removal: .opacity.combined(with: .offset(x: 14))
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .trailing).combined(with: .opacity)
           )
         )
       } else {
@@ -111,8 +119,8 @@ public struct MenuBarView: View {
         }
         .transition(
           .asymmetric(
-            insertion: .opacity.combined(with: .offset(x: -14)),
-            removal: .opacity.combined(with: .offset(x: -14))
+            insertion: .move(edge: .leading).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
           )
         )
       }
@@ -192,7 +200,8 @@ public struct MenuBarView: View {
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.transferErrorMessage)
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.toastMessage)
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: syncToastMessage)
-    .animation(.spring(response: 0.35, dampingFraction: 0.84), value: isViewingHistory)
+    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isViewingHistory)
+    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isViewingSettings)
     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isFileSent)
     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isClipboardSynced)
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: inspectingClip != nil)
@@ -310,83 +319,287 @@ public struct MenuBarView: View {
 
       Spacer()
 
-      Menu {
-        Toggle(
-          "Clip History",
-          isOn: $appState.showSyncHistory
-        )
+      Button(action: {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+          isViewingSettings = true
+        }
+      }) {
+        Image(systemName: "gearshape")
+          .font(.system(size: 13, weight: .medium))
+          .foregroundColor(AppColors.textSecondary)
+          .frame(width: 24, height: 24)
+          .background(
+            RoundedRectangle(cornerRadius: AppRadius.small)
+              .fill(AppColors.surfaceHover(colorScheme))
+          )
+      }
+      .buttonStyle(InteractivePillButtonStyle())
+      .accessibilityLabel("Settings")
+    }
+  }
+  private var settingsSection: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
+      HStack {
+        Button(action: {
+          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+            isViewingSettings = false
+          }
+        }) {
+          HStack(spacing: 4) {
+            Image(systemName: "chevron.backward")
+              .font(.system(size: 11, weight: .semibold))
+            Text("Back")
+              .font(AppTypography.bodySecondary.weight(.medium))
+          }
+          .foregroundColor(AppColors.textSecondary)
+        }
+        .buttonStyle(InteractivePillButtonStyle())
+        .accessibilityLabel("Back to Devices")
 
-        Menu("Storage") {
-          Picker("Save To", selection: $appState.mediaDestinationMode) {
-            Text("Both").tag(MediaDestinationMode.both)
-            Text("Folder").tag(MediaDestinationMode.folderOnly)
-            Text("Clipboard").tag(MediaDestinationMode.clipboardOnly)
+        Spacer()
+
+        Text("Settings")
+          .font(AppTypography.sectionTitle)
+          .foregroundColor(AppColors.textPrimary)
+
+        Spacer()
+
+        Color.clear
+          .frame(width: 48, height: 16)
+      }
+
+      Divider()
+
+      VStack(alignment: .leading, spacing: 4) {
+        Text("GENERAL")
+          .font(.system(size: 9, weight: .bold))
+          .foregroundColor(AppColors.textMuted)
+          .padding(.horizontal, 4)
+
+        VStack(spacing: 1) {
+          HStack {
+            Text("Clip History")
+              .font(AppTypography.bodySecondary)
+              .foregroundColor(AppColors.textPrimary)
+            Spacer()
+            Toggle("", isOn: $appState.showSyncHistory)
+              .labelsHidden()
+              .toggleStyle(.switch)
+              .controlSize(.small)
+              .tint(AppColors.accent)
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .frame(height: 34)
+          .background(AppColors.containerSubtle(colorScheme))
+
+          HStack {
+            Text("Sounds")
+              .font(AppTypography.bodySecondary)
+              .foregroundColor(AppColors.textPrimary)
+            Spacer()
+            Toggle(
+              "",
+              isOn: Binding(
+                get: { appState.isSoundEnabled },
+                set: { appState.setSoundEnabled($0) }
+              )
+            )
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .tint(AppColors.accent)
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .frame(height: 34)
+          .background(AppColors.containerSubtle(colorScheme))
+
+          if #available(macOS 13.0, *) {
+            HStack {
+              Text("Start at Login")
+                .font(AppTypography.bodySecondary)
+                .foregroundColor(AppColors.textPrimary)
+              Spacer()
+              Toggle(
+                "",
+                isOn: Binding(
+                  get: { appState.isLaunchAtLogin },
+                  set: { _ in appState.toggleLaunchAtLogin() }
+                )
+              )
+              .labelsHidden()
+              .toggleStyle(.switch)
+              .controlSize(.small)
+              .tint(AppColors.accent)
+            }
+            .padding(.horizontal, AppSpacing.spacing10)
+            .frame(height: 34)
+            .background(AppColors.containerSubtle(colorScheme))
+          }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
+      }
+      VStack(alignment: .leading, spacing: 4) {
+        Text("STORAGE")
+          .font(.system(size: 9, weight: .bold))
+          .foregroundColor(AppColors.textMuted)
+          .padding(.horizontal, 4)
+
+        VStack(spacing: AppSpacing.spacing6) {
+          HStack {
+            Text("Save To")
+              .font(AppTypography.bodySecondary)
+              .foregroundColor(AppColors.textPrimary)
+            Spacer()
+            Picker("", selection: $appState.mediaDestinationMode) {
+              Text("Both").tag(MediaDestinationMode.both)
+              Text("Folder").tag(MediaDestinationMode.folderOnly)
+              Text("Clip").tag(MediaDestinationMode.clipboardOnly)
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .frame(width: 170)
           }
 
           Divider()
+          HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+              Text(appState.mediaFolderURL.lastPathComponent)
+                .font(AppTypography.bodySecondary.weight(.medium))
+                .foregroundColor(AppColors.textPrimary)
+                .lineLimit(1)
+              Text(appState.mediaFolderURL.path)
+                .font(.system(size: 9))
+                .foregroundColor(AppColors.textMuted)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            }
 
-          Button("Open in Finder") {
-            let folder = appState.mediaFolderURL
-            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            NSWorkspace.shared.open(folder)
+            Spacer()
+
+            HStack(spacing: 4) {
+              Button(action: {
+                let folder = appState.mediaFolderURL
+                try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                NSWorkspace.shared.open(folder)
+              }) {
+                Image(systemName: "folder")
+                  .font(.system(size: 11))
+                  .foregroundColor(AppColors.textSecondary)
+                  .frame(width: 24, height: 24)
+                  .background(
+                    RoundedRectangle(cornerRadius: AppRadius.small)
+                      .fill(AppColors.surfaceHover(colorScheme))
+                  )
+              }
+              .buttonStyle(InteractivePillButtonStyle())
+              .help("Open in Finder")
+
+              Button(action: { selectCustomFolder() }) {
+                Text("Change...")
+                  .font(.system(size: 10, weight: .medium))
+                  .foregroundColor(AppColors.textSecondary)
+                  .padding(.horizontal, 6)
+                  .frame(height: 24)
+                  .background(
+                    RoundedRectangle(cornerRadius: AppRadius.small)
+                      .fill(AppColors.surfaceHover(colorScheme))
+                  )
+              }
+              .buttonStyle(InteractivePillButtonStyle())
+            }
           }
-
-          Button("Change Folder...") {
-            selectCustomFolder()
-          }
         }
-
-        Divider()
-
-        Toggle(
-          "Sounds",
-          isOn: Binding(
-            get: { appState.isSoundEnabled },
-            set: { appState.setSoundEnabled($0) }
-          ))
-
-        if #available(macOS 13.0, *) {
-          Toggle(
-            "Start at Login",
-            isOn: Binding(
-              get: { appState.isLaunchAtLogin },
-              set: { _ in appState.toggleLaunchAtLogin() }
-            ))
-        }
-
-        Divider()
-
-        Button("Check for Updates...") {
-          appState.checkForUpdates()
-        }
-
-        Button("GitHub") {
-          if let url = URL(string: "https://github.com/Prabotics/RapiDrop") {
-            NSWorkspace.shared.open(url)
-          }
-        }
-
-        Button("Report Issue...") {
-          if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues")
-          {
-            NSWorkspace.shared.open(url)
-          }
-        }
-        Divider()
-
-        Button("Quit RapiDrop") {
-          NSApplication.shared.terminate(nil)
-        }
-        .keyboardShortcut("q", modifiers: .command)
-      } label: {
-        Image(systemName: "gearshape")
-          .font(.system(size: 13, weight: .medium))
-          .foregroundColor(.secondary)
-          .accessibilityLabel("Settings")
+        .padding(AppSpacing.spacing10)
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.medium)
+            .fill(AppColors.containerSubtle(colorScheme))
+        )
       }
-      .menuIndicator(.hidden)
-      .menuStyle(.borderlessButton)
-      .fixedSize()
+      VStack(alignment: .leading, spacing: 4) {
+        Text("ABOUT")
+          .font(.system(size: 9, weight: .bold))
+          .foregroundColor(AppColors.textMuted)
+          .padding(.horizontal, 4)
+        VStack(spacing: 1) {
+          HStack {
+            Text("RapiDrop")
+              .font(AppTypography.bodySecondary.weight(.medium))
+              .foregroundColor(AppColors.textPrimary)
+            Spacer()
+            Button(action: { appState.checkForUpdates() }) {
+              Text("Check for Updates...")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(AppColors.accent)
+            }
+            .buttonStyle(InteractivePillButtonStyle())
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .frame(height: 32)
+          .background(AppColors.containerSubtle(colorScheme))
+
+          HStack {
+            Button(action: {
+              if let url = URL(string: "https://github.com/Prabotics/RapiDrop") {
+                NSWorkspace.shared.open(url)
+              }
+            }) {
+              HStack(spacing: 4) {
+                Image(systemName: "arrow.up.right.square")
+                  .font(.system(size: 10))
+                Text("GitHub")
+                  .font(AppTypography.bodySecondary)
+              }
+              .foregroundColor(AppColors.textSecondary)
+            }
+            .buttonStyle(InteractivePillButtonStyle())
+
+            Spacer()
+
+            Button(action: {
+              if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues") {
+                NSWorkspace.shared.open(url)
+              }
+            }) {
+              HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.bubble")
+                  .font(.system(size: 10))
+                Text("Report Issue")
+                  .font(AppTypography.bodySecondary)
+              }
+              .foregroundColor(AppColors.textSecondary)
+            }
+            .buttonStyle(InteractivePillButtonStyle())
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .frame(height: 32)
+          .background(AppColors.containerSubtle(colorScheme))
+        }
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
+      }
+
+      Button(action: {
+        NSApplication.shared.terminate(nil)
+      }) {
+        HStack {
+          Spacer()
+          Image(systemName: "power")
+            .font(.system(size: 11, weight: .semibold))
+          Text("Quit RapiDrop")
+            .font(AppTypography.bodySecondary.weight(.medium))
+          Text("⌘Q")
+            .font(.system(size: 10))
+            .foregroundColor(AppColors.textMuted)
+          Spacer()
+        }
+        .foregroundColor(AppColors.statusError)
+        .frame(height: 30)
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.medium)
+            .fill(AppColors.statusError.opacity(colorScheme == .dark ? 0.12 : 0.08))
+        )
+      }
+      .buttonStyle(InteractivePillButtonStyle())
+      .keyboardShortcut("q", modifiers: .command)
     }
   }
   private func brandmarkLogo(size: CGFloat = 20) -> some View {
