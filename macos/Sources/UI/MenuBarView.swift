@@ -809,29 +809,29 @@ public struct MenuBarView: View {
   }
 
   private func pairingPinCard(device: DiscoveredClientDevice) -> some View {
-    VStack(spacing: AppSpacing.spacing16) {
-      Spacer(minLength: 4)
-      VStack(spacing: AppSpacing.spacing10) {
+    VStack(spacing: AppSpacing.spacing10) {
+      Spacer(minLength: 0)
+      VStack(spacing: AppSpacing.spacing6) {
         ZStack {
           Circle()
             .stroke(AppColors.accent.opacity(isPairingPulsing ? 0.0 : 0.4), lineWidth: 1.5)
-            .scaleEffect(isPairingPulsing ? 1.45 : 0.95)
+            .scaleEffect(isPairingPulsing ? 1.4 : 0.95)
           Circle()
             .fill(AppColors.accent.opacity(colorScheme == .dark ? 0.14 : 0.08))
-            .frame(width: 44, height: 44)
+            .frame(width: 40, height: 40)
             .overlay(
               Circle()
                 .stroke(AppColors.accent.opacity(0.25), lineWidth: 1)
             )
           Image(systemName: deviceIcon(for: friendlyDeviceName(for: device.name)))
-            .font(.system(size: 20, weight: .medium))
+            .font(.system(size: 18, weight: .medium))
             .foregroundColor(AppColors.accent)
         }
-        .frame(width: 48, height: 48)
+        .frame(width: 44, height: 44)
 
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
           Text(friendlyDeviceName(for: device.name))
-            .font(.system(size: 15, weight: .semibold))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundColor(AppColors.textPrimary)
 
           if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
@@ -858,7 +858,7 @@ public struct MenuBarView: View {
           )
       }
 
-      HStack(alignment: .center, spacing: 8) {
+      HStack(alignment: .center, spacing: 6) {
         ProgressView()
           .controlSize(.small)
         Text(appState.pendingPairingSasCode != nil ? "Waiting for confirmation on device..." : "Waiting for approval on device...")
@@ -874,7 +874,7 @@ public struct MenuBarView: View {
           )
       }
       .padding(.horizontal, AppSpacing.spacing10)
-      .padding(.vertical, 6)
+      .padding(.vertical, 5)
       .background(
         Capsule()
           .fill(AppColors.containerSubtle(colorScheme))
@@ -889,7 +889,7 @@ public struct MenuBarView: View {
         Text("Cancel")
           .font(.system(size: 12, weight: .medium))
           .foregroundColor(AppColors.textPrimary)
-          .frame(width: 110, height: 26)
+          .frame(width: 100, height: 26)
           .background(
             Capsule()
               .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
@@ -901,11 +901,10 @@ public struct MenuBarView: View {
       }
       .buttonStyle(InteractivePillButtonStyle())
 
-      Spacer(minLength: 4)
+      Spacer(minLength: 0)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .animation(.spring(response: 0.42, dampingFraction: 0.85), value: appState.pendingPairingSasCode)
-    .padding(.vertical, AppSpacing.spacing14)
-    .padding(.horizontal, AppSpacing.spacing8)
     .onAppear {
       withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
         isPairingPulsing = true

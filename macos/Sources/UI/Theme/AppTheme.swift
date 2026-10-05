@@ -77,7 +77,8 @@ public enum AppRadius {
 }
 
 public enum AppLayout {
-  public static let popoverWidth: CGFloat = 336
+  public static let popoverWidth: CGFloat = 316
+  public static let popoverHeight: CGFloat = 275
   public static let minButtonHeight: CGFloat = 28
   public static let minRowHeight: CGFloat = 36
   public static let iconSmall: CGFloat = 14

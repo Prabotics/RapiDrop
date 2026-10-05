@@ -161,7 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     pop.behavior = .transient
     pop.animates = true
     pop.delegate = self
-    pop.contentSize = NSSize(width: AppLayout.popoverWidth, height: 340)
+    pop.contentSize = NSSize(width: AppLayout.popoverWidth, height: AppLayout.popoverHeight)
     let hosting = NSHostingController(rootView: MenuBarView(appState: appState))
     hosting.sizingOptions = [.preferredContentSize]
     pop.contentViewController = hosting
