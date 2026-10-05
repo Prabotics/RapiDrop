@@ -585,6 +585,30 @@ public struct MenuBarView: View {
             .padding(.leading, AppSpacing.spacing12)
 
           Button(action: {
+            WelcomeWindowController.shared.show()
+          }) {
+            HStack {
+              Text("Welcome Guide")
+                .font(AppTypography.bodySecondary.weight(.medium))
+                .foregroundColor(AppColors.textPrimary)
+
+              Spacer()
+
+              Image(systemName: "chevron.right")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(AppColors.textMuted)
+            }
+            .contentShape(Rectangle())
+            .padding(.horizontal, AppSpacing.spacing12)
+            .frame(height: 38)
+          }
+          .buttonStyle(InteractiveCardButtonStyle())
+
+          Rectangle()
+            .fill(AppColors.surfaceBorder(colorScheme))
+            .frame(height: 0.5)
+            .padding(.leading, AppSpacing.spacing12)
+          Button(action: {
             if let url = URL(string: "https://github.com/Prabotics/RapiDrop/issues") {
               NSWorkspace.shared.open(url)
             }

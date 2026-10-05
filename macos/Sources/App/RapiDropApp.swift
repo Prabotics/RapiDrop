@@ -81,6 +81,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       name: NSWorkspace.didWakeNotification,
       object: nil
     )
+
+    let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "rapidrop_has_completed_onboarding")
+    if !hasCompletedOnboarding {
+      WelcomeWindowController.shared.show { [weak self] in
+        UserDefaults.standard.set(true, forKey: "rapidrop_has_completed_onboarding")
+        self?.showPopover()
+      }
+    }
   }
 
   func applicationWillTerminate(_ notification: Notification) {
