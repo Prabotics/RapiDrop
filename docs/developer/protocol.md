@@ -62,6 +62,8 @@ Every network frame begins with a fixed 28-byte header encoded in Big-Endian (Ne
 | `22` | `0x0016` | `FILE_END` | JSON (Encrypted) | Signals streaming completion with SHA-256 hash |
 | `23` | `0x0017` | `FILE_CANCEL` | JSON (Encrypted) | Aborts streaming transfer and triggers cleanup |
 | `32` | `0x0020` | `CONFIG_SYNC` | JSON (Encrypted) | Synchronizes direct mode / privacy preferences |
+| `33` | `0x0021` | `NOTIFICATION_EVENT` | JSON (Encrypted) | Mirrored notification alert with OTP and actions |
+| `34` | `0x0022` | `NOTIFICATION_ACTION` | JSON (Encrypted) | Remote notification action or dismissal command |
 | `255` | `0x00FF` | `DISCONNECT` | UTF-8 String (Encrypted) | Unpair / graceful session termination |
 
 ## 3. Pairing Handshake Sequence

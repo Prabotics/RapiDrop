@@ -140,6 +140,39 @@ class RapiDropUnitTest {
         assertEquals(PacketType.CONFIG_SYNC, deserialized?.type)
         assertArrayEquals(configJson, deserialized?.ciphertext)
     }
+    @Test
+    fun testWireFrameNotificationEventSerialization() {
+        val payload = """{"id":"notif_1","packageName":"com.example","appName":"App","title":"Hello","text":"World"}""".toByteArray(Charsets.UTF_8)
+        val frame = WireFrame(
+            type = PacketType.NOTIFICATION_EVENT,
+            timestamp = 1700000000000L,
+            nonce = ByteArray(12) { 0x05.toByte() },
+            ciphertext = payload,
+            tag = ByteArray(16) { 0x06.toByte() }
+        )
+        val serialized = frame.serialize()
+        val deserialized = WireFrame.deserialize(serialized)
+        assertNotNull(deserialized)
+        assertEquals(PacketType.NOTIFICATION_EVENT, deserialized?.type)
+        assertArrayEquals(payload, deserialized?.ciphertext)
+    }
+
+    @Test
+    fun testWireFrameNotificationActionSerialization() {
+        val payload = """{"id":"notif_1","action":"dismiss"}""".toByteArray(Charsets.UTF_8)
+        val frame = WireFrame(
+            type = PacketType.NOTIFICATION_ACTION,
+            timestamp = 1700000000000L,
+            nonce = ByteArray(12) { 0x07.toByte() },
+            ciphertext = payload,
+            tag = ByteArray(16) { 0x08.toByte() }
+        )
+        val serialized = frame.serialize()
+        val deserialized = WireFrame.deserialize(serialized)
+        assertNotNull(deserialized)
+        assertEquals(PacketType.NOTIFICATION_ACTION, deserialized?.type)
+        assertArrayEquals(payload, deserialized?.ciphertext)
+    }
 
     @Test
     fun testWireFrameClipFileSerialization() {
@@ -219,6 +252,8 @@ class RapiDropUnitTest {
         assertEquals(0x0012.toShort(), PacketType.CLIP_IMAGE.value)
         assertEquals(0x0013.toShort(), PacketType.CLIP_FILE.value)
         assertEquals(0x0020.toShort(), PacketType.CONFIG_SYNC.value)
+        assertEquals(0x0021.toShort(), PacketType.NOTIFICATION_EVENT.value)
+        assertEquals(0x0022.toShort(), PacketType.NOTIFICATION_ACTION.value)
         assertEquals(0x00FF.toShort(), PacketType.DISCONNECT.value)
     }
 

@@ -59,6 +59,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +78,7 @@ import com.prabotics.rapidrop.service.UpdateChecker
 import com.prabotics.rapidrop.service.UpdateResult
 import com.prabotics.rapidrop.ui.HapticManager
 import com.prabotics.rapidrop.ui.theme.AppThemeMode
+import com.prabotics.rapidrop.service.NotificationSyncService
 import kotlinx.coroutines.launch
 
 
@@ -99,6 +104,22 @@ fun SettingsContent(
     var showMediaDialog by remember { mutableStateOf(false) }
 
     var isHapticEnabled by remember { mutableStateOf(preferencesManager.isHapticEnabled()) }
+    var isNotificationMirroringEnabled by remember { mutableStateOf(preferencesManager.isNotificationMirroringEnabled()) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val hasPermission = NotificationSyncService.isPermissionGranted(context)
+                if (hasPermission && preferencesManager.isNotificationMirroringEnabled()) {
+                    isNotificationMirroringEnabled = true
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     val isNotificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     } else true
@@ -298,6 +319,25 @@ fun SettingsContent(
                     checked = showSyncHistory,
                     onCheckedChange = {
                         onToggleShowSyncHistory(it)
+                    }
+                )
+                HorizontalDivider(modifier = Modifier.padding(start = 70.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+                SettingsSwitchRow(
+                    icon = Icons.Rounded.Notifications,
+                    title = "Mirror Notifications",
+                    subtitle = "Forward phone alerts to Mac",
+                    checked = isNotificationMirroringEnabled && NotificationSyncService.isPermissionGranted(context),
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            preferencesManager.setNotificationMirroringEnabled(true)
+                            isNotificationMirroringEnabled = true
+                            if (!NotificationSyncService.isPermissionGranted(context)) {
+                                NotificationSyncService.openSettings(context)
+                            }
+                        } else {
+                            isNotificationMirroringEnabled = false
+                            preferencesManager.setNotificationMirroringEnabled(false)
+                        }
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 70.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))

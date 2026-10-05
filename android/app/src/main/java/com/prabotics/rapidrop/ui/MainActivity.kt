@@ -42,6 +42,7 @@ import kotlinx.coroutines.withContext
 import com.prabotics.rapidrop.preference.PreferencesManager
 import com.prabotics.rapidrop.ui.theme.AppThemeMode
 import java.io.File
+import com.prabotics.rapidrop.service.NotificationSyncService
 
 
 
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
     }
     private var isNotificationGrantedState = mutableStateOf(true)
     private var isBatteryOptimizedIgnoredState = mutableStateOf(true)
+    private var isNotificationListenerGrantedState = mutableStateOf(true)
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
@@ -141,6 +143,7 @@ class MainActivity : ComponentActivity() {
                 val activeTransferProgress by SyncService.activeTransferProgress.collectAsState()
                 val isNotificationGranted by isNotificationGrantedState
                 val isBatteryOptimizedIgnored by isBatteryOptimizedIgnoredState
+                val isNotificationListenerGranted by isNotificationListenerGrantedState
                 MainScreen(
                     state = MainScreenState(
                         activeTransferProgress = activeTransferProgress,
@@ -158,6 +161,7 @@ class MainActivity : ComponentActivity() {
                         appThemeMode = appThemeMode,
                         isNotificationGranted = isNotificationGranted,
                         isBatteryOptimizedIgnored = isBatteryOptimizedIgnored,
+                        isNotificationListenerGranted = isNotificationListenerGranted,
                         incomingPairInvite = incomingPairInvite,
                         outgoingPairInvite = outgoingPairInvite,
                         pairingError = pairingError
@@ -234,6 +238,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onRequestBatteryExemption = {
                             requestBatteryOptimizationExemption()
+                        },
+                        onRequestNotificationListener = {
+                            NotificationSyncService.openSettings(this@MainActivity)
                         }
                     )
                 )
@@ -311,6 +318,7 @@ class MainActivity : ComponentActivity() {
         isBatteryOptimizedIgnoredState.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             powerManager?.isIgnoringBatteryOptimizations(packageName) ?: true
         } else true
+        isNotificationListenerGrantedState.value = NotificationSyncService.isPermissionGranted(this)
     }
 
     private fun requestBatteryOptimizationExemption() {

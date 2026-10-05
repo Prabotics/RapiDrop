@@ -129,6 +129,7 @@ data class MainScreenState(
     val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
     val isNotificationGranted: Boolean = false,
     val isBatteryOptimizedIgnored: Boolean = false,
+    val isNotificationListenerGranted: Boolean = false,
     val incomingPairInvite: PairInviteInfo? = null,
     val outgoingPairInvite: PairInviteInfo? = null,
     val pairingError: String? = null
@@ -153,7 +154,8 @@ data class MainScreenCallbacks(
     val onMediaDestinationModeChange: (MediaDestinationMode) -> Unit = {},
     val onThemeModeChange: (AppThemeMode) -> Unit = {},
     val onRequestNotificationPermission: () -> Unit = {},
-    val onRequestBatteryExemption: () -> Unit = {}
+    val onRequestBatteryExemption: () -> Unit = {},
+    val onRequestNotificationListener: () -> Unit = {}
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -178,11 +180,11 @@ fun MainScreen(
         appThemeMode,
         isNotificationGranted,
         isBatteryOptimizedIgnored,
+        isNotificationListenerGranted,
         incomingPairInvite,
         outgoingPairInvite,
         pairingError
     ) = state
-
     val (
         onCancelTransfer,
         onCancelOutgoingInvite,
@@ -202,7 +204,8 @@ fun MainScreen(
         onMediaDestinationModeChange,
         onThemeModeChange,
         onRequestNotificationPermission,
-        onRequestBatteryExemption
+        onRequestBatteryExemption,
+        onRequestNotificationListener
     ) = callbacks
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -222,6 +225,7 @@ fun MainScreen(
     }
     var notificationsDismissed by remember { mutableStateOf(false) }
     var batteryDismissed by remember { mutableStateOf(false) }
+    var listenerDismissed by remember { mutableStateOf(false) }
     var currentDestination by remember { mutableStateOf(MainNavDestination.DEVICES) }
     var inspectingClip by remember { mutableStateOf<ClipItem?>(null) }
 
@@ -440,6 +444,19 @@ fun MainScreen(
                         actionLabel = "Enable 24/7",
                         onActionClick = onRequestBatteryExemption,
                         onDismiss = { batteryDismissed = true }
+                    )
+                }
+                AnimatedVisibility(
+                    visible = isPaired && !isNotificationListenerGranted && !listenerDismissed,
+                    enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeIn(spring(stiffness = 600f, dampingRatio = 0.78f)),
+                    exit = shrinkVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeOut(spring(stiffness = 600f, dampingRatio = 0.78f))
+                ) {
+                    PermissionAlertBanner(
+                        title = "Notification mirroring disabled",
+                        subtitle = "Enable notification access to forward phone alerts to Mac",
+                        actionLabel = "Enable",
+                        onActionClick = onRequestNotificationListener,
+                        onDismiss = { listenerDismissed = true }
                     )
                 }
                 AnimatedVisibility(

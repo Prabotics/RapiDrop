@@ -237,6 +237,9 @@ class SyncService : Service() {
                 start(context)
             }
         }
+        fun sendNotificationEvent(payloadJson: String) {
+            instance?.sendNotificationEvent(payloadJson)
+        }
         fun cancelActiveTransfer(context: Context) {
             val s = instance ?: return
             val progress = activeTransferProgress.value ?: return
@@ -527,6 +530,11 @@ class SyncService : Service() {
                 )
             }
         }
+        socketClient.onNotificationActionReceived = { id, action ->
+            if (action == "dismiss") {
+                NotificationSyncService.dismiss(id)
+            }
+        }
         socketClient.onPrivacyModeUpdated = { _ ->
         }
         var rxLastProgressTime = 0L
@@ -757,6 +765,10 @@ class SyncService : Service() {
             }
             networkCallback = null
         } catch (_: RuntimeException) {}
+    }
+    fun sendNotificationEvent(payloadJson: String) {
+        if (!isConnected.value) return
+        socketClient.sendNotificationEvent(payloadJson)
     }
     private fun acquireWifiLock() {
         try {

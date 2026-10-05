@@ -1,3 +1,4 @@
+import UserNotifications
 import ServiceManagement
 import CryptoKit
 import Foundation
@@ -70,6 +71,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var peerName: String? = nil
   @Published public var pairedPeerName: String? = nil
   @Published public var peerBatteryStatus: DeviceBatteryStatus? = nil
+  @Published public var mirroredNotifications: [MirroredNotification] = []
   @Published public var recentClips: [ClipItem] = []
   @Published public var pinnedClipIds: Set<UUID> = []
   @Published public var showSyncHistory: Bool = true {
@@ -933,6 +935,44 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     }
   }
 
+  nonisolated public func networkEngine(
+    _ engine: NetworkEngine, didReceiveNotification notification: MirroredNotification
+  ) {
+    Task { @MainActor in
+      self.mirroredNotifications.removeAll { $0.id == notification.id }
+      self.mirroredNotifications.insert(notification, at: 0)
+      if self.mirroredNotifications.count > 50 {
+        self.mirroredNotifications.removeLast(self.mirroredNotifications.count - 50)
+      }
+
+      if Bundle.main.bundleIdentifier != nil {
+        let content = UNMutableNotificationContent()
+        content.title = notification.appName
+        if !notification.title.isEmpty && notification.title != notification.appName {
+          content.subtitle = notification.title
+        }
+        content.body = notification.text
+        if self.isSoundEnabled {
+          content.sound = .default
+        }
+        let request = UNNotificationRequest(
+          identifier: notification.id,
+          content: content,
+          trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request) { _ in }
+      }
+    }
+  }
+
+  public func dismissMirroredNotification(_ id: String) {
+    network.sendNotificationDismiss(id: id)
+    mirroredNotifications.removeAll { $0.id == id }
+  }
+
+  public func clearAllMirroredNotifications() {
+    mirroredNotifications.removeAll()
+  }
   nonisolated public func networkEngine(
     _ engine: NetworkEngine, didReceivePairInviteFrom device: DeviceDescriptor, pin: String?,
     host: String?, port: Int

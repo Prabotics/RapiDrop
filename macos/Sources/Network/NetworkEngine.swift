@@ -92,6 +92,7 @@ public protocol NetworkEngineDelegate: AnyObject, Sendable {
     bytesTransferred: Int64, totalBytes: Int64, fileIndex: Int, totalFiles: Int, isComplete: Bool)
   func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason)
   func networkEngine(_ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?)
+  func networkEngine(_ engine: NetworkEngine, didReceiveNotification notification: MirroredNotification)
 }
 extension NetworkEngineDelegate {
   public func networkEngine(
@@ -114,6 +115,7 @@ extension NetworkEngineDelegate {
   ) {}
   public func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason) {}
   public func networkEngine(_ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?) {}
+  public func networkEngine(_ engine: NetworkEngine, didReceiveNotification notification: MirroredNotification) {}
 }
 
 public final class NetworkEngine: @unchecked Sendable {
@@ -1205,6 +1207,31 @@ public final class NetworkEngine: @unchecked Sendable {
         self.activeIncomingTransfer = nil
         delegate?.networkEngineDidCancelTransfer(self, transferId: tid, reason: .userCancelled)
       }
+    case .notificationEvent:
+      if let json = (try? JSONSerialization.jsonObject(with: decryptedData)) as? [String: Any],
+         let id = json["id"] as? String
+      {
+        let packageName = (json["packageName"] as? String) ?? "unknown"
+        let appName = (json["appName"] as? String) ?? "App"
+        let title = (json["title"] as? String) ?? appName
+        let text = (json["text"] as? String) ?? ""
+        let timestampMs = (json["timestamp"] as? NSNumber)?.doubleValue ?? (Date().timeIntervalSince1970 * 1000.0)
+        let canDismiss = (json["canDismiss"] as? Bool) ?? true
+        let otpCode = json["otpCode"] as? String
+        let notif = MirroredNotification(
+          id: id,
+          packageName: packageName,
+          appName: appName,
+          title: title,
+          text: text,
+          timestamp: Date(timeIntervalSince1970: timestampMs / 1000.0),
+          canDismiss: canDismiss,
+          otpCode: otpCode
+        )
+        NSLog("[RapiDrop] Mirrored notification received: %@ - %@", appName, title)
+        delegate?.networkEngine(self, didReceiveNotification: notif)
+      }
+      clipItem = nil
     default:
       clipItem = nil
     }
@@ -1274,6 +1301,24 @@ public final class NetworkEngine: @unchecked Sendable {
               }
             }
           })
+      }
+    }
+  }
+  public func sendNotificationDismiss(id: String) {
+    queue.async { [weak self] in
+      guard let self, let key = self.sessionKey, !self.activeConnections.isEmpty else { return }
+      let dict: [String: Any] = ["id": id, "action": "dismiss"]
+      guard let jsonData = try? JSONSerialization.data(withJSONObject: dict) else { return }
+      guard let encrypted = try? CryptoEngine.encrypt(payload: jsonData, using: key) else { return }
+      let frame = WireFrame(
+        type: .notificationAction,
+        nonce: encrypted.nonce,
+        ciphertext: encrypted.ciphertext,
+        tag: encrypted.tag
+      )
+      let data = frame.serialize()
+      for conn in self.activeConnections {
+        conn.send(content: data, completion: .contentProcessed { _ in })
       }
     }
   }

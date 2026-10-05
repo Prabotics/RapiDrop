@@ -40,7 +40,8 @@ class SocketClient(
     var onPrivacyModeUpdated: ((Boolean) -> Unit)? = null,
     var onTransferProgress: ((transferId: String, fileName: String, bytesTransferred: Long, totalBytes: Long, fileIndex: Int, totalFiles: Int, isComplete: Boolean) -> Unit)? = null,
     var onTransferCancelled: ((transferId: String, reason: String) -> Unit)? = null,
-    var onPeerBatteryUpdated: ((DeviceBatteryStatus?) -> Unit)? = null
+    var onPeerBatteryUpdated: ((DeviceBatteryStatus?) -> Unit)? = null,
+    var onNotificationActionReceived: ((id: String, action: String) -> Unit)? = null
 ) {
     private var socket: Socket? = null
     private var outputStream: OutputStream? = null
@@ -451,6 +452,27 @@ class SocketClient(
             }
         } catch (_: Exception) {}
     }
+    fun sendNotificationEvent(payloadJson: String): Boolean {
+        val out = outputStream ?: return false
+        val key = sessionKey ?: return false
+        return try {
+            val bytes = payloadJson.toByteArray(Charsets.UTF_8)
+            val encrypted = CryptoEngine.encrypt(bytes, key)
+            val frame = WireFrame(
+                type = PacketType.NOTIFICATION_EVENT,
+                nonce = encrypted.nonce,
+                ciphertext = encrypted.ciphertext,
+                tag = encrypted.tag
+            )
+            synchronized(out) {
+                out.write(frame.serialize())
+                out.flush()
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
     private fun startHeartbeat(gen: Long) {
         heartbeatJob?.cancel()
         heartbeatJob = CoroutineScope(Dispatchers.IO).launch {
@@ -802,6 +824,18 @@ class SocketClient(
                     activeIncomingTransfer = null
                     onTransferCancelled?.invoke(tid, "Transfer cancelled")
                 }
+            }
+            PacketType.NOTIFICATION_ACTION -> {
+                val key = sessionKey ?: return
+                try {
+                    val decrypted = CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key)
+                    val json = org.json.JSONObject(String(decrypted, Charsets.UTF_8))
+                    val id = json.optString("id")
+                    val action = json.optString("action")
+                    if (id.isNotBlank()) {
+                        onNotificationActionReceived?.invoke(id, action)
+                    }
+                } catch (_: Exception) {}
             }
             else -> {}
         }

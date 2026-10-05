@@ -23,6 +23,8 @@ enum class PacketType(val value: Short) {
     FILE_END(0x0016),
     FILE_CANCEL(0x0017),
     CONFIG_SYNC(0x0020),
+    NOTIFICATION_EVENT(0x0021),
+    NOTIFICATION_ACTION(0x0022),
     DISCONNECT(0x00FF.toShort());
 
     companion object {

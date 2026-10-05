@@ -34,8 +34,10 @@ public struct MenuBarView: View {
   @State private var syncToastDismissTask: Task<Void, Never>? = nil
   @State private var showClearConfirmation: Bool = false
   @State private var isViewingHistory: Bool = false
+  @State private var isViewingNotifications: Bool = false
   @State private var isViewingSettings: Bool = false
   @State private var isPairingPulsing: Bool = false
+  @State private var copiedOtpId: String? = nil
   @Namespace private var storageSegmentNamespace
   public init(appState: AppState) {
     self.appState = appState
@@ -88,6 +90,14 @@ public struct MenuBarView: View {
             removal: .move(edge: .trailing).combined(with: .opacity)
           )
         )
+      } else if isViewingNotifications {
+        notificationHistorySection
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+          )
       } else {
         VStack(alignment: .leading, spacing: 12) {
           headerSection
@@ -1246,6 +1256,56 @@ public struct MenuBarView: View {
           .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
+        Rectangle()
+          .fill(AppColors.surfaceBorder(colorScheme))
+          .frame(height: 0.5)
+          .padding(.leading, 48)
+
+        Button(action: {
+          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+            isViewingNotifications = true
+          }
+        }) {
+          HStack(spacing: AppSpacing.spacing10) {
+            ZStack {
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(AppColors.surfaceHover(colorScheme))
+                .frame(width: 30, height: 30)
+              Image(systemName: "bell.fill")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Notifications")
+                .font(AppTypography.bodyPrimary.weight(.semibold))
+                .foregroundColor(AppColors.textPrimary)
+              Text("Phone alerts and OTP codes")
+                .font(AppTypography.metadata)
+                .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
+            }
+
+            Spacer()
+
+            if !appState.mirroredNotifications.isEmpty {
+              Text("\(appState.mirroredNotifications.count)")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundColor(AppColors.accent)
+                .padding(.horizontal, 7)
+                .frame(height: 18)
+                .background(Capsule().fill(AppColors.accent.opacity(0.14)))
+            }
+
+            Image(systemName: "chevron.forward")
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(AppColors.textSecondary.opacity(0.6))
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
       }
       .background(
         RoundedRectangle(cornerRadius: AppRadius.card)
@@ -2055,6 +2115,215 @@ public struct MenuBarView: View {
       "package ", "namespace ", "struct ", "interface ", "enum ", "=>",
     ]
     return codeTokens.contains { text.contains($0) }
+  }
+  private var notificationHistorySection: some View {
+    VStack(alignment: .leading, spacing: AppSpacing.spacing8) {
+      HStack {
+        Button(action: {
+          withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            isViewingNotifications = false
+          }
+        }) {
+          HStack(spacing: 4) {
+            Image(systemName: "chevron.backward")
+              .font(.system(size: 11, weight: .semibold))
+            Text("Back")
+              .font(AppTypography.bodySecondary.weight(.medium))
+          }
+          .foregroundColor(AppColors.textSecondary)
+          .padding(.horizontal, 10)
+          .frame(height: 26)
+          .background(
+            Capsule()
+              .fill(AppColors.surfaceHover(colorScheme))
+          )
+        }
+        .buttonStyle(InteractivePillButtonStyle())
+        .accessibilityLabel("Back to Cockpit")
+
+        Spacer()
+
+        Text("Notifications")
+          .font(AppTypography.sectionTitle)
+          .foregroundColor(AppColors.textPrimary)
+
+        Spacer()
+
+        if !appState.mirroredNotifications.isEmpty {
+          Button(action: {
+            withAnimation(.spring(response: 0.30, dampingFraction: 0.82)) {
+              appState.clearAllMirroredNotifications()
+            }
+          }) {
+            Text("Clear All")
+              .font(AppTypography.bodySecondary.weight(.medium))
+              .foregroundColor(AppColors.textMuted)
+              .padding(.horizontal, 10)
+              .frame(height: 26)
+              .background(
+                Capsule()
+                  .fill(AppColors.surfaceHover(colorScheme))
+              )
+          }
+          .buttonStyle(InteractivePillButtonStyle())
+          .accessibilityLabel("Clear all notifications")
+        } else {
+          Color.clear
+            .frame(width: 58, height: 26)
+        }
+      }
+      .padding(.bottom, 2)
+
+      if appState.mirroredNotifications.isEmpty {
+        VStack(spacing: AppSpacing.spacing10) {
+          Spacer(minLength: 28)
+          Image(systemName: "bell.slash")
+            .font(.system(size: 26))
+            .foregroundColor(AppColors.textMuted.opacity(0.6))
+          Text("No Notifications")
+            .font(AppTypography.bodyPrimary.weight(.semibold))
+            .foregroundColor(AppColors.textPrimary)
+          Text("Phone alerts and verification codes appear here")
+            .font(AppTypography.metadata)
+            .foregroundColor(AppColors.textMuted)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, AppSpacing.spacing16)
+          Spacer(minLength: 28)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.spacing16)
+      } else {
+        ScrollView(.vertical, showsIndicators: false) {
+          LazyVStack(spacing: AppSpacing.spacing8) {
+            ForEach(appState.mirroredNotifications) { notif in
+              mirroredNotificationCard(notif)
+            }
+          }
+          .padding(.vertical, 2)
+        }
+        .frame(maxHeight: 340)
+      }
+    }
+  }
+
+  private func appIconInfo(for appName: String, packageName: String) -> (icon: String, tint: Color) {
+    let lower = (appName + " " + packageName).lowercased()
+    if lower.contains("whatsapp") {
+      return ("message.fill", Color(red: 0.15, green: 0.80, blue: 0.44))
+    } else if lower.contains("telegram") {
+      return ("paperplane.fill", Color(red: 0.18, green: 0.65, blue: 0.90))
+    } else if lower.contains("message") || lower.contains("sms") || lower.contains("mms") {
+      return ("bubble.left.and.bubble.right.fill", Color(red: 0.20, green: 0.78, blue: 0.35))
+    } else if lower.contains("mail") || lower.contains("gmail") || lower.contains("outlook") {
+      return ("envelope.fill", Color(red: 0.92, green: 0.30, blue: 0.24))
+    } else if lower.contains("auth") || lower.contains("otp") || lower.contains("2fa") || lower.contains("security") {
+      return ("lock.shield.fill", Color(red: 0.95, green: 0.60, blue: 0.10))
+    } else if lower.contains("phone") || lower.contains("call") || lower.contains("dialer") {
+      return ("phone.fill", Color(red: 0.20, green: 0.78, blue: 0.35))
+    } else if lower.contains("slack") || lower.contains("discord") || lower.contains("teams") {
+      return ("number.square.fill", Color(red: 0.45, green: 0.20, blue: 0.85))
+    } else if lower.contains("calendar") {
+      return ("calendar", Color(red: 0.92, green: 0.30, blue: 0.24))
+    } else if lower.contains("twitter") || lower.contains("x.com") || lower.contains("instagram") {
+      return ("shared.with.you", Color(red: 0.20, green: 0.60, blue: 0.95))
+    } else {
+      return ("bell.fill", AppColors.accent)
+    }
+  }
+
+  private func mirroredNotificationCard(_ notif: MirroredNotification) -> some View {
+    let iconInfo = appIconInfo(for: notif.appName, packageName: notif.packageName)
+    return VStack(alignment: .leading, spacing: 5) {
+      HStack(alignment: .center, spacing: 6) {
+        ZStack {
+          RoundedRectangle(cornerRadius: 5)
+            .fill(iconInfo.tint.opacity(0.14))
+            .frame(width: 18, height: 18)
+          Image(systemName: iconInfo.icon)
+            .font(.system(size: 9.5, weight: .semibold))
+            .foregroundColor(iconInfo.tint)
+        }
+
+        Text(notif.appName.lowercased() == "shell" ? notif.title : notif.appName)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(AppColors.textPrimary)
+          .lineLimit(1)
+
+        Spacer()
+
+        Text(relativeTimeString(for: notif.timestamp))
+          .font(.system(size: 10))
+          .foregroundColor(AppColors.textMuted)
+
+        Button(action: {
+          withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+            appState.dismissMirroredNotification(notif.id)
+          }
+        }) {
+          Image(systemName: "xmark")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundColor(AppColors.textMuted)
+            .frame(width: 16, height: 16)
+            .background(Circle().fill(AppColors.surfaceHover(colorScheme)))
+        }
+        .buttonStyle(PlainButtonStyle())
+        .help(notif.canDismiss ? "Dismiss on phone and Mac" : "Dismiss")
+        .accessibilityLabel("Dismiss notification")
+      }
+
+      let effectiveAppName = notif.appName.lowercased() == "shell" ? notif.title : notif.appName
+      if !notif.title.isEmpty && notif.title.caseInsensitiveCompare(effectiveAppName) != .orderedSame {
+        Text(notif.title)
+          .font(.system(size: 11.5, weight: .semibold))
+          .foregroundColor(AppColors.textPrimary)
+          .lineLimit(2)
+      }
+
+      if !notif.text.isEmpty {
+        Text(notif.text)
+          .font(.system(size: 11))
+          .foregroundColor(AppColors.textSecondary)
+          .lineLimit(6)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      if let otp = notif.otpCode {
+        Button(action: {
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString(otp, forType: .string)
+          copiedOtpId = notif.id
+          DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if copiedOtpId == notif.id {
+              copiedOtpId = nil
+            }
+          }
+        }) {
+          HStack(spacing: 5) {
+            Image(systemName: copiedOtpId == notif.id ? "checkmark" : "doc.on.doc.fill")
+              .font(.system(size: 9, weight: .bold))
+            Text(copiedOtpId == notif.id ? "Code Copied" : "Copy Code: \(otp)")
+              .font(.system(size: 10, weight: .semibold))
+          }
+          .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+          .padding(.horizontal, 9)
+          .frame(height: 22)
+          .background(Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.12))
+          .cornerRadius(6)
+        }
+        .buttonStyle(InteractivePillButtonStyle())
+        .padding(.top, 2)
+      }
+    }
+    .padding(.horizontal, 10)
+    .padding(.vertical, 8)
+    .background(
+      RoundedRectangle(cornerRadius: AppRadius.card)
+        .fill(AppColors.surfaceCard(colorScheme))
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: AppRadius.card)
+        .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+    )
   }
 }
 

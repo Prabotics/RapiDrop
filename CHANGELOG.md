@@ -1,4 +1,16 @@
 # Changelog
+## [Unreleased]
+
+### Networking & Protocol
+- New packet frames exchange encrypted notification payloads and bilateral dismissal commands.
+
+### macOS
+- System notifications forward phone alerts directly to macOS banners with sound support.
+- Notification history panel provides one-click OTP verification code copying and remote phone dismissal.
+
+### Android
+- Notification listener mirrors mobile alerts while filtering ongoing media players and download bars.
+- One-tap banner alerts users when device notification access requires system setup.
 
 ## [1.0.0] - 2026-09-16
 

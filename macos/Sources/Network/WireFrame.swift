@@ -18,6 +18,8 @@ public enum PacketType: UInt16, Sendable {
   case fileEnd = 0x0016
   case fileCancel = 0x0017
   case configSync = 0x0020
+  case notificationEvent = 0x0021
+  case notificationAction = 0x0022
   case disconnect = 0x00FF
 }
 

@@ -122,6 +122,31 @@ struct WireFrameTests {
     #expect(deserialized?.type == .configSync)
     #expect(deserialized?.ciphertext == configJson)
   }
+  @Test("Serialize and deserialize notificationEvent frame")
+  func testNotificationEventSerialization() {
+    let payload = Data(#"{"id":"notif_1","packageName":"com.example","appName":"App","title":"Hello","text":"World","timestamp":1700000000000,"canDismiss":true}"#.utf8)
+    let nonce = Data(repeating: 0x05, count: 12)
+    let tag = Data(repeating: 0x06, count: 16)
+    let frame = WireFrame(type: .notificationEvent, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
+    let serialized = frame.serialize()
+    let deserialized = WireFrame.deserialize(from: serialized)
+    #expect(deserialized != nil)
+    #expect(deserialized?.type == .notificationEvent)
+    #expect(deserialized?.ciphertext == payload)
+  }
+
+  @Test("Serialize and deserialize notificationAction frame")
+  func testNotificationActionSerialization() {
+    let payload = Data(#"{"id":"notif_1","action":"dismiss"}"#.utf8)
+    let nonce = Data(repeating: 0x07, count: 12)
+    let tag = Data(repeating: 0x08, count: 16)
+    let frame = WireFrame(type: .notificationAction, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
+    let serialized = frame.serialize()
+    let deserialized = WireFrame.deserialize(from: serialized)
+    #expect(deserialized != nil)
+    #expect(deserialized?.type == .notificationAction)
+    #expect(deserialized?.ciphertext == payload)
+  }
 
   @Test("Serialize and deserialize clipFile structured frame")
   func testClipFileSerialization() {
@@ -194,6 +219,8 @@ struct WireFrameTests {
     #expect(PacketType.clipImage.rawValue == 0x0012)
     #expect(PacketType.clipFile.rawValue == 0x0013)
     #expect(PacketType.configSync.rawValue == 0x0020)
+    #expect(PacketType.notificationEvent.rawValue == 0x0021)
+    #expect(PacketType.notificationAction.rawValue == 0x0022)
     #expect(PacketType.disconnect.rawValue == 0x00FF)
   }
 }

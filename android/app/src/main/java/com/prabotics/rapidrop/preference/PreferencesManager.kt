@@ -34,6 +34,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_SHOW_SYNC_HISTORY = "show_sync_history"
         private const val KEY_HAPTIC_ENABLED = "haptic_enabled"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_NOTIFICATION_MIRRORING_ENABLED = "notification_mirroring_enabled"
     }
 
     fun savePairingPin(pin: String) {
@@ -160,6 +161,13 @@ class PreferencesManager(context: Context) {
     fun setHapticEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_HAPTIC_ENABLED, enabled).apply()
         HapticManager.updateHapticEnabled(enabled)
+    }
+    fun isNotificationMirroringEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_MIRRORING_ENABLED, true)
+    }
+
+    fun setNotificationMirroringEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFICATION_MIRRORING_ENABLED, enabled).apply()
     }
 
     fun clear() {
