@@ -9,6 +9,7 @@ public struct MirroredNotification: Identifiable, Sendable, Equatable {
   public let timestamp: Date
   public let canDismiss: Bool
   public let otpCode: String?
+  public let iconBase64: String?
 
   public init(
     id: String,
@@ -18,7 +19,8 @@ public struct MirroredNotification: Identifiable, Sendable, Equatable {
     text: String,
     timestamp: Date = Date(),
     canDismiss: Bool = true,
-    otpCode: String? = nil
+    otpCode: String? = nil,
+    iconBase64: String? = nil
   ) {
     self.id = id
     self.packageName = packageName
@@ -28,5 +30,6 @@ public struct MirroredNotification: Identifiable, Sendable, Equatable {
     self.timestamp = timestamp
     self.canDismiss = canDismiss
     self.otpCode = otpCode
+    self.iconBase64 = iconBase64
   }
 }

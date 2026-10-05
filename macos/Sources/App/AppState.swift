@@ -72,6 +72,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var pairedPeerName: String? = nil
   @Published public var peerBatteryStatus: DeviceBatteryStatus? = nil
   @Published public var mirroredNotifications: [MirroredNotification] = []
+  @Published public var notificationAppIcons: [String: NSImage] = [:]
   @Published public var recentClips: [ClipItem] = []
   @Published public var pinnedClipIds: Set<UUID> = []
   @Published public var showSyncHistory: Bool = true {
@@ -939,6 +940,13 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     _ engine: NetworkEngine, didReceiveNotification notification: MirroredNotification
   ) {
     Task { @MainActor in
+      if let iconBase64 = notification.iconBase64,
+         self.notificationAppIcons[notification.packageName] == nil,
+         let data = Data(base64Encoded: iconBase64),
+         let img = NSImage(data: data) {
+        self.notificationAppIcons[notification.packageName] = img
+      }
+
       self.mirroredNotifications.removeAll { $0.id == notification.id }
       self.mirroredNotifications.insert(notification, at: 0)
       if self.mirroredNotifications.count > 50 {
@@ -954,6 +962,19 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
         content.body = notification.text
         if self.isSoundEnabled {
           content.sound = .default
+        }
+        if let iconBase64 = notification.iconBase64,
+           let data = Data(base64Encoded: iconBase64) {
+          let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("RapiDropIcons", isDirectory: true)
+          if (try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)) != nil {
+            let iconFile = tempDir.appendingPathComponent("\(notification.packageName).png")
+            if !FileManager.default.fileExists(atPath: iconFile.path) {
+              try? data.write(to: iconFile)
+            }
+            if let attachment = try? UNNotificationAttachment(identifier: notification.packageName, url: iconFile, options: nil) {
+              content.attachments = [attachment]
+            }
+          }
         }
         let request = UNNotificationRequest(
           identifier: notification.id,

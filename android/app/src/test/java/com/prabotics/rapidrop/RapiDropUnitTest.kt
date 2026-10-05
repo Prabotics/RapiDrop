@@ -156,6 +156,22 @@ class RapiDropUnitTest {
         assertEquals(PacketType.NOTIFICATION_EVENT, deserialized?.type)
         assertArrayEquals(payload, deserialized?.ciphertext)
     }
+    @Test
+    fun testWireFrameNotificationEventWithIconSerialization() {
+        val payload = """{"id":"notif_icon","packageName":"ump.reguetob.haym","appName":"Plus 1","title":"Chat","text":"Msg","iconBase64":"iVBORw0KGgoAAAANSUhEUg=="}""".toByteArray(Charsets.UTF_8)
+        val frame = WireFrame(
+            type = PacketType.NOTIFICATION_EVENT,
+            timestamp = 1700000000000L,
+            nonce = ByteArray(12) { 0x05.toByte() },
+            ciphertext = payload,
+            tag = ByteArray(16) { 0x06.toByte() }
+        )
+        val serialized = frame.serialize()
+        val deserialized = WireFrame.deserialize(serialized)
+        assertNotNull(deserialized)
+        assertEquals(PacketType.NOTIFICATION_EVENT, deserialized?.type)
+        assertArrayEquals(payload, deserialized?.ciphertext)
+    }
 
     @Test
     fun testWireFrameNotificationActionSerialization() {

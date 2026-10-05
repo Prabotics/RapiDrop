@@ -1116,6 +1116,152 @@ public struct MenuBarView: View {
 
       VStack(spacing: 0) {
         Button(action: {
+          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+            isViewingNotifications = true
+          }
+        }) {
+          HStack(spacing: AppSpacing.spacing10) {
+            ZStack {
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(AppColors.surfaceHover(colorScheme))
+                .frame(width: 30, height: 30)
+              Image(systemName: "bell.fill")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Notifications")
+                .font(AppTypography.bodyPrimary.weight(.semibold))
+                .foregroundColor(AppColors.textPrimary)
+              Text("Phone alerts and OTP codes")
+                .font(AppTypography.metadata)
+                .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
+            }
+
+            Spacer()
+
+            if !appState.mirroredNotifications.isEmpty {
+              Text("\(appState.mirroredNotifications.count)")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundColor(AppColors.accent)
+                .padding(.horizontal, 7)
+                .frame(height: 18)
+                .background(Capsule().fill(AppColors.accent.opacity(0.14)))
+            }
+
+            Image(systemName: "chevron.forward")
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(AppColors.textSecondary.opacity(0.6))
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+
+        Rectangle()
+          .fill(AppColors.surfaceBorder(colorScheme))
+          .frame(height: 0.5)
+          .padding(.leading, 48)
+
+        Button(action: {
+          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+            isViewingHistory = true
+          }
+        }) {
+          HStack(spacing: AppSpacing.spacing10) {
+            ZStack {
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(AppColors.surfaceHover(colorScheme))
+                .frame(width: 30, height: 30)
+              Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Sync History")
+                .font(AppTypography.bodyPrimary.weight(.semibold))
+                .foregroundColor(AppColors.textPrimary)
+              Text("View recent synchronized items")
+                .font(AppTypography.metadata)
+                .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.forward")
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(AppColors.textSecondary.opacity(0.6))
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+      }
+      .background(
+        RoundedRectangle(cornerRadius: AppRadius.card)
+          .fill(AppColors.surfaceCard(colorScheme))
+          .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.card)
+              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+          )
+      )
+
+      VStack(spacing: 0) {
+        Button(action: {
+          if appState.sendClipboardNow() {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+              isClipboardSynced = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+              withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                isClipboardSynced = false
+              }
+            }
+          }
+        }) {
+          HStack(spacing: AppSpacing.spacing10) {
+            ZStack {
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(isClipboardSynced ? AppColors.statusConnected.opacity(0.15) : AppColors.surfaceHover(colorScheme))
+                .frame(width: 30, height: 30)
+              Image(systemName: isClipboardSynced ? "checkmark" : "doc.on.clipboard")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(isClipboardSynced ? AppColors.statusConnected : AppColors.textPrimary)
+                .contentTransition(.symbolEffect(.replace.downUp))
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Send Clipboard")
+                .font(AppTypography.bodyPrimary.weight(.semibold))
+                .foregroundColor(appState.isConnected ? AppColors.textPrimary : AppColors.textPrimary.opacity(0.4))
+              Text(isClipboardSynced ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Send system clipboard")
+                .font(AppTypography.metadata)
+                .foregroundColor(isClipboardSynced ? AppColors.statusConnected : (appState.isConnected ? AppColors.textSecondary : AppColors.textSecondary.opacity(0.4)))
+                .lineLimit(1)
+            }
+
+            Spacer()
+          }
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(!appState.isConnected)
+        .opacity(appState.isConnected ? 1.0 : 0.45)
+
+        Rectangle()
+          .fill(AppColors.surfaceBorder(colorScheme))
+          .frame(height: 0.5)
+          .padding(.leading, 48)
+
+        Button(action: {
           NSApp.activate(ignoringOtherApps: true)
           let panel = NSOpenPanel()
           panel.canChooseFiles = true
@@ -1166,146 +1312,6 @@ public struct MenuBarView: View {
         .buttonStyle(PlainButtonStyle())
         .disabled(!appState.isConnected)
         .opacity(appState.isConnected ? 1.0 : 0.45)
-
-        Rectangle()
-          .fill(AppColors.surfaceBorder(colorScheme))
-          .frame(height: 0.5)
-          .padding(.leading, 48)
-
-        Button(action: {
-          if appState.sendClipboardNow() {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-              isClipboardSynced = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-              withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                isClipboardSynced = false
-              }
-            }
-          }
-        }) {
-          HStack(spacing: AppSpacing.spacing10) {
-            ZStack {
-              RoundedRectangle(cornerRadius: AppRadius.medium)
-                .fill(isClipboardSynced ? AppColors.statusConnected.opacity(0.15) : AppColors.surfaceHover(colorScheme))
-                .frame(width: 30, height: 30)
-              Image(systemName: isClipboardSynced ? "checkmark" : "doc.on.clipboard")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(isClipboardSynced ? AppColors.statusConnected : AppColors.textPrimary)
-                .contentTransition(.symbolEffect(.replace.downUp))
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-              Text("Send Clipboard")
-                .font(AppTypography.bodyPrimary.weight(.semibold))
-                .foregroundColor(appState.isConnected ? AppColors.textPrimary : AppColors.textPrimary.opacity(0.4))
-              Text(isClipboardSynced ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Send system clipboard")
-                .font(AppTypography.metadata)
-                .foregroundColor(isClipboardSynced ? AppColors.statusConnected : (appState.isConnected ? AppColors.textSecondary : AppColors.textSecondary.opacity(0.4)))
-                .lineLimit(1)
-            }
-
-            Spacer()
-          }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .padding(.vertical, AppSpacing.spacing8)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(!appState.isConnected)
-        .opacity(appState.isConnected ? 1.0 : 0.45)
-
-        Rectangle()
-          .fill(AppColors.surfaceBorder(colorScheme))
-          .frame(height: 0.5)
-          .padding(.leading, 48)
-
-        Button(action: {
-          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
-            isViewingHistory = true
-          }
-        }) {
-          HStack(spacing: AppSpacing.spacing10) {
-            ZStack {
-              RoundedRectangle(cornerRadius: AppRadius.medium)
-                .fill(AppColors.surfaceHover(colorScheme))
-                .frame(width: 30, height: 30)
-              Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(AppColors.textPrimary)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-              Text("Sync History")
-                .font(AppTypography.bodyPrimary.weight(.semibold))
-                .foregroundColor(AppColors.textPrimary)
-              Text("View recent synchronized items")
-                .font(AppTypography.metadata)
-                .foregroundColor(AppColors.textSecondary)
-                .lineLimit(1)
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.forward")
-              .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(AppColors.textSecondary.opacity(0.6))
-          }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .padding(.vertical, AppSpacing.spacing8)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-        Rectangle()
-          .fill(AppColors.surfaceBorder(colorScheme))
-          .frame(height: 0.5)
-          .padding(.leading, 48)
-
-        Button(action: {
-          withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
-            isViewingNotifications = true
-          }
-        }) {
-          HStack(spacing: AppSpacing.spacing10) {
-            ZStack {
-              RoundedRectangle(cornerRadius: AppRadius.medium)
-                .fill(AppColors.surfaceHover(colorScheme))
-                .frame(width: 30, height: 30)
-              Image(systemName: "bell.fill")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(AppColors.textPrimary)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-              Text("Notifications")
-                .font(AppTypography.bodyPrimary.weight(.semibold))
-                .foregroundColor(AppColors.textPrimary)
-              Text("Phone alerts and OTP codes")
-                .font(AppTypography.metadata)
-                .foregroundColor(AppColors.textSecondary)
-                .lineLimit(1)
-            }
-
-            Spacer()
-
-            if !appState.mirroredNotifications.isEmpty {
-              Text("\(appState.mirroredNotifications.count)")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundColor(AppColors.accent)
-                .padding(.horizontal, 7)
-                .frame(height: 18)
-                .background(Capsule().fill(AppColors.accent.opacity(0.14)))
-            }
-
-            Image(systemName: "chevron.forward")
-              .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(AppColors.textSecondary.opacity(0.6))
-          }
-          .padding(.horizontal, AppSpacing.spacing10)
-          .padding(.vertical, AppSpacing.spacing8)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
       }
       .background(
         RoundedRectangle(cornerRadius: AppRadius.card)
@@ -2257,17 +2263,32 @@ public struct MenuBarView: View {
 
   private func mirroredNotificationCard(_ notif: MirroredNotification) -> some View {
     let iconInfo = appIconInfo(for: notif.appName, packageName: notif.packageName)
+    let realIcon = appState.notificationAppIcons[notif.packageName] ?? {
+      if let iconBase64 = notif.iconBase64,
+         let data = Data(base64Encoded: iconBase64) {
+        return NSImage(data: data)
+      }
+      return nil
+    }()
+
     return VStack(alignment: .leading, spacing: 5) {
       HStack(alignment: .center, spacing: 6) {
-        ZStack {
-          RoundedRectangle(cornerRadius: 5)
-            .fill(iconInfo.tint.opacity(0.14))
+        if let realIcon {
+          Image(nsImage: realIcon)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
             .frame(width: 18, height: 18)
-          Image(systemName: iconInfo.icon)
-            .font(.system(size: 9.5, weight: .semibold))
-            .foregroundColor(iconInfo.tint)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+        } else {
+          ZStack {
+            RoundedRectangle(cornerRadius: 5)
+              .fill(iconInfo.tint.opacity(0.14))
+              .frame(width: 18, height: 18)
+            Image(systemName: iconInfo.icon)
+              .font(.system(size: 9.5, weight: .semibold))
+              .foregroundColor(iconInfo.tint)
+          }
         }
-
         Text(notif.appName.lowercased() == "shell" ? notif.title : notif.appName)
           .font(.system(size: 11, weight: .semibold))
           .foregroundColor(AppColors.textPrimary)

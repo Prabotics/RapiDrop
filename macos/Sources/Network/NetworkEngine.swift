@@ -1218,6 +1218,7 @@ public final class NetworkEngine: @unchecked Sendable {
         let timestampMs = (json["timestamp"] as? NSNumber)?.doubleValue ?? (Date().timeIntervalSince1970 * 1000.0)
         let canDismiss = (json["canDismiss"] as? Bool) ?? true
         let otpCode = json["otpCode"] as? String
+        let iconBase64 = json["iconBase64"] as? String
         let notif = MirroredNotification(
           id: id,
           packageName: packageName,
@@ -1226,7 +1227,8 @@ public final class NetworkEngine: @unchecked Sendable {
           text: text,
           timestamp: Date(timeIntervalSince1970: timestampMs / 1000.0),
           canDismiss: canDismiss,
-          otpCode: otpCode
+          otpCode: otpCode,
+          iconBase64: iconBase64
         )
         NSLog("[RapiDrop] Mirrored notification received: %@ - %@", appName, title)
         delegate?.networkEngine(self, didReceiveNotification: notif)

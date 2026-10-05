@@ -134,6 +134,21 @@ struct WireFrameTests {
     #expect(deserialized?.type == .notificationEvent)
     #expect(deserialized?.ciphertext == payload)
   }
+  @Test("MirroredNotification retains and exposes iconBase64")
+  func testMirroredNotificationIcon() {
+    let dummyBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    let notif = MirroredNotification(
+      id: "notif_icon_1",
+      packageName: "org.telegram.plus",
+      appName: "Plus 1",
+      title: "Chat",
+      text: "Message with icon",
+      iconBase64: dummyBase64
+    )
+    #expect(notif.iconBase64 == dummyBase64)
+    #expect(notif.packageName == "org.telegram.plus")
+    #expect(notif.appName == "Plus 1")
+  }
 
   @Test("Serialize and deserialize notificationAction frame")
   func testNotificationActionSerialization() {
