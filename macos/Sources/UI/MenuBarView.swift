@@ -1326,7 +1326,7 @@ public struct MenuBarView: View {
           .frame(width: 32, height: 32)
 
         Image(systemName: deviceIcon(for: friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device")))
-          .font(.system(size: 15))
+          .font(.system(size: 16, weight: .regular))
           .foregroundColor(AppColors.textPrimary)
       }
 
@@ -1339,15 +1339,18 @@ public struct MenuBarView: View {
       Spacer()
 
       if appState.isConnecting {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
           ProgressView()
             .controlSize(.mini)
           Text("Connecting...")
             .font(AppTypography.statusBadge)
             .foregroundColor(Color.orange)
         }
+        .padding(.horizontal, 8)
+        .frame(height: 24)
+        .background(Capsule().fill(Color.orange.opacity(0.12)))
       } else if !appState.isConnected {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
           Circle()
             .fill(AppColors.statusDisconnected)
             .frame(width: 5, height: 5)
@@ -1355,22 +1358,36 @@ public struct MenuBarView: View {
             .font(AppTypography.statusBadge)
             .foregroundColor(AppColors.statusDisconnected)
         }
+        .padding(.horizontal, 8)
+        .frame(height: 24)
+        .background(Capsule().fill(AppColors.surfaceHover(colorScheme)))
       } else if let battery = appState.peerBatteryStatus {
-        HStack(spacing: 4) {
+        let isLow = battery.level <= 20 && !battery.isCharging
+        let tintColor: Color = battery.isCharging
+          ? AppColors.statusConnected
+          : (isLow ? AppColors.statusError : AppColors.textPrimary)
+        let bgColor: Color = battery.isCharging
+          ? AppColors.statusConnected.opacity(0.12)
+          : (isLow ? AppColors.statusError.opacity(0.12) : AppColors.surfaceHover(colorScheme))
+
+        HStack(spacing: 5) {
           if battery.isCharging {
             Image(systemName: "bolt.fill")
-              .font(.system(size: 8, weight: .bold))
+              .font(.system(size: 9.5, weight: .bold))
               .foregroundColor(AppColors.statusConnected)
           }
           Image(systemName: batteryIcon(for: battery.level))
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(battery.isCharging ? AppColors.statusConnected : AppColors.textSecondary)
+            .font(.system(size: 12.5, weight: .medium))
+            .foregroundColor(tintColor)
           Text("\(battery.level)%")
-            .font(AppTypography.statusBadge)
-            .foregroundColor(AppColors.textSecondary)
+            .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+            .foregroundColor(tintColor)
         }
+        .padding(.horizontal, 8)
+        .frame(height: 24)
+        .background(Capsule().fill(bgColor))
       } else {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
           Circle()
             .fill(AppColors.statusConnected)
             .frame(width: 5, height: 5)
@@ -1378,6 +1395,9 @@ public struct MenuBarView: View {
             .font(AppTypography.statusBadge)
             .foregroundColor(AppColors.statusConnected)
         }
+        .padding(.horizontal, 8)
+        .frame(height: 24)
+        .background(Capsule().fill(AppColors.statusConnected.opacity(0.12)))
       }
     }
     .padding(AppSpacing.spacing10)
@@ -2085,10 +2105,14 @@ public struct MenuBarView: View {
   }
   private func deviceIcon(for name: String) -> String {
     let lower = name.lowercased()
-    if lower.contains("tablet") || lower.contains("pad") || lower.contains("tab") {
+    if lower.contains("mac") || lower.contains("macbook") || lower.contains("imac") {
+      return "macbook"
+    } else if lower.contains("tablet") || lower.contains("pad") || lower.contains("tab") {
       return "ipad"
+    } else if lower.contains("pc") || lower.contains("desktop") || lower.contains("windows") {
+      return "display"
     }
-    return "smartphone"
+    return "iphone"
   }
   private func batteryIcon(for level: Int) -> String {
     switch level {
