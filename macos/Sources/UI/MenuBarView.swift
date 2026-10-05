@@ -97,27 +97,35 @@ public struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 12) {
           if appState.selectedDeviceForPairing == nil && appState.incomingPairInvite == nil {
             headerSection
+              .transition(.opacity.combined(with: .move(edge: .top)))
           }
 
           if let toast = appState.toastMessage ?? syncToastMessage {
             syncToastBanner(toast)
+              .transition(.opacity.combined(with: .move(edge: .top)))
           }
 
           if let errorMsg = appState.transferErrorMessage {
             transferErrorBanner(errorMsg)
+              .transition(.opacity.combined(with: .move(edge: .top)))
           }
           if let progress = appState.activeTransferProgress {
             transferProgressCard(progress)
+              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           }
 
           if let invite = appState.incomingPairInvite {
             incomingPairInviteCard(deviceName: invite.deviceName)
+              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           } else if appState.isPaired {
             pairedDeviceCockpitSection
+              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           } else if let selectedDevice = appState.selectedDeviceForPairing {
             pairingPinCard(device: selectedDevice)
+              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           } else {
             discoveredDevicesSection
+              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           }
         }
         .transition(
@@ -192,6 +200,9 @@ public struct MenuBarView: View {
     )
     .animation(
       .spring(response: 0.35, dampingFraction: 0.8), value: appState.selectedDeviceForPairing
+    )
+    .animation(
+      .spring(response: 0.38, dampingFraction: 0.82), value: appState.pendingPairingSasCode
     )
     .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.isConnected)
     .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.isPaired)
@@ -817,12 +828,14 @@ public struct MenuBarView: View {
             Text("Compare this code with your phone")
               .font(AppTypography.bodySecondary)
               .foregroundColor(AppColors.textSecondary)
+              .transition(.opacity.combined(with: .scale(scale: 0.96)))
           }
         }
       }
 
       if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
         pinCodeView(pin: pin)
+          .transition(.opacity.combined(with: .scale(scale: 0.94)))
       }
 
       HStack(alignment: .center, spacing: 6) {

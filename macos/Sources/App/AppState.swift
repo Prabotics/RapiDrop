@@ -930,7 +930,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     _ engine: NetworkEngine, didReceivePairOfferFrom fromName: String, sasCode: String
   ) {
     Task { @MainActor in
-      self.pendingPairingSasCode = sasCode
+      withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+        self.pendingPairingSasCode = sasCode
+      }
     }
   }
   nonisolated public func networkEngine(
@@ -950,10 +952,12 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       UserDefaults.standard.set(fromName, forKey: "rapidrop_paired_peer_name")
       self.pairedPeerName = fromName
       self.peerName = fromName
-      self.pendingPairingSasCode = sasCode
-      self.selectedDeviceForPairing = nil
-      self.incomingPairInvite = nil
-      self.isConnecting = true
+      withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+        self.pendingPairingSasCode = sasCode
+        self.selectedDeviceForPairing = nil
+        self.incomingPairInvite = nil
+        self.isConnecting = true
+      }
       if let host = host, !host.isEmpty {
         let connectPort = (port > 0 && port != Int(WireFrame.defaultClientPort)) ? UInt16(port) : WireFrame.defaultPort
         self.network.connect(to: host, port: connectPort)
@@ -964,10 +968,12 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     Task { @MainActor in
       self.pairingTimeoutTask?.cancel()
       self.pairingTimeoutTask = nil
-      self.incomingPairInvite = nil
-      self.selectedDeviceForPairing = nil
-      self.isConnecting = false
-      self.pendingPairingSasCode = nil
+      withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+        self.incomingPairInvite = nil
+        self.selectedDeviceForPairing = nil
+        self.isConnecting = false
+        self.pendingPairingSasCode = nil
+      }
       if let savedPin = self.storedPairedPin {
         self.setPin(savedPin)
       }
