@@ -25,31 +25,37 @@ public struct WelcomeView: View {
           .foregroundColor(AppColors.textPrimary)
           .padding(.top, 14)
 
-        VStack(spacing: 24) {
+        VStack(spacing: 18) {
           featureRow(
-            icon: "wifi",
+            icon: "lock.shield",
             iconColor: AppColors.accent,
-            title: "Local Wi-Fi Only",
-            description: "Direct encrypted transfer. No accounts, cloud storage, or tracking."
+            title: "Direct & Encrypted",
+            description: "Local Wi-Fi transfer with AES-256-GCM. No accounts, cloud storage, or tracking."
           )
 
           featureRow(
             icon: "doc.on.clipboard",
             iconColor: Color(red: 0.2, green: 0.55, blue: 0.95),
-            title: "Instant Clipboard",
-            description: "Copy on your Mac, paste on your phone. Supports text, links, and photos."
+            title: "Universal Clipboard",
+            description: "Copy on Mac, paste on phone. Syncs text, web links, and image data instantly."
           )
 
           featureRow(
-            icon: "arrow.down.doc",
+            icon: "arrow.up.doc",
             iconColor: Color(red: 0.95, green: 0.55, blue: 0.15),
-            title: "File Transfers",
-            description: "Drop files into the menu bar. Incoming items land directly in Downloads."
+            title: "Drag & Drop Files",
+            description: "Drop files into the menu bar popover to send them to your paired device."
+          )
+
+          featureRow(
+            icon: "folder.badge.gearshape",
+            iconColor: Color(red: 0.15, green: 0.75, blue: 0.60),
+            title: "Custom Destinations",
+            description: "Save files to your chosen folder, copy straight to clipboard, or both in Settings."
           )
         }
         .padding(.horizontal, 44)
-        .padding(.top, 28)
-
+        .padding(.top, 22)
         Spacer(minLength: 20)
 
         VStack(spacing: 12) {
@@ -77,7 +83,7 @@ public struct WelcomeView: View {
       .opacity(0)
       .frame(width: 0, height: 0)
     }
-    .frame(width: 520, height: 460)
+    .frame(width: 520, height: 520)
   }
 
   private var appIconHeader: some View {
@@ -160,10 +166,10 @@ public final class WelcomeWindowController: NSObject, NSWindowDelegate {
     }
 
     let hostingView = NSHostingView(rootView: welcomeView)
-    hostingView.frame = NSRect(x: 0, y: 0, width: 520, height: 460)
+    hostingView.frame = NSRect(x: 0, y: 0, width: 520, height: 520)
     hostingView.autoresizingMask = [.width, .height]
     let newWindow = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 520, height: 460),
+      contentRect: NSRect(x: 0, y: 0, width: 520, height: 520),
       styleMask: [.titled, .fullSizeContentView],
       backing: .buffered,
       defer: false
