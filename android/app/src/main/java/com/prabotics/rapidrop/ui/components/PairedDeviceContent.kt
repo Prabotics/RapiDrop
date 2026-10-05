@@ -23,7 +23,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.automirrored.rounded.Subject
+import androidx.compose.material.icons.rounded.BatteryAlert
+import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.BatteryFull
+import androidx.compose.material.icons.rounded.Battery3Bar
+import androidx.compose.material.icons.rounded.Battery5Bar
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.ContentPaste
@@ -244,46 +250,82 @@ fun PairedDeviceContent(
 
                 Surface(
                     shape = CircleShape,
-                    color = animatedBadgeBg
+                    color = when {
+                        !isConnected && isConnecting -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+                        !isConnected -> MaterialTheme.colorScheme.surfaceContainerHigh
+                        deviceInfo?.isCharging == true -> statusColors.connected.copy(alpha = 0.12f)
+                        deviceInfo?.batteryLevel != null -> MaterialTheme.colorScheme.surfaceContainerHigh
+                        else -> animatedBadgeBg
+                    }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(animatedBadgeTint, CircleShape)
-                        )
-                        Text(
-                            text = when {
-                                isConnected -> "Connected"
-                                isConnecting -> "Connecting..."
-                                else -> "Offline"
-                            },
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                            color = animatedBadgeTint
-                        )
+                        if (isConnecting) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+                            )
+                            Text(
+                                text = "Connecting...",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        } else if (!isConnected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                            )
+                            Text(
+                                text = "Offline",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else if (deviceInfo?.batteryLevel != null && deviceInfo.batteryLevel in 0..100) {
+                            Icon(
+                                imageVector = if (deviceInfo.isCharging) Icons.Rounded.BatteryChargingFull else batteryIcon(deviceInfo.batteryLevel),
+                                contentDescription = null,
+                                tint = if (deviceInfo.isCharging) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = "${deviceInfo.batteryLevel}%",
+                                color = if (deviceInfo.isCharging) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(statusColors.connected, CircleShape)
+                            )
+                            Text(
+                                text = "Connected",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                color = statusColors.connected
+                            )
+                        }
                     }
                 }
             }
         }
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable(enabled = isConnected) {
-                        HapticManager.performClick(context)
-                        onSendMediaClick()
-                    },
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
-            ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow
+        ) {
+            Column {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = isConnected) {
+                            HapticManager.performClick(context)
+                            onSendMediaClick()
+                        }
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
@@ -334,27 +376,26 @@ fun PairedDeviceContent(
                         }
                     }
                 }
-            }
 
-            val clipboardSubtitle = when (syncState) {
-                SyncState.SUCCESS -> "Sent to $deviceName!"
-                SyncState.SYNCING -> "Sending clipboard..."
-                else -> "Send your current clipboard"
-            }
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 74.dp, end = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                )
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable(enabled = isConnected && syncState != SyncState.SYNCING) {
-                        HapticManager.performClick(context)
-                        onSendClipboardClick()
-                    },
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
-            ) {
+                val clipboardSubtitle = when (syncState) {
+                    SyncState.SUCCESS -> "Sent to $deviceName!"
+                    SyncState.SYNCING -> "Sending clipboard..."
+                    else -> "Send your current clipboard"
+                }
+
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = isConnected && syncState != SyncState.SYNCING) {
+                            HapticManager.performClick(context)
+                            onSendClipboardClick()
+                        }
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
@@ -392,12 +433,12 @@ fun PairedDeviceContent(
 
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                        color = if (syncState == SyncState.SUCCESS) statusColors.connected.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
                         modifier = Modifier.size(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = if (syncState == SyncState.SUCCESS) Icons.Rounded.Check else Icons.AutoMirrored.Rounded.ArrowForward,
+                                imageVector = if (syncState == SyncState.SUCCESS) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
                                 contentDescription = null,
                                 tint = if (syncState == SyncState.SUCCESS) statusColors.connected else if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                                 modifier = Modifier.size(16.dp)
@@ -440,7 +481,7 @@ fun PairedDeviceContent(
             if (previewClips.isNotEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Column {
@@ -462,7 +503,7 @@ fun PairedDeviceContent(
             } else {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Row(
@@ -622,5 +663,13 @@ private fun RecentActivityRow(
                 modifier = Modifier.size(16.dp)
             )
         }
+    }
+}
+private fun batteryIcon(level: Int): ImageVector {
+    return when {
+        level < 20 -> Icons.Rounded.BatteryAlert
+        level < 50 -> Icons.Rounded.Battery3Bar
+        level < 85 -> Icons.Rounded.Battery5Bar
+        else -> Icons.Rounded.BatteryFull
     }
 }

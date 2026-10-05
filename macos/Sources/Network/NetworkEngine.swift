@@ -91,6 +91,7 @@ public protocol NetworkEngineDelegate: AnyObject, Sendable {
     _ engine: NetworkEngine, didUpdateTransferProgress transferId: String, fileName: String,
     bytesTransferred: Int64, totalBytes: Int64, fileIndex: Int, totalFiles: Int, isComplete: Bool)
   func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason)
+  func networkEngine(_ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?)
 }
 extension NetworkEngineDelegate {
   public func networkEngine(
@@ -112,6 +113,7 @@ extension NetworkEngineDelegate {
     bytesTransferred: Int64, totalBytes: Int64, fileIndex: Int, totalFiles: Int, isComplete: Bool
   ) {}
   public func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason) {}
+  public func networkEngine(_ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?) {}
 }
 
 public final class NetworkEngine: @unchecked Sendable {
@@ -266,16 +268,8 @@ public final class NetworkEngine: @unchecked Sendable {
           }
           self.activeConnections.removeAll()
           self.notifyConnectionState(isConnected: false, peerName: nil)
-        } else if let key = self.sessionKey {
-          if let encrypted = try? CryptoEngine.encrypt(payload: Data("PING".utf8), using: key) {
-            let pingFrame = WireFrame(
-              type: .ping, nonce: encrypted.nonce, ciphertext: encrypted.ciphertext,
-              tag: encrypted.tag)
-            let data = pingFrame.serialize()
-            for conn in self.activeConnections {
-              conn.send(content: data, completion: .contentProcessed { _ in })
-            }
-          }
+        } else {
+          self.sendHeartbeatPing()
         }
       }
     }
@@ -924,13 +918,34 @@ public final class NetworkEngine: @unchecked Sendable {
     let clipItem: ClipItem?
     switch frame.type {
     case .ping:
-      if let encrypted = try? CryptoEngine.encrypt(payload: Data("PONG".utf8), using: key) {
+      if let json = (try? JSONSerialization.jsonObject(with: decryptedData)) as? [String: Any],
+        let level = json["battery"] as? Int,
+        let charging = json["charging"] as? Bool
+      {
+        let peerBattery = DeviceBatteryStatus(level: level, isCharging: charging)
+        delegate?.networkEngine(self, didUpdatePeerBatteryStatus: peerBattery)
+      }
+      let localBattery = DeviceBatteryStatus.current()
+      var pongObj: [String: Any] = ["type": "pong"]
+      if let b = localBattery {
+        pongObj["battery"] = b.level
+        pongObj["charging"] = b.isCharging
+      }
+      let pongData = (try? JSONSerialization.data(withJSONObject: pongObj)) ?? Data("PONG".utf8)
+      if let encrypted = try? CryptoEngine.encrypt(payload: pongData, using: key) {
         let pongFrame = WireFrame(
           type: .pong, nonce: encrypted.nonce, ciphertext: encrypted.ciphertext, tag: encrypted.tag)
         connection.send(content: pongFrame.serialize(), completion: .contentProcessed { _ in })
       }
       clipItem = nil
     case .pong:
+      if let json = (try? JSONSerialization.jsonObject(with: decryptedData)) as? [String: Any],
+        let level = json["battery"] as? Int,
+        let charging = json["charging"] as? Bool
+      {
+        let peerBattery = DeviceBatteryStatus(level: level, isCharging: charging)
+        delegate?.networkEngine(self, didUpdatePeerBatteryStatus: peerBattery)
+      }
       clipItem = nil
     case .pairRequest:
       self.pendingIncomingConnections.removeValue(forKey: ObjectIdentifier(connection))
@@ -1943,13 +1958,33 @@ private actor SendWindow {
       if !isConnectionNotified {
         isConnectionNotified = true
         delegate?.networkEngine(self, didUpdateConnectionState: true, peerName: peerName)
+        sendHeartbeatPing()
       }
     } else {
       isSessionEstablished = false
       if isConnectionNotified {
         isConnectionNotified = false
         delegate?.networkEngine(self, didUpdateConnectionState: false, peerName: nil)
+        delegate?.networkEngine(self, didUpdatePeerBatteryStatus: nil)
       }
+    }
+  }
+  public func sendHeartbeatPing() {
+    guard let key = self.sessionKey, !self.activeConnections.isEmpty else { return }
+    let localBattery = DeviceBatteryStatus.current()
+    var pingObj: [String: Any] = ["type": "ping"]
+    if let b = localBattery {
+      pingObj["battery"] = b.level
+      pingObj["charging"] = b.isCharging
+    }
+    let pingData = (try? JSONSerialization.data(withJSONObject: pingObj)) ?? Data("PING".utf8)
+    guard let encrypted = try? CryptoEngine.encrypt(payload: pingData, using: key) else { return }
+    let pingFrame = WireFrame(
+      type: .ping, nonce: encrypted.nonce, ciphertext: encrypted.ciphertext,
+      tag: encrypted.tag)
+    let data = pingFrame.serialize()
+    for conn in self.activeConnections {
+      conn.send(content: data, completion: .contentProcessed { _ in })
     }
   }
 }

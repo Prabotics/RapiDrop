@@ -69,6 +69,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var isConnecting: Bool = false
   @Published public var peerName: String? = nil
   @Published public var pairedPeerName: String? = nil
+  @Published public var peerBatteryStatus: DeviceBatteryStatus? = nil
   @Published public var recentClips: [ClipItem] = []
   @Published public var pinnedClipIds: Set<UUID> = []
   @Published public var showSyncHistory: Bool = true {
@@ -382,8 +383,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     self.network.setSessionKey(nil)
     pairedPeerName = nil
     peerName = nil
+    peerBatteryStatus = nil
     isConnected = false
-    selectedDeviceForPairing = nil
     reconnectAttempts = 0
     regeneratePin()
   }
@@ -910,6 +911,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
         }
       } else {
         self.peerName = nil
+        self.peerBatteryStatus = nil
         withAnimation(.easeOut(duration: 0.25)) {
           self.activeTransferProgress = nil
         }
@@ -921,6 +923,13 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
           self.network.setSessionKey(key)
         }
       }
+    }
+  }
+  nonisolated public func networkEngine(
+    _ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?
+  ) {
+    Task { @MainActor in
+      self.peerBatteryStatus = status
     }
   }
 

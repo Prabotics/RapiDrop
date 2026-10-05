@@ -121,6 +121,15 @@ class SyncService : Service() {
     private var autoReconnectJob: Job? = null
     private var pairingTimeoutJob: Job? = null
     private var activeOutgoingTransferJob: Job? = null
+    private val batteryReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (isConnected.value) {
+                serviceScope.launch {
+                    socketClient.sendBatteryUpdate()
+                }
+            }
+        }
+    }
 
     companion object {
         const val FOREGROUND_CHANNEL_ID = "rapidrop_status_channel"
@@ -444,8 +453,10 @@ class SyncService : Service() {
                     if (connected) {
                         startAutoReconnect()
                         acquireWifiLock()
+                        serviceScope.launch {
+                            socketClient.sendBatteryUpdate()
+                        }
                         android.util.Log.d("RapiDrop", "connection.connected")
-                        pairingError.value = null
                         HapticManager.performSuccess(this@SyncService)
                         val pin = pairingPin.value
                         val peer = connectedPeerName.value
@@ -499,6 +510,23 @@ class SyncService : Service() {
                 updateNotification()
             }
         )
+        socketClient.onPeerBatteryUpdated = { battery ->
+            val current = connectedDeviceInfo.value
+            if (current != null) {
+                connectedDeviceInfo.value = current.copy(
+                    batteryLevel = battery?.level,
+                    isCharging = battery?.isCharging ?: false
+                )
+            } else if (battery != null) {
+                val peer = connectedPeerName.value ?: "Device"
+                connectedDeviceInfo.value = ConnectedDeviceInfo(
+                    deviceName = peer,
+                    modelName = peer,
+                    batteryLevel = battery.level,
+                    isCharging = battery.isCharging
+                )
+            }
+        }
         socketClient.onPrivacyModeUpdated = { _ ->
         }
         var rxLastProgressTime = 0L
@@ -660,6 +688,12 @@ class SyncService : Service() {
 
         startAutoReconnect()
         registerNetworkCallback()
+        val batteryFilter = android.content.IntentFilter().apply {
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+            addAction(Intent.ACTION_BATTERY_CHANGED)
+        }
+        registerReceiver(batteryReceiver, batteryFilter)
     }
     private fun startAutoReconnect() {
         autoReconnectJob?.cancel()
@@ -1050,7 +1084,9 @@ class SyncService : Service() {
     override fun onDestroy() {
         instance = null
         unregisterNetworkCallback()
-        autoReconnectJob?.cancel()
+        try {
+            unregisterReceiver(batteryReceiver)
+        } catch (_: Exception) {}
         pairingTimeoutJob?.cancel()
         pairingTimeoutJob = null
         releaseWakeLock()

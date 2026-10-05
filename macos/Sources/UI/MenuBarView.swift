@@ -367,6 +367,61 @@ public struct MenuBarView: View {
       }
       .padding(.bottom, 2)
 
+      if let pairedName = appState.peerName ?? appState.pairedPeerName {
+        VStack(alignment: .leading, spacing: 5) {
+          Text("PAIRED DEVICE")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundColor(AppColors.textMuted)
+            .padding(.horizontal, AppSpacing.spacing4)
+
+          HStack(spacing: AppSpacing.spacing10) {
+            ZStack {
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(AppColors.surfaceHover(colorScheme))
+                .frame(width: 28, height: 28)
+
+              Image(systemName: deviceIcon(for: friendlyDeviceName(for: pairedName)))
+                .font(.system(size: 13))
+                .foregroundColor(AppColors.textPrimary)
+            }
+
+            Text(friendlyDeviceName(for: pairedName))
+              .font(AppTypography.bodySecondary.weight(.medium))
+              .foregroundColor(AppColors.textPrimary)
+              .lineLimit(1)
+              .truncationMode(.tail)
+
+            Spacer()
+
+            Button(action: {
+              withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                appState.unpair()
+                isViewingSettings = false
+              }
+            }) {
+              Text("Unpair")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Color.red)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.red.opacity(0.12))
+                .cornerRadius(AppRadius.small)
+            }
+            .buttonStyle(InteractivePillButtonStyle())
+            .accessibilityLabel("Unpair \(friendlyDeviceName(for: pairedName))")
+          }
+          .padding(.horizontal, AppSpacing.spacing12)
+          .padding(.vertical, AppSpacing.spacing8)
+          .background(
+            RoundedRectangle(cornerRadius: AppRadius.card)
+              .fill(AppColors.surfaceCard(colorScheme))
+          )
+          .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.card)
+              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+          )
+        }
+      }
       VStack(alignment: .leading, spacing: 5) {
         Text("GENERAL")
           .font(.system(size: 10, weight: .semibold))
@@ -1208,52 +1263,62 @@ public struct MenuBarView: View {
       ZStack {
         RoundedRectangle(cornerRadius: AppRadius.medium)
           .fill(AppColors.surfaceHover(colorScheme))
-          .frame(width: 34, height: 34)
+          .frame(width: 32, height: 32)
 
         Image(systemName: deviceIcon(for: friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device")))
           .font(.system(size: 15))
           .foregroundColor(AppColors.textPrimary)
       }
 
-      VStack(alignment: .leading, spacing: 2) {
-        Text(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Paired Device"))
-          .font(AppTypography.deviceName)
-          .foregroundColor(AppColors.textPrimary)
-          .lineLimit(1)
-          .truncationMode(.tail)
+      Text(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Paired Device"))
+        .font(AppTypography.deviceName)
+        .foregroundColor(AppColors.textPrimary)
+        .lineLimit(1)
+        .truncationMode(.tail)
 
-        HStack(spacing: 5) {
-          if appState.isConnecting {
-            ProgressView()
-              .controlSize(.mini)
-          } else {
-            Circle()
-              .fill(appState.isConnected ? AppColors.statusConnected : AppColors.statusDisconnected)
-              .frame(width: 5, height: 5)
-          }
-          Text(appState.isConnected ? "Connected" : (appState.isConnecting ? "Connecting..." : "Offline"))
-            .font(AppTypography.statusBadge)
-            .foregroundColor(appState.isConnected ? AppColors.statusConnected : (appState.isConnecting ? Color.orange : AppColors.statusDisconnected))
-            .lineLimit(1)
-        }
-      }
       Spacer()
 
-      Button(action: {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-          appState.unpair()
+      if appState.isConnecting {
+        HStack(spacing: 4) {
+          ProgressView()
+            .controlSize(.mini)
+          Text("Connecting...")
+            .font(AppTypography.statusBadge)
+            .foregroundColor(Color.orange)
         }
-      }) {
-        Text("Unpair")
-          .font(AppTypography.metadata.weight(.medium))
-          .foregroundColor(AppColors.textSecondary)
-          .padding(.horizontal, AppSpacing.spacing8)
-          .frame(minHeight: 24)
-          .background(AppColors.surfaceHover(colorScheme))
-          .cornerRadius(AppRadius.small)
+      } else if !appState.isConnected {
+        HStack(spacing: 4) {
+          Circle()
+            .fill(AppColors.statusDisconnected)
+            .frame(width: 5, height: 5)
+          Text("Offline")
+            .font(AppTypography.statusBadge)
+            .foregroundColor(AppColors.statusDisconnected)
+        }
+      } else if let battery = appState.peerBatteryStatus {
+        HStack(spacing: 4) {
+          if battery.isCharging {
+            Image(systemName: "bolt.fill")
+              .font(.system(size: 8, weight: .bold))
+              .foregroundColor(AppColors.statusConnected)
+          }
+          Image(systemName: batteryIcon(for: battery.level))
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(battery.isCharging ? AppColors.statusConnected : AppColors.textSecondary)
+          Text("\(battery.level)%")
+            .font(AppTypography.statusBadge)
+            .foregroundColor(AppColors.textSecondary)
+        }
+      } else {
+        HStack(spacing: 4) {
+          Circle()
+            .fill(AppColors.statusConnected)
+            .frame(width: 5, height: 5)
+          Text("Connected")
+            .font(AppTypography.statusBadge)
+            .foregroundColor(AppColors.statusConnected)
+        }
       }
-      .buttonStyle(InteractivePillButtonStyle())
-      .accessibilityLabel("Unpair device")
     }
     .padding(AppSpacing.spacing10)
     .background(
@@ -1264,6 +1329,7 @@ public struct MenuBarView: View {
             .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
         )
     )
+    .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.peerBatteryStatus)
   }
   @ViewBuilder
   private func transferProgressCard(_ info: AppState.TransferProgressInfo) -> some View {
@@ -1963,6 +2029,15 @@ public struct MenuBarView: View {
       return "ipad"
     }
     return "smartphone"
+  }
+  private func batteryIcon(for level: Int) -> String {
+    switch level {
+    case ..<15: return "battery.0percent"
+    case ..<35: return "battery.25percent"
+    case ..<65: return "battery.50percent"
+    case ..<85: return "battery.75percent"
+    default: return "battery.100percent"
+    }
   }
   private func friendlyDeviceName(for name: String) -> String {
     return name.trimmingCharacters(in: .whitespacesAndNewlines)

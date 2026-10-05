@@ -18,6 +18,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -26,6 +29,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.graphics.Color
 import com.prabotics.rapidrop.ui.components.PairedDeviceContent
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -267,38 +273,78 @@ fun MainScreen(
             },
             bottomBar = {
                 if (!isWideLayout) {
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        tonalElevation = 0.dp
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(bottom = 12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        MainNavDestination.entries.forEach { destination ->
-                            val isSelected = currentDestination == destination
-                            NavigationBarItem(
-                                selected = isSelected,
-                                onClick = {
-                                    HapticManager.performClick(context)
-                                    currentDestination = destination
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = destination.icon,
-                                        contentDescription = destination.label
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            tonalElevation = 6.dp,
+                            shadowElevation = 8.dp,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .widthIn(max = 380.dp)
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                MainNavDestination.entries.forEach { destination ->
+                                    val isSelected = currentDestination == destination
+                                    val animatedBgColor by animateColorAsState(
+                                        targetValue = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+                                        animationSpec = spring(stiffness = 500f),
+                                        label = "floatingNavBg"
                                     )
-                                },
-                                label = {
-                                    Text(
-                                        text = destination.label,
-                                        style = MaterialTheme.typography.labelMedium
+                                    val animatedContentColor by animateColorAsState(
+                                        targetValue = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        animationSpec = spring(stiffness = 500f),
+                                        label = "floatingNavContent"
                                     )
-                                },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
+
+                                    Surface(
+                                        onClick = {
+                                            HapticManager.performClick(context)
+                                            currentDestination = destination
+                                        },
+                                        shape = CircleShape,
+                                        color = animatedBgColor,
+                                        contentColor = animatedContentColor,
+                                        modifier = Modifier.clip(CircleShape)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = destination.icon,
+                                                contentDescription = destination.label,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            AnimatedVisibility(
+                                                visible = isSelected,
+                                                enter = fadeIn(spring(stiffness = 600f)) + expandHorizontally(spring(stiffness = 600f)),
+                                                exit = fadeOut(spring(stiffness = 600f)) + shrinkHorizontally(spring(stiffness = 600f))
+                                            ) {
+                                                Text(
+                                                    text = destination.label,
+                                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

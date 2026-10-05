@@ -39,7 +39,8 @@ class SocketClient(
     private val onRemoteUnpaired: (() -> Unit)? = null,
     var onPrivacyModeUpdated: ((Boolean) -> Unit)? = null,
     var onTransferProgress: ((transferId: String, fileName: String, bytesTransferred: Long, totalBytes: Long, fileIndex: Int, totalFiles: Int, isComplete: Boolean) -> Unit)? = null,
-    var onTransferCancelled: ((transferId: String, reason: String) -> Unit)? = null
+    var onTransferCancelled: ((transferId: String, reason: String) -> Unit)? = null,
+    var onPeerBatteryUpdated: ((DeviceBatteryStatus?) -> Unit)? = null
 ) {
     private var socket: Socket? = null
     private var outputStream: OutputStream? = null
@@ -331,6 +332,7 @@ class SocketClient(
         socket = null
         outputStream = null
         if (isConnectedState.compareAndSet(true, false)) {
+            onPeerBatteryUpdated?.invoke(null)
             onConnectionStateChanged(false)
         }
     }
@@ -431,6 +433,24 @@ class SocketClient(
         } catch (_: IOException) {
         } catch (_: SecurityException) {}
     }
+    fun sendBatteryUpdate() {
+        val out = outputStream ?: return
+        val key = sessionKey ?: return
+        val localBattery = DeviceBatteryStatus.current(context) ?: return
+        val payload = org.json.JSONObject().apply {
+            put("type", "ping")
+            put("battery", localBattery.level)
+            put("charging", localBattery.isCharging)
+        }.toString()
+        try {
+            val (cipher, nonce, tag) = CryptoEngine.encrypt(payload.toByteArray(Charsets.UTF_8), key)
+            val frame = WireFrame(type = PacketType.PING, nonce = nonce, ciphertext = cipher, tag = tag)
+            synchronized(out) {
+                out.write(frame.serialize())
+                out.flush()
+            }
+        } catch (_: Exception) {}
+    }
     private fun startHeartbeat(gen: Long) {
         heartbeatJob?.cancel()
         heartbeatJob = CoroutineScope(Dispatchers.IO).launch {
@@ -440,7 +460,15 @@ class SocketClient(
                 val key = sessionKey ?: continue
                 val out = outputStream ?: continue
                 try {
-                    val (cipher, nonce, tag) = CryptoEngine.encrypt("PING".toByteArray(Charsets.UTF_8), key)
+                    val localBattery = DeviceBatteryStatus.current(context)
+                    val pingPayload = org.json.JSONObject().apply {
+                        put("type", "ping")
+                        if (localBattery != null) {
+                            put("battery", localBattery.level)
+                            put("charging", localBattery.isCharging)
+                        }
+                    }.toString()
+                    val (cipher, nonce, tag) = CryptoEngine.encrypt(pingPayload.toByteArray(Charsets.UTF_8), key)
                     val pingFrame = WireFrame(type = PacketType.PING, nonce = nonce, ciphertext = cipher, tag = tag)
                     synchronized(out) {
                         out.write(pingFrame.serialize())
@@ -459,7 +487,27 @@ class SocketClient(
             val out = outputStream ?: return
             val key = sessionKey ?: return
             try {
-                val encrypted = CryptoEngine.encrypt("PONG".toByteArray(Charsets.UTF_8), key)
+                val decrypted = try { CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key) } catch (_: Exception) { null }
+                if (decrypted != null) {
+                    val str = String(decrypted, Charsets.UTF_8)
+                    val json = try { org.json.JSONObject(str) } catch (_: Exception) { null }
+                    if (json != null && json.has("battery")) {
+                        val lvl = json.optInt("battery", -1)
+                        val chg = json.optBoolean("charging", false)
+                        if (lvl in 0..100) {
+                            onPeerBatteryUpdated?.invoke(DeviceBatteryStatus(lvl, chg))
+                        }
+                    }
+                }
+                val localBattery = DeviceBatteryStatus.current(context)
+                val pongPayload = org.json.JSONObject().apply {
+                    put("type", "pong")
+                    if (localBattery != null) {
+                        put("battery", localBattery.level)
+                        put("charging", localBattery.isCharging)
+                    }
+                }.toString()
+                val encrypted = CryptoEngine.encrypt(pongPayload.toByteArray(Charsets.UTF_8), key)
                 val responseFrame = WireFrame(
                     type = PacketType.PONG,
                     nonce = encrypted.nonce,
@@ -479,6 +527,21 @@ class SocketClient(
             return
         }
         if (frame.type == PacketType.PONG) {
+            val key = sessionKey
+            if (key != null) {
+                val decrypted = try { CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key) } catch (_: Exception) { null }
+                if (decrypted != null) {
+                    val str = String(decrypted, Charsets.UTF_8)
+                    val json = try { org.json.JSONObject(str) } catch (_: Exception) { null }
+                    if (json != null && json.has("battery")) {
+                        val lvl = json.optInt("battery", -1)
+                        val chg = json.optBoolean("charging", false)
+                        if (lvl in 0..100) {
+                            onPeerBatteryUpdated?.invoke(DeviceBatteryStatus(lvl, chg))
+                        }
+                    }
+                }
+            }
             return
         }
         if (frame.type == PacketType.DISCONNECT) {
