@@ -41,7 +41,7 @@ public struct MenuBarView: View {
     self.appState = appState
   }
   public var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
+    ZStack(alignment: .topLeading) {
       if isViewingSettings {
         settingsSection
           .transition(
@@ -201,8 +201,6 @@ public struct MenuBarView: View {
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.transferErrorMessage)
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: appState.toastMessage)
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: syncToastMessage)
-    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isViewingHistory)
-    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isViewingSettings)
     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isFileSent)
     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isClipboardSynced)
     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: inspectingClip != nil)
@@ -318,7 +316,7 @@ public struct MenuBarView: View {
       Spacer()
 
       Button(action: {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+        withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) {
           isViewingSettings = true
         }
       }) {
@@ -339,7 +337,7 @@ public struct MenuBarView: View {
     VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
       HStack {
         Button(action: {
-          withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+          withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) {
             isViewingSettings = false
           }
         }) {
