@@ -870,11 +870,11 @@ public struct MenuBarView: View {
       ))
   }
   private var discoveredDevicesSection: some View {
-    VStack(alignment: .leading, spacing: AppSpacing.spacing8) {
-      Text("Nearby devices")
-        .font(AppTypography.sectionTitle)
-        .foregroundColor(AppColors.textSecondary)
-
+    VStack(alignment: .leading, spacing: 6) {
+      Text("NEARBY DEVICES")
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(AppColors.textMuted)
+        .padding(.horizontal, AppSpacing.spacing4)
       if appState.unpairedDiscoveredDevices.isEmpty {
         VStack(spacing: AppSpacing.spacing8) {
           ZStack {
@@ -908,57 +908,54 @@ public struct MenuBarView: View {
         VStack(spacing: AppSpacing.spacing6) {
           ForEach(appState.unpairedDiscoveredDevices) { device in
             HStack(spacing: AppSpacing.spacing10) {
-              ZStack {
-                RoundedRectangle(cornerRadius: AppRadius.medium)
-                  .fill(AppColors.surfaceHover(colorScheme))
-                  .frame(width: 32, height: 32)
-                Image(systemName: deviceIcon(for: device.name))
-                  .font(.system(size: 14))
-                  .foregroundColor(AppColors.textPrimary)
-              }
+              Image(systemName: deviceIcon(for: device.name))
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(AppColors.textSecondary)
+                .frame(width: 20, height: 20)
 
-              VStack(alignment: .leading, spacing: 2) {
+              VStack(alignment: .leading, spacing: 1.5) {
                 Text(friendlyDeviceName(for: device.name))
-                  .font(AppTypography.deviceName)
+                  .font(.system(size: 13, weight: .semibold))
                   .foregroundColor(AppColors.textPrimary)
                   .lineLimit(1)
                   .truncationMode(.tail)
-                Text("Local Wi-Fi")
-                  .font(AppTypography.metadata)
-                  .foregroundColor(AppColors.textSecondary)
+                Text("Ready to connect")
+                  .font(.system(size: 10.5, weight: .regular))
+                  .foregroundColor(AppColors.textMuted)
                   .lineLimit(1)
                   .truncationMode(.tail)
               }
 
               Spacer()
 
-              Button("Connect") {
+              Button(action: {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                   appState.selectDeviceForPairing(device)
                 }
+              }) {
+                Text("Connect")
+                  .font(.system(size: 11, weight: .semibold))
+                  .foregroundColor(AppColors.accent)
+                  .padding(.horizontal, 10)
+                  .frame(height: 22)
+                  .background(
+                    RoundedRectangle(cornerRadius: AppRadius.small)
+                      .fill(AppColors.surfaceHover(colorScheme))
+                  )
               }
-              .font(AppTypography.bodySecondary.weight(.semibold))
-              .foregroundColor(AppColors.textPrimary)
-              .padding(.horizontal, AppSpacing.spacing10)
-              .padding(.vertical, 4)
-              .background(AppColors.surfaceHover(colorScheme))
-              .cornerRadius(AppRadius.medium)
-              .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.medium)
-                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-              )
               .buttonStyle(InteractivePillButtonStyle())
               .fixedSize()
               .layoutPriority(1)
             }
-            .padding(AppSpacing.spacing8)
+            .padding(.horizontal, AppSpacing.spacing12)
+            .frame(height: 42)
             .background(
               RoundedRectangle(cornerRadius: AppRadius.card)
                 .fill(AppColors.surfaceCard(colorScheme))
-                .overlay(
-                  RoundedRectangle(cornerRadius: AppRadius.card)
-                    .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-                )
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: AppRadius.card)
+                .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
             )
             .transition(
               .asymmetric(
@@ -1917,15 +1914,10 @@ public struct MenuBarView: View {
   }
   private func deviceIcon(for name: String) -> String {
     let lower = name.lowercased()
-    if lower.contains("mac") || lower.contains("book") {
-      return "laptopcomputer"
-    } else if lower.contains("pc") || lower.contains("windows") || lower.contains("desktop") {
-      return "display"
-    } else if lower.contains("ipad") || lower.contains("tablet") {
+    if lower.contains("tablet") || lower.contains("pad") || lower.contains("tab") {
       return "ipad"
-    } else {
-      return "smartphone"
     }
+    return "smartphone"
   }
   private func friendlyDeviceName(for name: String) -> String {
     return name.trimmingCharacters(in: .whitespacesAndNewlines)
