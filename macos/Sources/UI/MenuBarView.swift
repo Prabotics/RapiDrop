@@ -1051,13 +1051,15 @@ public struct MenuBarView: View {
 
       VStack(spacing: 0) {
         Button(action: {
+          NSApp.activate(ignoringOtherApps: true)
           let panel = NSOpenPanel()
           panel.canChooseFiles = true
           panel.canChooseDirectories = true
           panel.allowsMultipleSelection = true
           panel.prompt = "Send"
           panel.message = "Choose files, photos, or documents to send"
-          if panel.runModal() == .OK, !panel.urls.isEmpty {
+          panel.begin { response in
+            guard response == .OK, !panel.urls.isEmpty else { return }
             appState.sendFiles(at: panel.urls)
             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
               isFileSent = true
@@ -1330,6 +1332,7 @@ public struct MenuBarView: View {
   }
 
   private func selectCustomFolder() {
+    NSApp.activate(ignoringOtherApps: true)
     let panel = NSOpenPanel()
     panel.canChooseFiles = false
     panel.canChooseDirectories = true
@@ -1338,8 +1341,10 @@ public struct MenuBarView: View {
     panel.prompt = "Select Folder"
     panel.message = "Choose destination folder for received media"
 
-    if panel.runModal() == .OK, let selectedURL = panel.url {
-      appState.customMediaFolderURL = selectedURL
+    panel.begin { response in
+      if response == .OK, let selectedURL = panel.url {
+        appState.customMediaFolderURL = selectedURL
+      }
     }
   }
 
@@ -1555,7 +1560,6 @@ public struct MenuBarView: View {
         }
       }
     }
-
   private var filteredClips: [ClipItem] {
     let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     let filtered = appState.recentClips.filter { clip in

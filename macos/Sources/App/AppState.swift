@@ -515,13 +515,6 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       playSound("Basso")
       return
     }
-    let files = collectFiles(from: urls)
-    guard !files.isEmpty else {
-      setTransferError("No files found to send")
-      return
-    }
-    let totalBytes = files.reduce(0) { $0 + $1.size }
-    let transferId = UUID().uuidString
 
     self.triggerSyncFeedback()
     self.playSound("Glass")
@@ -529,6 +522,15 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
 
     activeOutgoingTransferTask?.cancel()
     activeOutgoingTransferTask = Task.detached(priority: .utility) {
+      let files = Self.collectFiles(from: urls)
+      guard !files.isEmpty else {
+        await MainActor.run {
+          self.setTransferError("No files found to send")
+        }
+        return
+      }
+      let totalBytes = files.reduce(0) { $0 + $1.size }
+      let transferId = UUID().uuidString
       var overallBytesSent: Int64 = 0
       let speedTracker = TransferSpeedTracker()
 
@@ -578,7 +580,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     }
   }
 
-  private func collectFiles(from urls: [URL]) -> [(url: URL, relativePath: String, size: Int64)] {
+  nonisolated private static func collectFiles(from urls: [URL]) -> [(url: URL, relativePath: String, size: Int64)] {
     var result: [(url: URL, relativePath: String, size: Int64)] = []
     let fm = FileManager.default
     for url in urls {
