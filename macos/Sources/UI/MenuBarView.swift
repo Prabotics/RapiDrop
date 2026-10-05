@@ -144,7 +144,7 @@ public struct MenuBarView: View {
         )
       }
     }
-    .padding(AppSpacing.spacing14)
+    .padding(AppSpacing.spacing12)
     .frame(width: AppLayout.popoverWidth)
     .background(AppColors.surfaceBackground(colorScheme))
     .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
@@ -716,62 +716,63 @@ public struct MenuBarView: View {
   }
 
   private func incomingPairInviteCard(deviceName: String) -> some View {
-    VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
-      HStack(spacing: AppSpacing.spacing10) {
+    VStack(spacing: AppSpacing.spacing10) {
+      VStack(spacing: AppSpacing.spacing6) {
         ZStack {
-          RoundedRectangle(cornerRadius: AppRadius.medium)
-            .fill(AppColors.accent.opacity(colorScheme == .dark ? 0.15 : 0.12))
-            .frame(width: 36, height: 36)
+          Circle()
+            .stroke(AppColors.accent.opacity(isPairingPulsing ? 0.0 : 0.4), lineWidth: 1.5)
+            .scaleEffect(isPairingPulsing ? 1.4 : 0.95)
+          Circle()
+            .fill(AppColors.accent.opacity(colorScheme == .dark ? 0.14 : 0.08))
+            .frame(width: 40, height: 40)
+            .overlay(
+              Circle()
+                .stroke(AppColors.accent.opacity(0.25), lineWidth: 1)
+            )
           Image(systemName: deviceIcon(for: friendlyDeviceName(for: deviceName)))
-            .font(.system(size: 16, weight: .medium))
+            .font(.system(size: 18, weight: .medium))
             .foregroundColor(AppColors.accent)
         }
+        .frame(width: 44, height: 44)
 
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(spacing: 2) {
           Text(friendlyDeviceName(for: deviceName))
-            .font(AppTypography.deviceName)
+            .font(.system(size: 14, weight: .semibold))
             .foregroundColor(AppColors.textPrimary)
+
           Text("Wants to connect with this Mac")
             .font(AppTypography.bodySecondary)
             .foregroundColor(AppColors.textSecondary)
         }
-
-        Spacer()
       }
 
       if let pin = appState.incomingPairInvite?.pin, !pin.isEmpty {
-        let formattedPin = pin.count == 6 ? "\(pin.prefix(3)) \(pin.suffix(3))" : pin
-        HStack {
-          Text("Verification Code")
-            .font(AppTypography.metadata)
-            .foregroundColor(AppColors.textSecondary)
-          Spacer()
-          Text(formattedPin)
-            .font(AppTypography.codeSnippet.weight(.bold))
-            .foregroundColor(AppColors.statusConnected)
-        }
-        .padding(.horizontal, AppSpacing.spacing8)
-        .padding(.vertical, AppSpacing.spacing4)
-        .background(AppColors.containerSubtle(colorScheme))
-        .cornerRadius(AppRadius.small)
+        pinCodeView(pin: pin)
+          .transition(
+            .asymmetric(
+              insertion: .opacity.combined(with: .scale(scale: 0.92)),
+              removal: .opacity
+            )
+          )
       }
 
-      HStack(spacing: AppSpacing.spacing8) {
+      HStack(spacing: AppSpacing.spacing10) {
         Button(action: {
           withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             appState.declinePairInvite()
           }
         }) {
           Text("Decline")
-            .font(AppTypography.bodySecondary)
-            .foregroundColor(AppColors.textSecondary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
-            .background(AppColors.surfaceHover(colorScheme))
-            .cornerRadius(AppRadius.medium)
-            .overlay(
-              RoundedRectangle(cornerRadius: AppRadius.medium)
-                .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(AppColors.textPrimary)
+            .frame(width: 100, height: 28)
+            .background(
+              Capsule()
+                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+                .overlay(
+                  Capsule()
+                    .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+                )
             )
         }
         .buttonStyle(InteractivePillButtonStyle())
@@ -782,35 +783,33 @@ public struct MenuBarView: View {
           }
         }) {
           Text("Accept")
-            .font(AppTypography.bodySecondary.weight(.semibold))
+            .font(.system(size: 12, weight: .semibold))
             .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
-            .background(AppColors.accent)
-            .cornerRadius(AppRadius.medium)
+            .frame(width: 100, height: 28)
+            .background(
+              Capsule()
+                .fill(AppColors.accent)
+            )
         }
         .buttonStyle(InteractivePillButtonStyle())
       }
+      .padding(.top, 2)
+
     }
-    .padding(AppSpacing.spacing12)
-    .background(
-      RoundedRectangle(cornerRadius: AppRadius.card)
-        .fill(AppColors.surfaceCard(colorScheme))
-        .overlay(
-          RoundedRectangle(cornerRadius: AppRadius.card)
-            .stroke(AppColors.accent.opacity(colorScheme == .dark ? 0.35 : 0.5), lineWidth: 1)
-        )
-    )
-    .transition(
-      .asymmetric(
-        insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .top)),
-        removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
-      ))
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 4)
+    .onAppear {
+      withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
+        isPairingPulsing = true
+      }
+    }
+    .onDisappear {
+      isPairingPulsing = false
+    }
   }
 
   private func pairingPinCard(device: DiscoveredClientDevice) -> some View {
     VStack(spacing: AppSpacing.spacing10) {
-      Spacer(minLength: 0)
       VStack(spacing: AppSpacing.spacing6) {
         ZStack {
           Circle()
@@ -900,10 +899,9 @@ public struct MenuBarView: View {
           )
       }
       .buttonStyle(InteractivePillButtonStyle())
-
-      Spacer(minLength: 0)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 4)
     .animation(.spring(response: 0.42, dampingFraction: 0.85), value: appState.pendingPairingSasCode)
     .onAppear {
       withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
@@ -919,13 +917,13 @@ public struct MenuBarView: View {
   private func pinCodeView(pin: String) -> some View {
     let digits = Array(pin)
     if digits.count == 6 {
-      HStack(spacing: AppSpacing.spacing10) {
-        HStack(spacing: 5) {
+      HStack(spacing: 8) {
+        HStack(spacing: 4) {
           ForEach(0..<3, id: \.self) { i in
             pinDigitCell(char: digits[i])
           }
         }
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
           ForEach(3..<6, id: \.self) { i in
             pinDigitCell(char: digits[i])
           }
@@ -949,9 +947,9 @@ public struct MenuBarView: View {
   }
   private func pinDigitCell(char: Character) -> some View {
     Text(String(char))
-      .font(.system(size: 19, weight: .semibold, design: .monospaced))
+      .font(.system(size: 18, weight: .semibold, design: .monospaced))
       .foregroundColor(AppColors.textPrimary)
-      .frame(width: 30, height: 38)
+      .frame(width: 28, height: 35)
       .background(
         RoundedRectangle(cornerRadius: AppRadius.medium)
           .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04))
