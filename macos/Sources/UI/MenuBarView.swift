@@ -28,7 +28,6 @@ public struct MenuBarView: View {
   @State private var inspectingClip: ClipItem? = nil
   @State private var isClipboardSynced: Bool = false
   @State private var searchText: String = ""
-  @State private var selectedFilter: ClipContentType? = nil
   @State private var isDropTargeted: Bool = false
   @State private var isFileSent: Bool = false
   @State private var syncToastMessage: String? = nil
@@ -68,41 +67,20 @@ public struct MenuBarView: View {
             )
           )
       } else if isViewingHistory {
-        VStack(alignment: .leading, spacing: 12) {
-          HStack {
-            Button(action: {
-              withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
-                isViewingHistory = false
-              }
-            }) {
-              HStack(spacing: 4) {
-                Image(systemName: "chevron.backward")
-                  .font(.system(size: 11, weight: .semibold))
-                Text("Back")
-                  .font(AppTypography.bodySecondary.weight(.medium))
-              }
-              .foregroundColor(AppColors.textSecondary)
-            }
-            .accessibilityLabel("Back to Paired Device")
-
-            Spacer()
-
-            Text("Sync History")
-              .font(AppTypography.sectionTitle)
-              .foregroundColor(AppColors.textPrimary)
-
-            Spacer()
-
-            Button(action: { showClearConfirmation = true }) {
-              Image(systemName: "trash")
-                .font(.system(size: 11))
-                .foregroundColor(AppColors.textSecondary)
-            }
-            .buttonStyle(InteractivePillButtonStyle())
-            .accessibilityLabel("Clear all clips")
+        VStack(alignment: .leading, spacing: AppSpacing.spacing8) {
+          if let inspecting = inspectingClip {
+            inspectorHeader(inspecting)
+            clipInspectorCard(inspecting)
+              .transition(
+                .asymmetric(
+                  insertion: .move(edge: .trailing).combined(with: .opacity),
+                  removal: .move(edge: .trailing).combined(with: .opacity)
+                )
+              )
+          } else {
+            historyHeader
+            recentHistorySection
           }
-          Divider()
-          recentHistorySection
         }
         .transition(
           .asymmetric(
@@ -1071,7 +1049,7 @@ public struct MenuBarView: View {
     VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
       connectedDeviceCard
 
-      VStack(spacing: AppSpacing.spacing6) {
+      VStack(spacing: 0) {
         Button(action: {
           let panel = NSOpenPanel()
           panel.canChooseFiles = true
@@ -1095,41 +1073,37 @@ public struct MenuBarView: View {
             ZStack {
               RoundedRectangle(cornerRadius: AppRadius.medium)
                 .fill(isFileSent ? AppColors.statusConnected.opacity(0.15) : AppColors.surfaceHover(colorScheme))
-                .frame(width: 32, height: 32)
+                .frame(width: 30, height: 30)
               Image(systemName: isFileSent ? "checkmark" : "folder")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(isFileSent ? AppColors.statusConnected : AppColors.textPrimary)
                 .contentTransition(.symbolEffect(.replace.downUp))
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
               Text("Send Media")
                 .font(AppTypography.bodyPrimary.weight(.semibold))
                 .foregroundColor(appState.isConnected ? AppColors.textPrimary : AppColors.textPrimary.opacity(0.4))
-              Text(isFileSent ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Share files, photos, or documents")
+              Text(isFileSent ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Send files, photos, documents")
                 .font(AppTypography.metadata)
                 .foregroundColor(isFileSent ? AppColors.statusConnected : (appState.isConnected ? AppColors.textSecondary : AppColors.textSecondary.opacity(0.4)))
-                .contentTransition(.opacity)
+                .lineLimit(1)
             }
 
             Spacer()
-
-            Image(systemName: "chevron.forward")
-              .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(AppColors.textSecondary.opacity(0.6))
           }
-          .padding(AppSpacing.spacing8)
-          .background(
-            RoundedRectangle(cornerRadius: AppRadius.card)
-              .fill(isFileSent ? AppColors.statusConnected.opacity(colorScheme == .dark ? 0.12 : 0.08) : AppColors.surfaceCard(colorScheme))
-              .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.card)
-                  .stroke(isFileSent ? AppColors.statusConnected.opacity(0.3) : AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-              )
-          )
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
         }
-        .buttonStyle(InteractiveCardButtonStyle())
+        .buttonStyle(PlainButtonStyle())
         .disabled(!appState.isConnected)
+        .opacity(appState.isConnected ? 1.0 : 0.45)
+
+        Rectangle()
+          .fill(AppColors.surfaceBorder(colorScheme))
+          .frame(height: 0.5)
+          .padding(.leading, 48)
 
         Button(action: {
           if appState.sendClipboardNow() {
@@ -1147,41 +1121,37 @@ public struct MenuBarView: View {
             ZStack {
               RoundedRectangle(cornerRadius: AppRadius.medium)
                 .fill(isClipboardSynced ? AppColors.statusConnected.opacity(0.15) : AppColors.surfaceHover(colorScheme))
-                .frame(width: 32, height: 32)
+                .frame(width: 30, height: 30)
               Image(systemName: isClipboardSynced ? "checkmark" : "doc.on.clipboard")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(isClipboardSynced ? AppColors.statusConnected : AppColors.textPrimary)
                 .contentTransition(.symbolEffect(.replace.downUp))
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
               Text("Send Clipboard")
                 .font(AppTypography.bodyPrimary.weight(.semibold))
                 .foregroundColor(appState.isConnected ? AppColors.textPrimary : AppColors.textPrimary.opacity(0.4))
-              Text(isClipboardSynced ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Send current clipboard to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))")
+              Text(isClipboardSynced ? "Sent to \(friendlyDeviceName(for: appState.peerName ?? appState.pairedPeerName ?? "Device"))!" : "Send system clipboard")
                 .font(AppTypography.metadata)
                 .foregroundColor(isClipboardSynced ? AppColors.statusConnected : (appState.isConnected ? AppColors.textSecondary : AppColors.textSecondary.opacity(0.4)))
-                .contentTransition(.opacity)
+                .lineLimit(1)
             }
 
             Spacer()
-
-            Image(systemName: "chevron.forward")
-              .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(AppColors.textSecondary.opacity(0.6))
           }
-          .padding(AppSpacing.spacing8)
-          .background(
-            RoundedRectangle(cornerRadius: AppRadius.card)
-              .fill(isClipboardSynced ? AppColors.statusConnected.opacity(colorScheme == .dark ? 0.12 : 0.08) : AppColors.surfaceCard(colorScheme))
-              .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.card)
-                  .stroke(isClipboardSynced ? AppColors.statusConnected.opacity(0.3) : AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-              )
-          )
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
         }
-        .buttonStyle(InteractiveCardButtonStyle())
+        .buttonStyle(PlainButtonStyle())
         .disabled(!appState.isConnected)
+        .opacity(appState.isConnected ? 1.0 : 0.45)
+
+        Rectangle()
+          .fill(AppColors.surfaceBorder(colorScheme))
+          .frame(height: 0.5)
+          .padding(.leading, 48)
 
         Button(action: {
           withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
@@ -1192,19 +1162,20 @@ public struct MenuBarView: View {
             ZStack {
               RoundedRectangle(cornerRadius: AppRadius.medium)
                 .fill(AppColors.surfaceHover(colorScheme))
-                .frame(width: 32, height: 32)
+                .frame(width: 30, height: 30)
               Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(AppColors.textPrimary)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
               Text("Sync History")
                 .font(AppTypography.bodyPrimary.weight(.semibold))
                 .foregroundColor(AppColors.textPrimary)
               Text("View recent synchronized items")
                 .font(AppTypography.metadata)
                 .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
             }
 
             Spacer()
@@ -1213,18 +1184,20 @@ public struct MenuBarView: View {
               .font(.system(size: 10, weight: .semibold))
               .foregroundColor(AppColors.textSecondary.opacity(0.6))
           }
-          .padding(AppSpacing.spacing8)
-          .background(
-            RoundedRectangle(cornerRadius: AppRadius.card)
-              .fill(AppColors.surfaceCard(colorScheme))
-              .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.card)
-                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-              )
-          )
+          .padding(.horizontal, AppSpacing.spacing10)
+          .padding(.vertical, AppSpacing.spacing8)
+          .contentShape(Rectangle())
         }
-        .buttonStyle(InteractiveCardButtonStyle())
+        .buttonStyle(PlainButtonStyle())
       }
+      .background(
+        RoundedRectangle(cornerRadius: AppRadius.card)
+          .fill(AppColors.surfaceCard(colorScheme))
+          .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.card)
+              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+          )
+      )
     }
   }
 
@@ -1248,9 +1221,14 @@ public struct MenuBarView: View {
           .truncationMode(.tail)
 
         HStack(spacing: 5) {
-          Circle()
-            .fill(appState.isConnected ? AppColors.statusConnected : (appState.isConnecting ? Color.orange : AppColors.statusDisconnected))
-            .frame(width: 5, height: 5)
+          if appState.isConnecting {
+            ProgressView()
+              .controlSize(.mini)
+          } else {
+            Circle()
+              .fill(appState.isConnected ? AppColors.statusConnected : AppColors.statusDisconnected)
+              .frame(width: 5, height: 5)
+          }
           Text(appState.isConnected ? "Connected" : (appState.isConnecting ? "Connecting..." : "Offline"))
             .font(AppTypography.statusBadge)
             .foregroundColor(appState.isConnected ? AppColors.statusConnected : (appState.isConnecting ? Color.orange : AppColors.statusDisconnected))
@@ -1365,64 +1343,102 @@ public struct MenuBarView: View {
     }
   }
 
+  private var historyHeader: some View {
+    HStack(spacing: AppSpacing.spacing6) {
+      Button(action: {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+          isViewingHistory = false
+        }
+      }) {
+        Image(systemName: "chevron.backward")
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(AppColors.textSecondary)
+          .frame(width: 22, height: 22)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Back to Paired Device")
+
+      Text("Sync History")
+        .font(AppTypography.sectionTitle)
+        .foregroundColor(AppColors.textPrimary)
+
+      Spacer()
+
+      if !appState.recentClips.isEmpty {
+        Button(action: { showClearConfirmation = true }) {
+          Image(systemName: "trash")
+            .font(.system(size: 11))
+            .foregroundColor(AppColors.textSecondary)
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Clear all clips")
+      }
+    }
+  }
+
+  private func inspectorHeader(_ clip: ClipItem) -> some View {
+    let isPinned = appState.pinnedClipIds.contains(clip.id)
+    return HStack(spacing: AppSpacing.spacing6) {
+      Button(action: {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+          inspectingClip = nil
+        }
+      }) {
+        Image(systemName: "chevron.backward")
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(AppColors.textSecondary)
+          .frame(width: 22, height: 22)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Back to clips list")
+
+      Text("Clip Details")
+        .font(AppTypography.sectionTitle)
+        .foregroundColor(AppColors.textPrimary)
+
+      Spacer()
+
+      Button(action: {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+          appState.togglePinClip(clip)
+        }
+      }) {
+        Image(systemName: isPinned ? "pin.fill" : "pin")
+          .font(.system(size: 11))
+          .foregroundColor(isPinned ? AppColors.accent : AppColors.textSecondary)
+          .frame(width: 22, height: 22)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(isPinned ? "Unpin clip" : "Pin clip")
+
+      Button(action: {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+          appState.deleteClip(clip)
+          inspectingClip = nil
+        }
+      }) {
+        Image(systemName: "trash")
+          .font(.system(size: 11))
+          .foregroundColor(AppColors.textSecondary)
+          .frame(width: 22, height: 22)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Delete clip")
+    }
+  }
+
   private var recentHistorySection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      if let inspecting = inspectingClip {
-        HStack {
-          Button(action: {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
-              inspectingClip = nil
-            }
-          }) {
-            HStack(spacing: 4) {
-              Image(systemName: "chevron.left")
-                .font(.system(size: 9, weight: .bold))
-              Text("Back to Clips")
-                .font(.system(size: 10, weight: .medium))
-            }
-            .foregroundColor(.secondary)
-          }
-          .buttonStyle(InteractivePillButtonStyle())
-          .accessibilityLabel("Back to clips list")
-
-          Spacer()
-
-          Text("Inspect Clip")
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(.secondary)
-            .tracking(0.5)
-        }
-
-        clipInspectorCard(inspecting)
-          .transition(
-            .asymmetric(
-              insertion: .move(edge: .trailing).combined(with: .opacity),
-              removal: .move(edge: .trailing).combined(with: .opacity)
-            )
-          )
-      } else {
-        HStack {
-          Text("Recent clips")
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(.secondary)
-            .tracking(0.5)
-
-          Spacer()
-
-          if !appState.recentClips.isEmpty {
-            Button("Clear") {
-              showClearConfirmation = true
-            }
-            .font(.system(size: 10))
-            .foregroundColor(.secondary)
-            .buttonStyle(.plain)
-            .accessibilityLabel("Clear all clips")
-          }
-        }
         if appState.showSyncHistory && !appState.recentClips.isEmpty {
           HStack(spacing: AppSpacing.spacing6) {
             Image(systemName: "magnifyingglass")
-              .font(.system(size: 10))
+              .font(.system(size: 11))
               .foregroundColor(AppColors.textSecondary)
 
             TextField("Search clips...", text: $searchText)
@@ -1433,6 +1449,7 @@ public struct MenuBarView: View {
                   searchText = ""
                 }
               }
+
             if !searchText.isEmpty {
               Button(action: { searchText = "" }) {
                 Image(systemName: "xmark.circle.fill")
@@ -1444,22 +1461,15 @@ public struct MenuBarView: View {
             }
           }
           .padding(.horizontal, AppSpacing.spacing8)
-          .padding(.vertical, AppSpacing.spacing4)
+          .padding(.vertical, 5)
           .background(
             RoundedRectangle(cornerRadius: AppRadius.medium)
               .fill(AppColors.surfaceCard(colorScheme))
               .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.medium)
-                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
+                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
               )
           )
-
-          HStack(spacing: 4) {
-            filterChip(title: "All", filter: nil, key: "1")
-            filterChip(title: "Text", filter: .text, key: "2")
-            filterChip(title: "Links", filter: .url, key: "3")
-            filterChip(title: "Media", filter: .image, key: "4")
-          }
         }
 
         if !appState.showSyncHistory {
@@ -1523,9 +1533,8 @@ public struct MenuBarView: View {
             Text("No matching clips")
               .font(.system(size: 11, weight: .medium))
               .foregroundColor(.secondary)
-            Button("Clear Filter") {
+            Button("Clear Search") {
               searchText = ""
-              selectedFilter = nil
             }
             .font(.system(size: 10))
             .buttonStyle(.plain)
@@ -1546,24 +1555,16 @@ public struct MenuBarView: View {
         }
       }
     }
-  }
 
   private var filteredClips: [ClipItem] {
+    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     let filtered = appState.recentClips.filter { clip in
-      let matchesFilter: Bool = {
-        guard let filter = selectedFilter else { return true }
-        if filter == .image {
-          return clip.type == .image || clip.type == .file
-        }
-        return clip.type == filter
-      }()
-      let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !trimmed.isEmpty else { return matchesFilter }
+      guard !trimmed.isEmpty else { return true }
       let query = trimmed.lowercased()
       let textMatch = clip.textContent?.lowercased().contains(query) ?? false
       let fileMatch = clip.fileName?.lowercased().contains(query) ?? false
       let previewMatch = clip.previewText.lowercased().contains(query)
-      return matchesFilter && (textMatch || fileMatch || previewMatch)
+      return textMatch || fileMatch || previewMatch
     }
     var pinned: [ClipItem] = []
     var unpinned: [ClipItem] = []
@@ -1577,45 +1578,6 @@ public struct MenuBarView: View {
       }
     }
     return pinned + unpinned
-  }
-
-  private func filterChip(title: String, filter: ClipContentType?, key: KeyEquivalent? = nil)
-    -> some View
-  {
-    let isSelected = selectedFilter == filter
-    let btn = Button(action: {
-      withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-        selectedFilter = filter
-      }
-    }) {
-      Text(title)
-        .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
-        .foregroundColor(isSelected ? .white : AppColors.textSecondary)
-        .padding(.horizontal, AppSpacing.spacing8)
-        .padding(.vertical, 3)
-        .background(
-          RoundedRectangle(cornerRadius: AppRadius.small)
-            .fill(
-              isSelected
-                ? Color.accentColor
-                : AppColors.surfaceHover(colorScheme)
-            )
-            .overlay(
-              RoundedRectangle(cornerRadius: AppRadius.small)
-                .stroke(isSelected ? Color.clear : AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-            )
-        )
-    }
-    .buttonStyle(InteractivePillButtonStyle())
-    .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedFilter)
-
-    return Group {
-      if let key = key {
-        btn.keyboardShortcut(key, modifiers: .command)
-      } else {
-        btn
-      }
-    }
   }
   private static let relativeFormatter: RelativeDateTimeFormatter = {
     let formatter = RelativeDateTimeFormatter()
@@ -1633,26 +1595,26 @@ public struct MenuBarView: View {
 
   @ViewBuilder
   private func clipLeadingView(_ clip: ClipItem, isCopied: Bool) -> some View {
-    if isCopied {
-      Image(systemName: "checkmark")
-        .font(.system(size: 11))
-        .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
-        .frame(width: 20, height: 20)
-    } else if clip.type == .image, let thumb = ThumbnailCache.shared.thumbnail(for: clip.id, rawData: clip.rawData) {
-      Image(nsImage: thumb)
-        .resizable()
-        .scaledToFill()
-        .frame(width: 20, height: 20)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .overlay(
-          RoundedRectangle(cornerRadius: 4)
-            .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
-    } else {
-      Image(systemName: iconForType(clip.type))
-        .font(.system(size: 11))
-        .foregroundColor(.secondary)
-        .frame(width: 14)
+    ZStack {
+      RoundedRectangle(cornerRadius: 6)
+        .fill(AppColors.surfaceHover(colorScheme))
+        .frame(width: 24, height: 24)
+
+      if isCopied {
+        Image(systemName: "checkmark")
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+      } else if clip.type == .image, let thumb = ThumbnailCache.shared.thumbnail(for: clip.id, rawData: clip.rawData) {
+        Image(nsImage: thumb)
+          .resizable()
+          .scaledToFill()
+          .frame(width: 24, height: 24)
+          .clipShape(RoundedRectangle(cornerRadius: 6))
+      } else {
+        Image(systemName: iconForType(clip.type))
+          .font(.system(size: 11, weight: .medium))
+          .foregroundColor(AppColors.textSecondary)
+      }
     }
   }
 
@@ -1693,75 +1655,67 @@ public struct MenuBarView: View {
             .foregroundColor(.secondary.opacity(0.75))
         }
       }
-      Spacer()
-      if isHovered || isCopied {
-        HStack(spacing: 4) {
-          if isHovered && !isCopied {
-            if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr),
-              url.scheme != nil
-            {
+      Spacer(minLength: 4)
+      if isCopied {
+        Text("Copied")
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+          .padding(.horizontal, 6)
+          .padding(.vertical, 2)
+          .background(Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.12))
+          .cornerRadius(4)
+          .fixedSize()
+          .transition(.opacity)
+      } else if isHovered {
+        HStack(spacing: 3) {
+          if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr),
+            url.scheme != nil
+          {
+            Button(action: {
+              NSWorkspace.shared.open(url)
+            }) {
+              Image(systemName: "arrow.up.right")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.secondary)
+                .frame(width: 20, height: 18)
+                .background(Color.primary.opacity(0.06))
+                .cornerRadius(4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open URL in browser")
+          } else if clip.type == .file || clip.type == .image, let name = clip.fileName {
+            let fileURL = appState.mediaFolderURL.appendingPathComponent(name)
+            if FileManager.default.fileExists(atPath: fileURL.path) {
               Button(action: {
-                NSWorkspace.shared.open(url)
+                NSWorkspace.shared.activateFileViewerSelecting([fileURL])
               }) {
-                Image(systemName: "arrow.up.right")
+                Image(systemName: "folder")
                   .font(.system(size: 8, weight: .bold))
                   .foregroundColor(.secondary)
-                  .frame(width: 22, height: 20)
+                  .frame(width: 20, height: 18)
                   .background(Color.primary.opacity(0.06))
                   .cornerRadius(4)
-                  .contentShape(Rectangle())
               }
               .buttonStyle(.plain)
-              .accessibilityLabel("Open URL in browser")
-            } else if clip.type == .file || clip.type == .image, let name = clip.fileName {
-              let fileURL = appState.mediaFolderURL.appendingPathComponent(name)
-              if FileManager.default.fileExists(atPath: fileURL.path) {
-                Button(action: {
-                  NSWorkspace.shared.activateFileViewerSelecting([fileURL])
-                }) {
-                  Image(systemName: "folder")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 22, height: 20)
-                    .background(Color.primary.opacity(0.06))
-                    .cornerRadius(4)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Show file in Finder")
-              }
+              .accessibilityLabel("Show file in Finder")
             }
-            Button(action: {
-              withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                inspectingClip = clip
-              }
-            }) {
-              Image(systemName: "magnifyingglass")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.secondary)
-                .frame(width: 22, height: 20)
-                .background(Color.primary.opacity(0.06))
-                .cornerRadius(4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(InteractivePillButtonStyle())
-            .accessibilityLabel("Inspect clip details")
-            Button(action: {
-              withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                appState.deleteClip(clip)
-              }
-            }) {
-              Image(systemName: "trash")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.secondary)
-                .frame(width: 22, height: 20)
-                .background(Color.primary.opacity(0.06))
-                .cornerRadius(4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(InteractivePillButtonStyle())
-            .accessibilityLabel("Delete clip")
           }
+
+          Button(action: {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+              inspectingClip = clip
+            }
+          }) {
+            Image(systemName: "magnifyingglass")
+              .font(.system(size: 8, weight: .bold))
+              .foregroundColor(.secondary)
+              .frame(width: 20, height: 18)
+              .background(Color.primary.opacity(0.06))
+              .cornerRadius(4)
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("Inspect clip details")
+
           Button(action: {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
               appState.togglePinClip(clip)
@@ -1770,22 +1724,29 @@ public struct MenuBarView: View {
             Image(systemName: isPinned ? "pin.fill" : "pin")
               .font(.system(size: 8, weight: .bold))
               .foregroundColor(isPinned ? .accentColor : .secondary)
-              .frame(width: 22, height: 20)
+              .frame(width: 20, height: 18)
               .background(Color.primary.opacity(0.06))
               .cornerRadius(4)
-              .contentShape(Rectangle())
           }
-          .buttonStyle(InteractivePillButtonStyle())
+          .buttonStyle(.plain)
           .accessibilityLabel(isPinned ? "Unpin clip" : "Pin clip")
 
-          Text(isCopied ? "Copied" : "Copy")
-            .font(.system(size: 9, weight: .medium))
-            .foregroundColor(isCopied ? Color(red: 0.06, green: 0.72, blue: 0.51) : .secondary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(Color.primary.opacity(0.06))
-            .cornerRadius(4)
+          Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+              appState.deleteClip(clip)
+            }
+          }) {
+            Image(systemName: "trash")
+              .font(.system(size: 8, weight: .bold))
+              .foregroundColor(.secondary)
+              .frame(width: 20, height: 18)
+              .background(Color.primary.opacity(0.06))
+              .cornerRadius(4)
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("Delete clip")
         }
+        .transition(.opacity)
       }
     }
     .padding(.horizontal, 8)
@@ -1817,36 +1778,52 @@ public struct MenuBarView: View {
         }
       }
     }
+    .contextMenu {
+      Button("Copy") {
+        appState.copyRecentClip(clip)
+        copiedClipId = clip.id
+      }
+      Button(isPinned ? "Unpin" : "Pin") {
+        appState.togglePinClip(clip)
+      }
+      Button("Inspect Details") {
+        inspectingClip = clip
+      }
+      if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr) {
+        Button("Open in Browser") {
+          NSWorkspace.shared.open(url)
+        }
+      } else if clip.type == .file || clip.type == .image, let name = clip.fileName {
+        let fileURL = appState.mediaFolderURL.appendingPathComponent(name)
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+          Button("Show in Finder") {
+            NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+          }
+        }
+      }
+      Divider()
+      Button("Delete", role: .destructive) {
+        appState.deleteClip(clip)
+      }
+    }
   }
   @ViewBuilder
   private func clipInspectorCard(_ clip: ClipItem) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
+      HStack(spacing: 6) {
         Image(systemName: iconForType(clip.type))
           .font(.system(size: 11, weight: .semibold))
-          .foregroundColor(.accentColor)
+          .foregroundColor(AppColors.accent)
         Text(clip.type.rawValue.capitalized)
-          .font(.system(size: 11, weight: .bold))
-          .foregroundColor(.primary)
-        Text(relativeTimeString(for: clip.timestamp))
-          .font(.system(size: 9))
-          .foregroundColor(.secondary)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(AppColors.textPrimary)
         Spacer()
-        Button(action: {
-          withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
-            inspectingClip = nil
-          }
-        }) {
-          Image(systemName: "xmark")
-            .font(.system(size: 8, weight: .bold))
-            .foregroundColor(.secondary)
-            .padding(4)
-            .background(Color.primary.opacity(0.06))
-            .clipShape(Circle())
-        }
-        .buttonStyle(InteractivePillButtonStyle())
-        .accessibilityLabel("Close inspector")
+        Text(relativeTimeString(for: clip.timestamp))
+          .font(.system(size: 10))
+          .foregroundColor(AppColors.textSecondary)
       }
+      .padding(.horizontal, 2)
+
       if clip.type == .image {
         let nsImage: NSImage? = {
           if let raw = clip.rawData { return NSImage(data: raw) }
@@ -1861,21 +1838,21 @@ public struct MenuBarView: View {
             Image(nsImage: image)
               .resizable()
               .scaledToFit()
-              .frame(maxHeight: 180)
-              .cornerRadius(6)
+              .frame(maxHeight: 140)
+              .cornerRadius(AppRadius.medium)
               .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                  .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppRadius.medium)
+                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
               )
             HStack {
               Text("\(Int(image.size.width)) × \(Int(image.size.height)) px")
                 .font(.system(size: 9))
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
               Spacer()
               if let raw = clip.rawData {
                 Text(ByteCountFormatter.string(fromByteCount: Int64(raw.count), countStyle: .file))
                   .font(.system(size: 9))
-                  .foregroundColor(.secondary)
+                  .foregroundColor(AppColors.textSecondary)
               }
             }
           }
@@ -1884,26 +1861,27 @@ public struct MenuBarView: View {
         ScrollView(.vertical, showsIndicators: true) {
           Text(text)
             .font(isCodeSnippet(text) ? .system(size: 10, design: .monospaced) : .system(size: 11))
-            .foregroundColor(.primary)
+            .foregroundColor(AppColors.textPrimary)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8)
+            .padding(10)
         }
-        .frame(maxHeight: 160)
-        .background(colorScheme == .dark ? Color.primary.opacity(0.04) : Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .frame(maxHeight: 120)
+        .background(AppColors.surfaceCard(colorScheme))
+        .cornerRadius(AppRadius.medium)
         .overlay(
-          RoundedRectangle(cornerRadius: 6)
-            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+          RoundedRectangle(cornerRadius: AppRadius.medium)
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
         )
       } else if clip.type == .file, let name = clip.fileName {
         HStack(spacing: 8) {
           Image(systemName: "doc")
             .font(.system(size: 18))
-            .foregroundColor(.secondary)
+            .foregroundColor(AppColors.textSecondary)
           VStack(alignment: .leading, spacing: 2) {
             Text(name)
               .font(.system(size: 11, weight: .medium))
+              .foregroundColor(AppColors.textPrimary)
               .lineLimit(1)
             let fileURL = appState.mediaFolderURL.appendingPathComponent(name)
             if FileManager.default.fileExists(atPath: fileURL.path),
@@ -1911,7 +1889,7 @@ public struct MenuBarView: View {
                let size = attr[.size] as? Int64 {
               Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
                 .font(.system(size: 9))
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             }
           }
           Spacer()
@@ -1924,85 +1902,47 @@ public struct MenuBarView: View {
                 .font(.system(size: 9, weight: .medium))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 3)
-                .background(Color.primary.opacity(0.06))
+                .background(AppColors.surfaceHover(colorScheme))
                 .cornerRadius(4)
             }
             .buttonStyle(.plain)
           }
         }
         .padding(8)
-        .background(colorScheme == .dark ? Color.primary.opacity(0.04) : Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .background(AppColors.surfaceCard(colorScheme))
+        .cornerRadius(AppRadius.medium)
       }
-      HStack(spacing: 6) {
-        Button(action: {
-          appState.copyRecentClip(clip)
-          withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
-            copiedClipId = clip.id
-          }
-          DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            if copiedClipId == clip.id {
-              withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
-                copiedClipId = nil
-              }
+
+      Button(action: {
+        appState.copyRecentClip(clip)
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+          copiedClipId = clip.id
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+          if copiedClipId == clip.id {
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+              copiedClipId = nil
             }
           }
-        }) {
-          HStack(spacing: 4) {
-            Image(systemName: copiedClipId == clip.id ? "checkmark" : "doc.on.doc")
-              .font(.system(size: 9))
-              .contentTransition(.symbolEffect(.replace.downUp))
-            Text(copiedClipId == clip.id ? "Copied" : "Copy")
-              .font(.system(size: 10, weight: .medium))
-          }
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 4)
-          .background(copiedClipId == clip.id ? Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.12) : Color.primary.opacity(0.06))
-          .foregroundColor(copiedClipId == clip.id ? Color(red: 0.06, green: 0.72, blue: 0.51) : .primary)
-          .cornerRadius(4)
         }
-        .buttonStyle(InteractivePillButtonStyle())
-        .accessibilityLabel("Copy clip content")
-        Button(action: {
-          withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            appState.togglePinClip(clip)
-          }
-        }) {
-          Image(systemName: appState.pinnedClipIds.contains(clip.id) ? "pin.fill" : "pin")
-            .font(.system(size: 9))
-            .frame(width: 24, height: 22)
-            .background(Color.primary.opacity(0.06))
-            .foregroundColor(appState.pinnedClipIds.contains(clip.id) ? .accentColor : .primary)
-            .cornerRadius(4)
+      }) {
+        HStack(spacing: 5) {
+          Image(systemName: copiedClipId == clip.id ? "checkmark" : "doc.on.clipboard")
+            .font(.system(size: 11, weight: .semibold))
+          Text(copiedClipId == clip.id ? "Copied to Clipboard" : "Copy to Clipboard")
+            .font(.system(size: 11, weight: .semibold))
         }
-        .buttonStyle(InteractivePillButtonStyle())
-        .accessibilityLabel(appState.pinnedClipIds.contains(clip.id) ? "Unpin clip" : "Pin clip")
-        Button(action: {
-          withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            appState.deleteClip(clip)
-            inspectingClip = nil
-          }
-        }) {
-          Image(systemName: "trash")
-            .font(.system(size: 9))
-            .frame(width: 24, height: 22)
-            .background(Color.primary.opacity(0.06))
-            .foregroundColor(.secondary)
-            .cornerRadius(4)
-        }
-        .buttonStyle(InteractivePillButtonStyle())
-        .accessibilityLabel("Delete clip")
-      }
-    }
-    .padding(10)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(colorScheme == .dark ? Color.primary.opacity(0.04) : Color(nsColor: .controlBackgroundColor))
-        .overlay(
-          RoundedRectangle(cornerRadius: 8)
-            .stroke(colorScheme == .dark ? Color.primary.opacity(0.08) : Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+        .frame(maxWidth: .infinity)
+        .frame(height: 28)
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.medium)
+            .fill(copiedClipId == clip.id ? AppColors.statusConnected.opacity(0.12) : AppColors.surfaceHover(colorScheme))
         )
-    )
+        .foregroundColor(copiedClipId == clip.id ? AppColors.statusConnected : AppColors.textPrimary)
+      }
+      .buttonStyle(PlainButtonStyle())
+      .accessibilityLabel("Copy clip content")
+    }
   }
 
   private func iconForType(_ type: ClipContentType) -> String {

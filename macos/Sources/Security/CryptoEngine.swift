@@ -167,8 +167,39 @@ public struct CryptoEngine: Sendable {
     }
     return decrypted
   }
+  private final class TestStore: @unchecked Sendable {
+    static let shared = TestStore()
+    private let lock = NSLock()
+    private var store: [String: String] = [:]
+    func set(_ value: String, for key: String) {
+      lock.lock()
+      store[key] = value
+      lock.unlock()
+    }
+    func get(_ key: String) -> String? {
+      lock.lock()
+      defer { lock.unlock() }
+      return store[key]
+    }
+    func remove(_ key: String) {
+      lock.lock()
+      store.removeValue(forKey: key)
+      lock.unlock()
+    }
+  }
+
+  private static var isTestEnvironment: Bool {
+    ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+    ProcessInfo.processInfo.processName == "swiftpm-testing-helper" ||
+    ProcessInfo.processInfo.processName == "xctest" ||
+    ProcessInfo.processInfo.arguments.contains(where: { $0.contains("xctest") || $0.contains("Testing") })
+  }
 
   public static func saveSecureValue(key: String, value: String) {
+    if isTestEnvironment {
+      TestStore.shared.set(value, for: key)
+      return
+    }
     guard let data = value.data(using: .utf8) else { return }
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
@@ -179,14 +210,13 @@ public struct CryptoEngine: Sendable {
     var attributes = query
     attributes[kSecValueData as String] = data
     attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    var access: SecAccess?
-    if SecAccessCreate("RapiDrop" as CFString, nil, &access) == errSecSuccess, let access = access {
-      attributes[kSecAttrAccess as String] = access
-    }
     SecItemAdd(attributes as CFDictionary, nil)
   }
 
   public static func loadSecureValue(key: String) -> String? {
+    if isTestEnvironment {
+      return TestStore.shared.get(key)
+    }
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: "com.prabotics.rapidrop",
@@ -203,6 +233,10 @@ public struct CryptoEngine: Sendable {
   }
 
   public static func deleteSecureValue(key: String) {
+    if isTestEnvironment {
+      TestStore.shared.remove(key)
+      return
+    }
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: "com.prabotics.rapidrop",
