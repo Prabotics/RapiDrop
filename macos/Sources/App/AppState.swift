@@ -295,8 +295,10 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   }
   public func selectDeviceForPairing(_ device: DiscoveredClientDevice) {
     pairingTimeoutTask?.cancel()
-    self.selectedDeviceForPairing = device
-    self.pendingPairingSasCode = nil
+    withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
+      self.selectedDeviceForPairing = device
+      self.pendingPairingSasCode = nil
+    }
     network.sendPairInvite(to: device, host: device.host, port: device.port ?? 0)
     pairingTimeoutTask = Task { @MainActor in
       try? await Task.sleep(nanoseconds: 30_000_000_000)
@@ -351,8 +353,10 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       network.sendPairCancel(to: device)
     }
     network.cancelPendingPairingConnections()
-    selectedDeviceForPairing = nil
-    pendingPairingSasCode = nil
+    withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) {
+      self.selectedDeviceForPairing = nil
+      self.pendingPairingSasCode = nil
+    }
   }
   public func regeneratePin() {
     let newPin = String(format: "%06d", Int.random(in: 100000...999999))

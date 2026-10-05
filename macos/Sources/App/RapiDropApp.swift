@@ -143,13 +143,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     guard let popover = popover, let button = statusItem?.button else { return }
     if !popover.isShown {
       updatePopoverAppearance()
-      if let hosting = hostingController {
-        hosting.view.layoutSubtreeIfNeeded()
-        let fitting = hosting.view.fittingSize
-        if fitting.width > 0 && fitting.height > 0 {
-          popover.contentSize = fitting
-        }
-      }
       popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
       popover.contentViewController?.view.window?.makeKey()
       if #available(macOS 14.0, *) {
@@ -168,6 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     pop.behavior = .transient
     pop.animates = true
     pop.delegate = self
+    pop.contentSize = NSSize(width: AppLayout.popoverWidth, height: 340)
     let hosting = NSHostingController(rootView: MenuBarView(appState: appState))
     hosting.sizingOptions = [.preferredContentSize]
     pop.contentViewController = hosting

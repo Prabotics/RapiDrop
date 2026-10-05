@@ -36,13 +36,30 @@ public struct MenuBarView: View {
   @State private var showClearConfirmation: Bool = false
   @State private var isViewingHistory: Bool = false
   @State private var isViewingSettings: Bool = false
+  @State private var isPairingPulsing: Bool = false
   @Namespace private var storageSegmentNamespace
   public init(appState: AppState) {
     self.appState = appState
   }
   public var body: some View {
     ZStack(alignment: .topLeading) {
-      if isViewingSettings {
+      if let selectedDevice = appState.selectedDeviceForPairing {
+        pairingPinCard(device: selectedDevice)
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+          )
+      } else if let invite = appState.incomingPairInvite {
+        incomingPairInviteCard(deviceName: invite.deviceName)
+          .transition(
+            .asymmetric(
+              insertion: .move(edge: .trailing).combined(with: .opacity),
+              removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+          )
+      } else if isViewingSettings {
         settingsSection
           .transition(
             .asymmetric(
@@ -95,10 +112,7 @@ public struct MenuBarView: View {
         )
       } else {
         VStack(alignment: .leading, spacing: 12) {
-          if appState.selectedDeviceForPairing == nil && appState.incomingPairInvite == nil {
-            headerSection
-              .transition(.opacity.combined(with: .move(edge: .top)))
-          }
+          headerSection
 
           if let toast = appState.toastMessage ?? syncToastMessage {
             syncToastBanner(toast)
@@ -113,20 +127,14 @@ public struct MenuBarView: View {
             transferProgressCard(progress)
               .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
           }
-
-          if let invite = appState.incomingPairInvite {
-            incomingPairInviteCard(deviceName: invite.deviceName)
-              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
-          } else if appState.isPaired {
-            pairedDeviceCockpitSection
-              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
-          } else if let selectedDevice = appState.selectedDeviceForPairing {
-            pairingPinCard(device: selectedDevice)
-              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
-          } else {
-            discoveredDevicesSection
-              .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+          Group {
+            if appState.isPaired {
+              pairedDeviceCockpitSection
+            } else {
+              discoveredDevicesSection
+            }
           }
+          .transition(.opacity.combined(with: .scale(scale: 0.99, anchor: .top)))
         }
         .transition(
           .asymmetric(
@@ -200,9 +208,6 @@ public struct MenuBarView: View {
     )
     .animation(
       .spring(response: 0.35, dampingFraction: 0.8), value: appState.selectedDeviceForPairing
-    )
-    .animation(
-      .spring(response: 0.38, dampingFraction: 0.82), value: appState.pendingPairingSasCode
     )
     .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.isConnected)
     .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.isPaired)
@@ -804,49 +809,77 @@ public struct MenuBarView: View {
   }
 
   private func pairingPinCard(device: DiscoveredClientDevice) -> some View {
-    VStack(spacing: AppSpacing.spacing14) {
-      VStack(spacing: AppSpacing.spacing8) {
+    VStack(spacing: AppSpacing.spacing16) {
+      Spacer(minLength: 4)
+      VStack(spacing: AppSpacing.spacing10) {
         ZStack {
-          RoundedRectangle(cornerRadius: AppRadius.large)
+          Circle()
+            .stroke(AppColors.accent.opacity(isPairingPulsing ? 0.0 : 0.4), lineWidth: 1.5)
+            .scaleEffect(isPairingPulsing ? 1.45 : 0.95)
+          Circle()
             .fill(AppColors.accent.opacity(colorScheme == .dark ? 0.14 : 0.08))
-            .frame(width: 40, height: 40)
+            .frame(width: 44, height: 44)
             .overlay(
-              RoundedRectangle(cornerRadius: AppRadius.large)
+              Circle()
                 .stroke(AppColors.accent.opacity(0.25), lineWidth: 1)
             )
           Image(systemName: deviceIcon(for: friendlyDeviceName(for: device.name)))
-            .font(.system(size: 18, weight: .medium))
+            .font(.system(size: 20, weight: .medium))
             .foregroundColor(AppColors.accent)
         }
+        .frame(width: 48, height: 48)
 
-        VStack(spacing: 3) {
+        VStack(spacing: 4) {
           Text(friendlyDeviceName(for: device.name))
-            .font(.system(size: 14, weight: .semibold))
+            .font(.system(size: 15, weight: .semibold))
             .foregroundColor(AppColors.textPrimary)
 
           if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
             Text("Compare this code with your phone")
               .font(AppTypography.bodySecondary)
               .foregroundColor(AppColors.textSecondary)
-              .transition(.opacity.combined(with: .scale(scale: 0.96)))
+              .transition(
+                .asymmetric(
+                  insertion: .opacity.combined(with: .offset(y: 4)),
+                  removal: .opacity
+                )
+              )
           }
         }
       }
 
       if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
         pinCodeView(pin: pin)
-          .transition(.opacity.combined(with: .scale(scale: 0.94)))
+          .transition(
+            .asymmetric(
+              insertion: .opacity.combined(with: .scale(scale: 0.92)),
+              removal: .opacity
+            )
+          )
       }
 
-      HStack(alignment: .center, spacing: 6) {
+      HStack(alignment: .center, spacing: 8) {
         ProgressView()
           .controlSize(.small)
         Text(appState.pendingPairingSasCode != nil ? "Waiting for confirmation on device..." : "Waiting for approval on device...")
           .font(AppTypography.metadata)
           .foregroundColor(AppColors.textSecondary)
           .lineLimit(1)
+          .id(appState.pendingPairingSasCode != nil)
+          .transition(
+            .asymmetric(
+              insertion: .opacity.combined(with: .offset(y: 3)),
+              removal: .opacity.combined(with: .offset(y: -3))
+            )
+          )
       }
-      .padding(.top, 2)
+      .padding(.horizontal, AppSpacing.spacing10)
+      .padding(.vertical, 6)
+      .background(
+        Capsule()
+          .fill(AppColors.containerSubtle(colorScheme))
+      )
+      .animation(.spring(response: 0.35, dampingFraction: 0.85), value: appState.pendingPairingSasCode != nil)
 
       Button(action: {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -867,37 +900,33 @@ public struct MenuBarView: View {
           )
       }
       .buttonStyle(InteractivePillButtonStyle())
+
+      Spacer(minLength: 4)
     }
-    .frame(maxWidth: .infinity)
-    .padding(.vertical, AppSpacing.spacing16)
-    .padding(.horizontal, AppSpacing.spacing12)
-    .background(
-      RoundedRectangle(cornerRadius: AppRadius.card)
-        .fill(AppColors.surfaceCard(colorScheme))
-        .overlay(
-          RoundedRectangle(cornerRadius: AppRadius.card)
-            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
-        )
-    )
-    .transition(
-      .asymmetric(
-        insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .top)),
-        removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
-      )
-    )
+    .animation(.spring(response: 0.42, dampingFraction: 0.85), value: appState.pendingPairingSasCode)
+    .padding(.vertical, AppSpacing.spacing14)
+    .padding(.horizontal, AppSpacing.spacing8)
+    .onAppear {
+      withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
+        isPairingPulsing = true
+      }
+    }
+    .onDisappear {
+      isPairingPulsing = false
+    }
   }
 
   @ViewBuilder
   private func pinCodeView(pin: String) -> some View {
     let digits = Array(pin)
     if digits.count == 6 {
-      HStack(spacing: AppSpacing.spacing8) {
-        HStack(spacing: 4) {
+      HStack(spacing: AppSpacing.spacing10) {
+        HStack(spacing: 5) {
           ForEach(0..<3, id: \.self) { i in
             pinDigitCell(char: digits[i])
           }
         }
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
           ForEach(3..<6, id: \.self) { i in
             pinDigitCell(char: digits[i])
           }
@@ -919,18 +948,17 @@ public struct MenuBarView: View {
         )
     }
   }
-
   private func pinDigitCell(char: Character) -> some View {
     Text(String(char))
-      .font(.system(size: 18, weight: .semibold, design: .monospaced))
+      .font(.system(size: 19, weight: .semibold, design: .monospaced))
       .foregroundColor(AppColors.textPrimary)
-      .frame(width: 28, height: 36)
+      .frame(width: 30, height: 38)
       .background(
         RoundedRectangle(cornerRadius: AppRadius.medium)
           .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04))
           .overlay(
             RoundedRectangle(cornerRadius: AppRadius.medium)
-              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+              .stroke(AppColors.accent.opacity(colorScheme == .dark ? 0.35 : 0.25), lineWidth: 1)
           )
       )
   }
@@ -1540,8 +1568,17 @@ public struct MenuBarView: View {
       let previewMatch = clip.previewText.lowercased().contains(query)
       return matchesFilter && (textMatch || fileMatch || previewMatch)
     }
-    let pinned = filtered.filter { appState.pinnedClipIds.contains($0.id) }
-    let unpinned = filtered.filter { !appState.pinnedClipIds.contains($0.id) }
+    var pinned: [ClipItem] = []
+    var unpinned: [ClipItem] = []
+    pinned.reserveCapacity(filtered.count / 2)
+    unpinned.reserveCapacity(filtered.count)
+    for clip in filtered {
+      if appState.pinnedClipIds.contains(clip.id) {
+        pinned.append(clip)
+      } else {
+        unpinned.append(clip)
+      }
+    }
     return pinned + unpinned
   }
 
@@ -1626,7 +1663,7 @@ public struct MenuBarView: View {
     let isCopied = copiedClipId == clip.id
     let isHovered = hoveredClipId == clip.id
     let isPinned = appState.pinnedClipIds.contains(clip.id)
-
+    let isCode = isCodeSnippet(clip.previewText)
     return HStack(spacing: 8) {
       if isPinned {
         Image(systemName: "pin.fill")
@@ -1639,14 +1676,13 @@ public struct MenuBarView: View {
       VStack(alignment: .leading, spacing: 1) {
         Text(clip.previewText)
           .font(
-            isCodeSnippet(clip.previewText)
-              ? .system(size: 11, design: .monospaced) : .system(size: 11)
+            isCode ? .system(size: 11, design: .monospaced) : .system(size: 11)
           )
           .lineLimit(1)
           .truncationMode(.tail)
 
         HStack(spacing: 4) {
-          if isCodeSnippet(clip.previewText) {
+          if isCode {
             Text("CODE")
               .font(.system(size: 7.5, weight: .bold))
               .foregroundColor(.secondary)

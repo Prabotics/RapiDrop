@@ -87,9 +87,22 @@ public final class PasteboardMonitor: @unchecked Sendable {
         self.onClipCaptured?(item)
         return
       }
+      if let pngData = self.pasteboard.data(forType: .png) {
+        if pngData.count <= WireFrame.maxPayloadSize {
+          self.onClipCaptured?(ClipItem(type: .image, rawData: pngData))
+          return
+        }
+      }
 
-      if let imageData = self.extractImageData() {
-        self.onClipCaptured?(ClipItem(type: .image, rawData: imageData))
+      if let tiffData = self.pasteboard.data(forType: .tiff) {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+          guard let imageRep = NSBitmapImageRep(data: tiffData),
+                let convertedPng = imageRep.representation(using: .png, properties: [:]),
+                convertedPng.count <= WireFrame.maxPayloadSize else { return }
+          DispatchQueue.main.async {
+            self?.onClipCaptured?(ClipItem(type: .image, rawData: convertedPng))
+          }
+        }
         return
       }
 
