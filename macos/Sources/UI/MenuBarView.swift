@@ -95,7 +95,9 @@ public struct MenuBarView: View {
         )
       } else {
         VStack(alignment: .leading, spacing: 12) {
-          headerSection
+          if appState.selectedDeviceForPairing == nil && appState.incomingPairInvite == nil {
+            headerSection
+          }
 
           if let toast = appState.toastMessage ?? syncToastMessage {
             syncToastBanner(toast)
@@ -791,80 +793,133 @@ public struct MenuBarView: View {
   }
 
   private func pairingPinCard(device: DiscoveredClientDevice) -> some View {
-    VStack(alignment: .leading, spacing: AppSpacing.spacing10) {
-      HStack(spacing: AppSpacing.spacing10) {
+    VStack(spacing: AppSpacing.spacing14) {
+      VStack(spacing: AppSpacing.spacing8) {
         ZStack {
-          RoundedRectangle(cornerRadius: AppRadius.medium)
-            .fill(AppColors.statusConnected.opacity(colorScheme == .dark ? 0.15 : 0.12))
-            .frame(width: 36, height: 36)
+          RoundedRectangle(cornerRadius: AppRadius.large)
+            .fill(AppColors.accent.opacity(colorScheme == .dark ? 0.14 : 0.08))
+            .frame(width: 40, height: 40)
+            .overlay(
+              RoundedRectangle(cornerRadius: AppRadius.large)
+                .stroke(AppColors.accent.opacity(0.25), lineWidth: 1)
+            )
           Image(systemName: deviceIcon(for: friendlyDeviceName(for: device.name)))
-            .font(.system(size: 16, weight: .medium))
-            .foregroundColor(AppColors.statusConnected)
+            .font(.system(size: 18, weight: .medium))
+            .foregroundColor(AppColors.accent)
         }
 
-        VStack(alignment: .leading, spacing: 2) {
-          Text("Connecting to \(friendlyDeviceName(for: device.name))")
-            .font(AppTypography.deviceName)
+        VStack(spacing: 3) {
+          Text(friendlyDeviceName(for: device.name))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundColor(AppColors.textPrimary)
-            .lineLimit(1)
 
           if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
-            let formatted = pin.count == 6 ? "\(pin.prefix(3)) \(pin.suffix(3))" : pin
-            HStack(spacing: 6) {
-              Text("Verification code:")
-                .font(AppTypography.bodySecondary)
-                .foregroundColor(AppColors.textSecondary)
-              Text(formatted)
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
-                .foregroundColor(AppColors.textPrimary)
-            }
-            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .leading)))
-          } else {
-            HStack(spacing: 5) {
-              Circle()
-                .fill(AppColors.statusConnected)
-                .frame(width: 5, height: 5)
-              Text("Waiting for approval on \(friendlyDeviceName(for: device.name))...")
-                .font(AppTypography.bodySecondary)
-                .foregroundColor(AppColors.textSecondary)
-                .lineLimit(1)
-            }
-            .transition(.opacity)
+            Text("Compare this code with your phone")
+              .font(AppTypography.bodySecondary)
+              .foregroundColor(AppColors.textSecondary)
           }
         }
-        Spacer()
       }
-      Button("Cancel") {
+
+      if let pin = appState.pendingPairingSasCode, !pin.isEmpty {
+        pinCodeView(pin: pin)
+      }
+
+      HStack(alignment: .center, spacing: 6) {
+        ProgressView()
+          .controlSize(.small)
+        Text(appState.pendingPairingSasCode != nil ? "Waiting for confirmation on device..." : "Waiting for approval on device...")
+          .font(AppTypography.metadata)
+          .foregroundColor(AppColors.textSecondary)
+          .lineLimit(1)
+      }
+      .padding(.top, 2)
+
+      Button(action: {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
           appState.cancelPairingSelection()
         }
+      }) {
+        Text("Cancel")
+          .font(.system(size: 12, weight: .medium))
+          .foregroundColor(AppColors.textPrimary)
+          .frame(width: 110, height: 26)
+          .background(
+            Capsule()
+              .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+              .overlay(
+                Capsule()
+                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+              )
+          )
       }
-      .font(AppTypography.bodySecondary)
-      .foregroundColor(AppColors.textSecondary)
-      .frame(maxWidth: .infinity)
-      .padding(.vertical, 5)
-      .background(AppColors.surfaceHover(colorScheme))
-      .cornerRadius(AppRadius.medium)
-      .overlay(
-        RoundedRectangle(cornerRadius: AppRadius.medium)
-          .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
-      )
       .buttonStyle(InteractivePillButtonStyle())
     }
-    .padding(AppSpacing.spacing12)
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, AppSpacing.spacing16)
+    .padding(.horizontal, AppSpacing.spacing12)
     .background(
       RoundedRectangle(cornerRadius: AppRadius.card)
         .fill(AppColors.surfaceCard(colorScheme))
         .overlay(
           RoundedRectangle(cornerRadius: AppRadius.card)
-            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 1)
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
         )
     )
     .transition(
       .asymmetric(
         insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .top)),
         removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
-      ))
+      )
+    )
+  }
+
+  @ViewBuilder
+  private func pinCodeView(pin: String) -> some View {
+    let digits = Array(pin)
+    if digits.count == 6 {
+      HStack(spacing: AppSpacing.spacing8) {
+        HStack(spacing: 4) {
+          ForEach(0..<3, id: \.self) { i in
+            pinDigitCell(char: digits[i])
+          }
+        }
+        HStack(spacing: 4) {
+          ForEach(3..<6, id: \.self) { i in
+            pinDigitCell(char: digits[i])
+          }
+        }
+      }
+    } else {
+      Text(pin)
+        .font(.system(size: 18, weight: .bold, design: .monospaced))
+        .foregroundColor(AppColors.textPrimary)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(
+          RoundedRectangle(cornerRadius: AppRadius.medium)
+            .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
+            .overlay(
+              RoundedRectangle(cornerRadius: AppRadius.medium)
+                .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+            )
+        )
+    }
+  }
+
+  private func pinDigitCell(char: Character) -> some View {
+    Text(String(char))
+      .font(.system(size: 18, weight: .semibold, design: .monospaced))
+      .foregroundColor(AppColors.textPrimary)
+      .frame(width: 28, height: 36)
+      .background(
+        RoundedRectangle(cornerRadius: AppRadius.medium)
+          .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.04))
+          .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.medium)
+              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+          )
+      )
   }
   private var discoveredDevicesSection: some View {
     VStack(alignment: .leading, spacing: 6) {
