@@ -323,9 +323,9 @@ public struct MenuBarView: View {
         Image(systemName: "gearshape")
           .font(.system(size: 13, weight: .medium))
           .foregroundColor(AppColors.textSecondary)
-          .frame(width: 24, height: 24)
+          .frame(width: 26, height: 26)
           .background(
-            RoundedRectangle(cornerRadius: AppRadius.small)
+            Circle()
               .fill(AppColors.surfaceHover(colorScheme))
           )
       }
@@ -930,11 +930,14 @@ public struct MenuBarView: View {
         VStack(spacing: AppSpacing.spacing6) {
           ForEach(appState.unpairedDiscoveredDevices) { device in
             HStack(spacing: AppSpacing.spacing10) {
-              Image(systemName: deviceIcon(for: device.name))
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(AppColors.textSecondary)
-                .frame(width: 20, height: 20)
-
+              ZStack {
+                RoundedRectangle(cornerRadius: AppRadius.medium)
+                  .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
+                  .frame(width: 32, height: 32)
+                Image(systemName: deviceIcon(for: device.name))
+                  .font(.system(size: 15, weight: .medium))
+                  .foregroundColor(AppColors.textSecondary)
+              }
               VStack(alignment: .leading, spacing: 1.5) {
                 Text(friendlyDeviceName(for: device.name))
                   .font(.system(size: 13, weight: .semibold))
@@ -956,13 +959,13 @@ public struct MenuBarView: View {
                 }
               }) {
                 Text("Connect")
-                  .font(.system(size: 11, weight: .semibold))
-                  .foregroundColor(AppColors.accent)
-                  .padding(.horizontal, 10)
-                  .frame(height: 22)
+                  .font(.system(size: 11.5, weight: .semibold))
+                  .foregroundColor(AppColors.textPrimary)
+                  .padding(.horizontal, 12)
+                  .frame(height: 24)
                   .background(
-                    RoundedRectangle(cornerRadius: AppRadius.small)
-                      .fill(AppColors.surfaceHover(colorScheme))
+                    Capsule()
+                      .fill(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06))
                   )
               }
               .buttonStyle(InteractivePillButtonStyle())
@@ -970,7 +973,7 @@ public struct MenuBarView: View {
               .layoutPriority(1)
             }
             .padding(.horizontal, AppSpacing.spacing12)
-            .frame(height: 42)
+            .frame(height: 46)
             .background(
               RoundedRectangle(cornerRadius: AppRadius.card)
                 .fill(AppColors.surfaceCard(colorScheme))

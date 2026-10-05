@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 
 public enum AppColors {
-  public static let accent = Color(red: 0.063, green: 0.725, blue: 0.506)
-  public static let statusConnected = Color(red: 0.063, green: 0.725, blue: 0.506)
+  public static let accent = Color(red: 0.0, green: 0.510, blue: 0.980)
+  public static let statusConnected = Color(red: 0.133, green: 0.773, blue: 0.369)
   public static let statusWarning = Color(red: 0.961, green: 0.620, blue: 0.043)
   public static let statusError = Color(red: 0.937, green: 0.267, blue: 0.267)
   public static let statusDisconnected = Color.secondary
