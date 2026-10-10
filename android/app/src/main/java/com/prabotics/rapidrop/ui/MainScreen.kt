@@ -170,7 +170,8 @@ data class MainScreenCallbacks(
     val onRequestBatteryExemption: () -> Unit = {},
     val onRequestNotificationListener: () -> Unit = {},
     val onCopyOtp: (String) -> Unit = {},
-    val onClearNotices: () -> Unit = {}
+    val onClearNotices: () -> Unit = {},
+    val onExitApp: () -> Unit = {}
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -223,7 +224,8 @@ fun MainScreen(
         onRequestBatteryExemption,
         onRequestNotificationListener,
         onCopyOtp,
-        onClearNotices
+        onClearNotices,
+        onExitApp
     ) = callbacks
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -431,7 +433,8 @@ fun MainScreen(
                                     onUnpair()
                                     showSettings = false
                                 },
-                                onClose = { showSettings = false }
+                                onClose = { showSettings = false },
+                                onExitApp = onExitApp
                             )
                         }
                     } else {

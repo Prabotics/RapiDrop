@@ -262,6 +262,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onClearNotices = {
                             NotificationSyncService.clearNotices()
+                        },
+                        onExitApp = {
+                            SyncService.stop(this@MainActivity)
+                            finishAffinity()
                         }
                     )
                 )

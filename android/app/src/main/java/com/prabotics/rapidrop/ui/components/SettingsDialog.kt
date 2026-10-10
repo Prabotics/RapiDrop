@@ -57,6 +57,7 @@ import androidx.compose.material.icons.rounded.Laptop
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
@@ -118,6 +119,7 @@ fun SettingsContent(
     onToggleShowSyncHistory: (Boolean) -> Unit = {},
     onUnpairDevice: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
+    onExitApp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -677,6 +679,35 @@ fun SettingsContent(
                     )
                 }
         }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        FilledTonalButton(
+            onClick = {
+                HapticManager.performClick(context)
+                onExitApp()
+            },
+            shape = CircleShape,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.PowerSettingsNew,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Exit RapiDrop",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 
     if (showReleaseNotesDialog && updateState is UpdateResult.UpdateAvailable) {

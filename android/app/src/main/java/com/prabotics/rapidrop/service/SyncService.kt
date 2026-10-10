@@ -169,6 +169,16 @@ class SyncService : Service() {
             } catch (_: SecurityException) {}
         }
 
+        fun stop(context: Context) {
+            val intent = Intent(context, SyncService::class.java).apply {
+                action = ACTION_STOP_SERVICE
+            }
+            try {
+                context.startService(intent)
+            } catch (_: IllegalStateException) {
+            } catch (_: SecurityException) {}
+        }
+
         fun pairWithDevice(context: Context, device: DiscoveredDevice, pin: String) {
             val s = instance
             if (s != null) {
@@ -1071,6 +1081,15 @@ class SyncService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val exitIntent = Intent(this, SyncService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val exitPendingIntent = PendingIntent.getService(
+            this,
+            2,
+            exitIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
         val statusText = if (isConnected.value) {
             "Connected to ${connectedPeerName.value ?: "device"}"
         } else {
@@ -1089,12 +1108,17 @@ class SyncService : Service() {
         if (isConnected.value) {
             builder.addAction(R.drawable.ic_notification, "Push Clipboard", sendPendingIntent)
         }
+        builder.addAction(R.drawable.ic_notification, "Exit", exitPendingIntent)
 
         return builder.build()
     }
 
     override fun onDestroy() {
         instance = null
+        isConnected.value = false
+        isConnecting.value = false
+        connectedPeerName.value = null
+        connectedDeviceInfo.value = null
         unregisterNetworkCallback()
         try {
             unregisterReceiver(batteryReceiver)
