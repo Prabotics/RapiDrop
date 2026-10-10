@@ -483,8 +483,11 @@ fun MainScreen(
                                 Spacer(Modifier.height(16.dp))
                             } else {
                                 alertsContent()
+                                val availableDevices = discoveredDevices.filter { dev ->
+                                    activePairInvite?.let { !DeviceNameHelper.isSameDevice(dev.name, it.deviceName) } ?: true
+                                }
                                 DeviceDiscoveryRadar(
-                                    discoveredDevices = discoveredDevices,
+                                    discoveredDevices = availableDevices,
                                     pairingDeviceName = outgoingPairInvite?.deviceName,
                                     pairingSasCode = outgoingPairInvite?.pin,
                                     onDeviceSelect = { device -> onSendPairInvite(device, "") },

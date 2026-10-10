@@ -800,23 +800,41 @@ public struct MenuBarView: View {
       }
 
       HStack(spacing: AppSpacing.spacing10) {
+        let progress = CGFloat(appState.pairingTimeRemaining)
+        let barColor: Color = progress <= 0.13
+          ? AppColors.statusError.opacity(0.30)
+          : (progress <= 0.27 ? AppColors.statusWarning.opacity(0.30) : AppColors.accent.opacity(0.24))
+
         Button(action: {
           withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             appState.declinePairInvite()
           }
         }) {
-          Text("Decline")
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(AppColors.textPrimary)
-            .frame(width: 100, height: 28)
-            .background(
+          ZStack(alignment: .leading) {
+            Capsule()
+              .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+
+            GeometryReader { geo in
               Capsule()
-                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
-                .overlay(
-                  Capsule()
-                    .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
-                )
-            )
+                .fill(barColor)
+                .frame(width: max(0, geo.size.width * progress))
+                .animation(.linear(duration: 0.1), value: progress)
+            }
+
+            HStack {
+              Spacer()
+              Text("Decline")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+              Spacer()
+            }
+          }
+          .frame(width: 100, height: 28)
+          .overlay(
+            Capsule()
+              .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+          )
+          .clipShape(Capsule())
         }
         .buttonStyle(InteractivePillButtonStyle())
 
@@ -928,18 +946,38 @@ public struct MenuBarView: View {
           appState.cancelPairingSelection()
         }
       }) {
-        Text("Cancel")
-          .font(.system(size: 12, weight: .medium))
-          .foregroundColor(AppColors.textPrimary)
-          .frame(width: 100, height: 26)
-          .background(
-            Capsule()
-              .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
-              .overlay(
-                Capsule()
-                  .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
-              )
-          )
+        let isPinVisible = appState.pendingPairingSasCode != nil
+        let progress = isPinVisible ? CGFloat(appState.pairingTimeRemaining) : 0.0
+        let barColor: Color = progress <= 0.13
+          ? AppColors.statusError.opacity(0.30)
+          : (progress <= 0.27 ? AppColors.statusWarning.opacity(0.30) : AppColors.accent.opacity(0.24))
+
+        ZStack(alignment: .leading) {
+          Capsule()
+            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+
+          if isPinVisible {
+            GeometryReader { geo in
+              Capsule()
+                .fill(barColor)
+                .frame(width: max(0, geo.size.width * progress))
+                .animation(.linear(duration: 0.1), value: progress)
+            }
+          }
+          HStack {
+            Spacer()
+            Text("Cancel")
+              .font(.system(size: 12, weight: .semibold))
+              .foregroundColor(AppColors.textPrimary)
+            Spacer()
+          }
+        }
+        .frame(width: 140, height: 28)
+        .overlay(
+          Capsule()
+            .stroke(AppColors.surfaceBorder(colorScheme), lineWidth: 0.5)
+        )
+        .clipShape(Capsule())
       }
       .buttonStyle(InteractivePillButtonStyle())
     }

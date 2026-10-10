@@ -488,11 +488,13 @@ private fun OutgoingPairingBottomSheet(
                 }
             }
 
-            var progressTarget by remember { mutableFloatStateOf(1f) }
-            var hasWarnedHaptic by remember { mutableStateOf(false) }
+            var progressTarget by remember(pin) { mutableFloatStateOf(1f) }
+            var hasWarnedHaptic by remember(pin) { mutableStateOf(false) }
 
-            LaunchedEffect(Unit) {
-                progressTarget = 0f
+            LaunchedEffect(pin) {
+                if (!pin.isNullOrBlank()) {
+                    progressTarget = 0f
+                }
             }
             val remainingProgress by animateFloatAsState(
                 targetValue = progressTarget,
@@ -536,15 +538,17 @@ private fun OutgoingPairingBottomSheet(
                     }
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction = remainingProgress)
-                            .fillMaxHeight()
-                            .background(
-                                color = barColor,
-                                shape = RoundedCornerShape(22.dp)
-                            )
-                    )
+                    if (!pin.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = remainingProgress)
+                                .fillMaxHeight()
+                                .background(
+                                    color = barColor,
+                                    shape = RoundedCornerShape(22.dp)
+                                )
+                        )
+                    }
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center

@@ -164,7 +164,7 @@ class SocketClient(
             val serialized = frame.serialize()
             out.write(serialized)
             out.flush()
-            delay(200)
+            delay(1500L)
             try {
                 sock.shutdownOutput()
             } catch (_: IOException) {}
@@ -195,7 +195,7 @@ class SocketClient(
             )
             out.write(frame.serialize())
             out.flush()
-            delay(150)
+            delay(1000L)
             sock.close()
         } catch (_: IOException) {
         } catch (_: SecurityException) {}
@@ -237,7 +237,7 @@ class SocketClient(
             )
             out.write(frame.serialize())
             out.flush()
-            delay(250)
+            delay(1500L)
             try {
                 sock.shutdownOutput()
             } catch (_: IOException) {}

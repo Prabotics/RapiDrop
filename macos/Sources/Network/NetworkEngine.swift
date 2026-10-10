@@ -1652,7 +1652,7 @@ private actor SendWindow {
             let serialized = frame.serialize()
             conn.send(content: serialized, completion: .contentProcessed { [weak self, weak conn] _ in
               guard let self, let conn else { return }
-              self.queue.asyncAfter(deadline: .now() + 0.25) {
+              self.queue.asyncAfter(deadline: .now() + 2.5) {
                 conn.cancel()
                 self.pendingHandshakeConnections.removeAll { $0 === conn }
               }
@@ -1815,7 +1815,7 @@ private actor SendWindow {
               content: serialized,
               completion: .contentProcessed { [weak self, weak conn] _ in
                 guard let self, let conn else { return }
-                self.queue.asyncAfter(deadline: .now() + 0.25) {
+                self.queue.asyncAfter(deadline: .now() + 2.5) {
                   conn.cancel()
                   self.pendingHandshakeConnections.removeAll { $0 === conn }
                 }
@@ -1854,7 +1854,7 @@ private actor SendWindow {
           content: serialized,
           completion: .contentProcessed { [weak self, weak conn] _ in
             guard let self, let conn else { return }
-            self.queue.asyncAfter(deadline: .now() + 0.25) {
+            self.queue.asyncAfter(deadline: .now() + 2.5) {
               conn.cancel()
               self.pendingHandshakeConnections.removeAll { $0 === conn }
             }

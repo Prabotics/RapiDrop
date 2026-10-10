@@ -105,6 +105,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var incomingPairInvite:
     (deviceName: String, pin: String?, host: String?, port: Int)? = nil
   @Published public var pendingPairingSasCode: String? = nil
+  @Published public var pairingTimeRemaining: Double = 1.0
   @Published public var pairingErrorMessage: String? = nil
   @Published public var transferErrorMessage: String? = nil
   private var transferErrorMessageResetTask: Task<Void, Never>? = nil
@@ -338,15 +339,29 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   }
   public func selectDeviceForPairing(_ device: DiscoveredClientDevice) {
     pairingTimeoutTask?.cancel()
+    pairingTimeRemaining = 1.0
     withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
       self.selectedDeviceForPairing = device
       self.pendingPairingSasCode = nil
     }
     network.sendPairInvite(to: device, host: device.host, port: device.port ?? 0)
     pairingTimeoutTask = Task { @MainActor in
-      try? await Task.sleep(nanoseconds: 30_000_000_000)
-      if self.selectedDeviceForPairing?.id == device.id {
-        self.cancelPairingSelection()
+      let startTime = Date()
+      let connectTimeout: Double = 30.0
+      var lastRetryTime = startTime
+      while !Task.isCancelled {
+        let now = Date()
+        if now.timeIntervalSince(startTime) >= connectTimeout {
+          if self.selectedDeviceForPairing?.id == device.id && self.pendingPairingSasCode == nil {
+            self.cancelPairingSelection()
+          }
+          break
+        }
+        if self.pendingPairingSasCode == nil && now.timeIntervalSince(lastRetryTime) >= 3.0 {
+          lastRetryTime = now
+          self.network.sendPairInvite(to: device, host: device.host, port: device.port ?? 0)
+        }
+        try? await Task.sleep(nanoseconds: 200_000_000)
       }
     }
   }
@@ -1048,15 +1063,51 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     host: String?, port: Int
   ) {
     Task { @MainActor in
+      self.pairingTimeoutTask?.cancel()
+      self.pairingTimeRemaining = 1.0
       self.incomingPairInvite = (deviceName: device.deviceName, pin: pin, host: host, port: port)
+      self.pairingTimeoutTask = Task { @MainActor in
+        let startTime = Date()
+        let duration: Double = 30.0
+        while !Task.isCancelled {
+          let elapsed = Date().timeIntervalSince(startTime)
+          let remaining = max(0.0, 1.0 - (elapsed / duration))
+          self.pairingTimeRemaining = remaining
+          if remaining <= 0.0 {
+            if self.incomingPairInvite != nil {
+              self.declinePairInvite()
+            }
+            break
+          }
+          try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+      }
     }
   }
   nonisolated public func networkEngine(
     _ engine: NetworkEngine, didReceivePairOfferFrom fromName: String, sasCode: String
   ) {
     Task { @MainActor in
+      self.pairingTimeoutTask?.cancel()
+      self.pairingTimeRemaining = 1.0
       withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
         self.pendingPairingSasCode = sasCode
+      }
+      self.pairingTimeoutTask = Task { @MainActor in
+        let startTime = Date()
+        let duration: Double = 30.0
+        while !Task.isCancelled {
+          let elapsed = Date().timeIntervalSince(startTime)
+          let remaining = max(0.0, 1.0 - (elapsed / duration))
+          self.pairingTimeRemaining = remaining
+          if remaining <= 0.0 {
+            if self.selectedDeviceForPairing != nil {
+              self.cancelPairingSelection()
+            }
+            break
+          }
+          try? await Task.sleep(nanoseconds: 100_000_000)
+        }
       }
     }
   }

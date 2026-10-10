@@ -7,7 +7,26 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import com.prabotics.rapidrop.ui.theme.LocalStatusColors
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
@@ -34,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.prabotics.rapidrop.ui.HapticManager
 
@@ -64,7 +84,8 @@ fun PairInviteCard(
             .fillMaxWidth()
             .animateContentSize(spring(stiffness = 500f, dampingRatio = 0.8f)),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     ) {
         Column(
             modifier = Modifier
@@ -77,7 +98,7 @@ fun PairInviteCard(
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = CircleShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(44.dp)
                 ) {
@@ -96,14 +117,14 @@ fun PairInviteCard(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "$deviceName wants to connect",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        text = deviceName,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "Pairing request",
+                        text = "Wants to pair with this device",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -118,8 +139,9 @@ fun PairInviteCard(
                 formattedPin?.let { pinText ->
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainer
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -137,7 +159,8 @@ fun PairInviteCard(
                                 text = pinText,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
+                                    fontFamily = FontFamily.Monospace,
+                                    letterSpacing = 1.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -146,21 +169,64 @@ fun PairInviteCard(
                 }
             }
 
+            var progressTarget by remember { mutableFloatStateOf(1f) }
+            LaunchedEffect(Unit) {
+                progressTarget = 0f
+            }
+            val remainingProgress by animateFloatAsState(
+                targetValue = progressTarget,
+                animationSpec = tween(durationMillis = 30000, easing = LinearEasing),
+                label = "declineExpiryProgress"
+            )
+
+            val statusColors = LocalStatusColors.current
+            val barColor by animateColorAsState(
+                targetValue = when {
+                    remainingProgress <= 0.13f -> MaterialTheme.colorScheme.error.copy(alpha = 0.22f)
+                    remainingProgress <= 0.27f -> statusColors.warning.copy(alpha = 0.22f)
+                    else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                },
+                animationSpec = tween(400),
+                label = "declineExpiryColor"
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(
-                    onClick = {
-                        HapticManager.performClick(context)
-                        onDecline()
-                    },
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
+                        .height(44.dp)
+                        .clickable {
+                            HapticManager.performClick(context)
+                            onDecline()
+                        }
                 ) {
-                    Text(text = "Decline", style = MaterialTheme.typography.labelLarge)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = remainingProgress)
+                                .fillMaxHeight()
+                                .background(
+                                    color = barColor,
+                                    shape = CircleShape
+                                )
+                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Decline",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
 
                 Button(
@@ -170,10 +236,13 @@ fun PairInviteCard(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
+                        .height(44.dp),
+                    shape = CircleShape
                 ) {
-                    Text(text = "Accept", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        text = "Accept",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
             }
         }
