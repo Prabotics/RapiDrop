@@ -78,10 +78,21 @@ class NotificationSyncService : NotificationListenerService() {
         }
 
         fun openSettings(context: Context) {
-            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+            val componentName = "${context.packageName}/${NotificationSyncService::class.java.name}"
+            val directIntent = Intent("android.settings.NOTIFICATION_LISTENER_DETAIL_SETTINGS").apply {
+                putExtra("android.provider.extra.NOTIFICATION_LISTENER_COMPONENT_NAME", componentName)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(intent)
+            try {
+                context.startActivity(directIntent)
+            } catch (_: Exception) {
+                val fallbackIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                try {
+                    context.startActivity(fallbackIntent)
+                } catch (_: Exception) {}
+            }
         }
 
         fun dismiss(id: String) {

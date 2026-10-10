@@ -455,25 +455,33 @@ fun SettingsContent(
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
-                SettingsSwitchRow(
-                    icon = Icons.Rounded.Notifications,
-                    title = "Mirror Notifications",
-                    subtitle = "Forward phone alerts to Mac",
-                    checked = isNotificationMirroringEnabled && isNotificationListenerGranted,
-                    onCheckedChange = { enabled ->
-                        if (enabled) {
+                if (!isNotificationListenerGranted) {
+                    SettingsNavigationRow(
+                        icon = Icons.Rounded.Notifications,
+                        title = "Mirror Notifications",
+                        subtitle = "Requires Notification Access",
+                        onClick = {
+                            HapticManager.performClick(context)
                             preferencesManager.setNotificationMirroringEnabled(true)
                             isNotificationMirroringEnabled = true
-                            if (!isNotificationListenerGranted) {
-                                NotificationSyncService.openSettings(context)
-                            }
-                        } else {
-                            isNotificationMirroringEnabled = false
-                            preferencesManager.setNotificationMirroringEnabled(false)
-                        }
-                    },
-                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                )
+                            NotificationSyncService.openSettings(context)
+                        },
+                        trailingBadge = "Set up",
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
+                } else {
+                    SettingsSwitchRow(
+                        icon = Icons.Rounded.Notifications,
+                        title = "Mirror Notifications",
+                        subtitle = "Forward phone alerts to Mac",
+                        checked = isNotificationMirroringEnabled,
+                        onCheckedChange = { enabled ->
+                            isNotificationMirroringEnabled = enabled
+                            preferencesManager.setNotificationMirroringEnabled(enabled)
+                        },
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
+                }
             }
         }
 
@@ -856,7 +864,8 @@ private fun SettingsNavigationRow(
     shape: Shape = RectangleShape,
     showChevron: Boolean = true,
     titleColor: Color = Color.Unspecified,
-    iconTint: Color = Color.Unspecified
+    iconTint: Color = Color.Unspecified,
+    trailingBadge: String? = null
 ) {
     val context = LocalContext.current
     Row(
@@ -902,7 +911,19 @@ private fun SettingsNavigationRow(
                 )
             }
         }
-        if (showChevron) {
+        if (!trailingBadge.isNullOrBlank()) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Text(
+                    text = trailingBadge,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        } else if (showChevron) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = null,
