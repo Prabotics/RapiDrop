@@ -1,4 +1,4 @@
-import CryptoKit
+@preconcurrency import CryptoKit
 import Foundation
 import Network
 
