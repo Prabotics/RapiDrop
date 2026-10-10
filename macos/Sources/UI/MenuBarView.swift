@@ -1356,17 +1356,12 @@ public struct MenuBarView: View {
         .frame(height: 24)
         .background(Capsule().fill(Color.orange.opacity(0.12)))
       } else if !appState.isConnected {
-        HStack(spacing: 5) {
-          Circle()
-            .fill(AppColors.statusDisconnected)
-            .frame(width: 5, height: 5)
-          Text("Offline")
-            .font(AppTypography.statusBadge)
-            .foregroundColor(AppColors.statusDisconnected)
-        }
-        .padding(.horizontal, 8)
-        .frame(height: 24)
-        .background(Capsule().fill(AppColors.surfaceHover(colorScheme)))
+        Text("Offline")
+          .font(AppTypography.statusBadge)
+          .foregroundColor(AppColors.statusDisconnected)
+          .padding(.horizontal, 8)
+          .frame(height: 24)
+          .background(Capsule().fill(AppColors.surfaceHover(colorScheme)))
       } else if let battery = appState.peerBatteryStatus {
         let isLow = battery.level <= 20 && !battery.isCharging
         let tintColor: Color = battery.isCharging
