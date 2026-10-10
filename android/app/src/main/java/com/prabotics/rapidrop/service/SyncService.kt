@@ -310,7 +310,10 @@ class SyncService : Service() {
                                 }
                             }
                             overallBytesSent += size
-                        } catch (_: Exception) {
+                        } catch (_: java.io.IOException) {
+                            activeTransferProgress.value = null
+                            return@launch
+                        } catch (_: SecurityException) {
                             activeTransferProgress.value = null
                             return@launch
                         }
@@ -321,7 +324,7 @@ class SyncService : Service() {
                     for (item in files) {
                         try {
                             item.third.close()
-                        } catch (_: Exception) {}
+                        } catch (_: java.io.IOException) {}
                     }
                     activeTransferProgress.value = null
                     s.releaseWakeLock()
@@ -937,7 +940,8 @@ class SyncService : Service() {
                     sock.getOutputStream().write(frame.serialize())
                     sock.getOutputStream().flush()
                     sock.close()
-                } catch (_: Exception) {}
+                } catch (_: java.io.IOException) {
+                } catch (_: SecurityException) {}
             }
         }
         updateNotification()
@@ -1042,7 +1046,9 @@ class SyncService : Service() {
             } else {
                 startForeground(FOREGROUND_NOTIFICATION_ID, notification)
             }
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            android.util.Log.w("RapiDrop", "Failed to startForeground: ${e.message}")
+        } catch (e: IllegalStateException) {
             android.util.Log.w("RapiDrop", "Failed to startForeground: ${e.message}")
         }
     }
@@ -1112,7 +1118,7 @@ class SyncService : Service() {
         unregisterNetworkCallback()
         try {
             unregisterReceiver(batteryReceiver)
-        } catch (_: Exception) {}
+        } catch (_: IllegalArgumentException) {}
         pairingTimeoutJob?.cancel()
         pairingTimeoutJob = null
         releaseWakeLock()

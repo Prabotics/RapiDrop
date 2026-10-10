@@ -73,7 +73,9 @@ object ClipboardManagerHelper {
                     try {
                         val descriptor = try {
                             context.contentResolver.openFileDescriptor(uri, "r")
-                        } catch (_: Exception) {
+                        } catch (_: SecurityException) {
+                            null
+                        } catch (_: java.io.FileNotFoundException) {
                             null
                         }
                         val size = descriptor?.statSize ?: 0L

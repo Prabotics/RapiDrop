@@ -37,10 +37,23 @@ object ImageMetadataHelper {
             return value.byteCount
         }
     }
-
+    private val metadataCache = LruCache<UUID, ImageMetadata>(256)
     fun getCachedThumbnail(id: UUID?): Bitmap? {
         if (id == null) return null
         return thumbnailCache.get(id)
+    }
+
+    fun extractMetadata(id: UUID?, raw: ByteArray?): ImageMetadata? {
+        if (id != null) {
+            val cached = metadataCache.get(id)
+            if (cached != null) return cached
+        }
+        if (raw == null || raw.isEmpty()) return null
+        val meta = extractMetadata(raw)
+        if (meta != null && id != null) {
+            metadataCache.put(id, meta)
+        }
+        return meta
     }
 
     fun extractMetadata(raw: ByteArray?): ImageMetadata? {
@@ -55,7 +68,8 @@ object ImageMetadataHelper {
             BitmapFactory.decodeByteArray(raw, 0, raw.size, options)
             width = options.outWidth
             height = options.outHeight
-        } catch (_: Throwable) {
+        } catch (_: IllegalArgumentException) {
+        } catch (_: OutOfMemoryError) {
         }
 
         if (width <= 0 || height <= 0) {
@@ -95,7 +109,9 @@ object ImageMetadataHelper {
                 thumbnailCache.put(id, bitmap)
             }
             bitmap
-        } catch (_: Throwable) {
+        } catch (_: IllegalArgumentException) {
+            null
+        } catch (_: OutOfMemoryError) {
             null
         }
     }
@@ -205,7 +221,9 @@ object ImageMetadataHelper {
                 }
                 else -> null
             }
-        } catch (_: Exception) {
+        } catch (_: IndexOutOfBoundsException) {
+            null
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

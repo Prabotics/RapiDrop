@@ -99,7 +99,7 @@ class ClientSocketServer(
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)
                                 val json = try {
                                     JSONObject(jsonStr)
-                                } catch (_: Exception) {
+                                } catch (_: org.json.JSONException) {
                                     return@withContext
                                 }
                                 val version = json.optInt("version", 1)
@@ -168,7 +168,7 @@ class ClientSocketServer(
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)
                                 val json = try {
                                     JSONObject(jsonStr)
-                                } catch (_: Exception) {
+                                } catch (_: org.json.JSONException) {
                                     return@withContext
                                 }
                                 val fromName = json.optString("fromDeviceName").takeIf { it.isNotBlank() } ?: "Device"
@@ -185,7 +185,7 @@ class ClientSocketServer(
                                 val raw = String(frame.ciphertext, Charsets.UTF_8)
                                 val reason = try {
                                     JSONObject(raw).optString("reason").takeIf { it.isNotBlank() } ?: raw
-                                } catch (_: Exception) {
+                                } catch (_: org.json.JSONException) {
                                     raw
                                 }
                                 onPairDeclinedReceived?.invoke(reason)

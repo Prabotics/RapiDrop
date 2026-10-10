@@ -517,7 +517,7 @@ private fun SyncHistoryItemRow(
     }
     val imageMetadata = remember(clip.id) {
         if (clip.type == ClipContentType.IMAGE) {
-            ImageMetadataHelper.extractMetadata(clip.rawData)
+            ImageMetadataHelper.extractMetadata(clip.id, clip.rawData)
         } else {
             null
         }
@@ -691,7 +691,9 @@ private fun SyncHistoryItemRow(
                     ClipContentType.URL -> {
                         try {
                             java.net.URI(clip.textContent ?: "").host ?: "web link"
-                        } catch (_: Exception) {
+                        } catch (_: java.net.URISyntaxException) {
+                            "web link"
+                        } catch (_: IllegalArgumentException) {
                             "web link"
                         }
                     }

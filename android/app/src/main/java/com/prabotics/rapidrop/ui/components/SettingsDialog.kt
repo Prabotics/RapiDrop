@@ -1,6 +1,7 @@
 package com.prabotics.rapidrop.ui.components
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -521,7 +522,8 @@ fun SettingsContent(
                                 try {
                                     val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                                     context.startActivity(intent)
-                                } catch (_: Exception) {}
+                                } catch (_: ActivityNotFoundException) {
+                                } catch (_: SecurityException) {}
                             }
                         },
                         shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),

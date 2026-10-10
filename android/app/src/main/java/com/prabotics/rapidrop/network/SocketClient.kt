@@ -452,7 +452,8 @@ class SocketClient(
                 out.write(frame.serialize())
                 out.flush()
             }
-        } catch (_: Exception) {}
+        } catch (_: IOException) {
+        } catch (_: SecurityException) {}
     }
     fun sendNotificationEvent(payloadJson: String): Boolean {
         val out = outputStream ?: return false
@@ -498,7 +499,9 @@ class SocketClient(
                         out.write(pingFrame.serialize())
                         out.flush()
                     }
-                } catch (_: Exception) {
+                } catch (_: IOException) {
+                    break
+                } catch (_: SecurityException) {
                     break
                 }
             }
@@ -512,14 +515,14 @@ class SocketClient(
             try {
                 val decrypted = try {
                     CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key)
-                } catch (_: Exception) {
+                } catch (_: java.security.GeneralSecurityException) {
                     null
                 }
                 if (decrypted != null) {
                     val str = String(decrypted, Charsets.UTF_8)
                     val json = try {
                         org.json.JSONObject(str)
-                    } catch (_: Exception) {
+                    } catch (_: org.json.JSONException) {
                         null
                     }
                     if (json != null && json.has("battery")) {
@@ -562,14 +565,14 @@ class SocketClient(
             if (key != null) {
                 val decrypted = try {
                     CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key)
-                } catch (_: Exception) {
+                } catch (_: java.security.GeneralSecurityException) {
                     null
                 }
                 if (decrypted != null) {
                     val str = String(decrypted, Charsets.UTF_8)
                     val json = try {
                         org.json.JSONObject(str)
-                    } catch (_: Exception) {
+                    } catch (_: org.json.JSONException) {
                         null
                     }
                     if (json != null && json.has("battery")) {

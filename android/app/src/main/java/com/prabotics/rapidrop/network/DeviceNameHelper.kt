@@ -9,7 +9,9 @@ object DeviceNameHelper {
         val userDeviceName = try {
             Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)?.takeIf { it.isNotBlank() }
                 ?: Settings.System.getString(context.contentResolver, "bluetooth_name")?.takeIf { it.isNotBlank() }
-        } catch (_: Exception) {
+        } catch (_: SecurityException) {
+            null
+        } catch (_: Settings.SettingNotFoundException) {
             null
         }
 

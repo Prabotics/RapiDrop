@@ -104,7 +104,11 @@ object MediaStorageHelper {
                 }
                 else -> null
             }
-        } catch (e: Exception) {
+        } catch (_: java.io.IOException) {
+            null
+        } catch (_: SecurityException) {
+            null
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

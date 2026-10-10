@@ -12,6 +12,7 @@
 -keep class com.prabotics.rapidrop.network.PacketType { *; }
 -keep class com.prabotics.rapidrop.security.** { *; }
 -keep class com.prabotics.rapidrop.service.TransferProgress { *; }
+-keep class com.prabotics.rapidrop.service.MirroredNotice { *; }
 -keep class kotlinx.coroutines.** { *; }
 -dontwarn java.lang.management.**
 -dontwarn javax.annotation.**

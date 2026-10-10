@@ -30,7 +30,8 @@ object HapticManager {
                 @Suppress("DEPRECATION")
                 vibrator?.vibrate(20)
             }
-        } catch (_: Exception) {}
+        } catch (_: SecurityException) {
+        } catch (_: IllegalStateException) {}
     }
 
     fun performSuccess(context: Context) {
@@ -47,7 +48,8 @@ object HapticManager {
             }
             val audio = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
             audio?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_STANDARD, 1.0f)
-        } catch (_: Exception) {}
+        } catch (_: SecurityException) {
+        } catch (_: IllegalStateException) {}
     }
 
     fun performError(context: Context) {
@@ -64,7 +66,8 @@ object HapticManager {
             }
             val audio = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
             audio?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_DELETE, 1.0f)
-        } catch (_: Exception) {}
+        } catch (_: SecurityException) {
+        } catch (_: IllegalStateException) {}
     }
 
     fun performWarning(context: Context) {
@@ -79,7 +82,8 @@ object HapticManager {
                 @Suppress("DEPRECATION")
                 vibrator?.vibrate(longArrayOf(0, 40, 60, 40), -1)
             }
-        } catch (_: Exception) {}
+        } catch (_: SecurityException) {
+        } catch (_: IllegalStateException) {}
     }
 
     private fun getVibrator(context: Context): Vibrator? {
@@ -91,7 +95,9 @@ object HapticManager {
                 @Suppress("DEPRECATION")
                 context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             }
-        } catch (_: Exception) {
+        } catch (_: SecurityException) {
+            null
+        } catch (_: IllegalStateException) {
             null
         }
     }

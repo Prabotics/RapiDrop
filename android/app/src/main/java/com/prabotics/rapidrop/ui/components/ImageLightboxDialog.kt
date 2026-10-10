@@ -85,10 +85,12 @@ fun ImageLightboxDialog(
         } catch (_: OutOfMemoryError) {
             try {
                 ImageMetadataHelper.decodeSampledBitmap(raw, 1024, 1024)
-            } catch (_: Throwable) {
+            } catch (_: OutOfMemoryError) {
+                null
+            } catch (_: IllegalArgumentException) {
                 null
             }
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     } ?: return

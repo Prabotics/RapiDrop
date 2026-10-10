@@ -1,8 +1,10 @@
 package com.prabotics.rapidrop.service
 
 import android.app.Notification
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -63,7 +65,9 @@ class NotificationSyncService : NotificationListenerService() {
                 val encoded = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
                 iconCache.put(packageName, encoded)
                 encoded
-            } catch (_: Exception) {
+            } catch (_: PackageManager.NameNotFoundException) {
+                null
+            } catch (_: SecurityException) {
                 null
             }
         }
@@ -85,13 +89,14 @@ class NotificationSyncService : NotificationListenerService() {
             }
             try {
                 context.startActivity(directIntent)
-            } catch (_: Exception) {
+            } catch (_: ActivityNotFoundException) {
                 val fallbackIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 try {
                     context.startActivity(fallbackIntent)
-                } catch (_: Exception) {}
+                } catch (_: ActivityNotFoundException) {
+                } catch (_: SecurityException) {}
             }
         }
 
@@ -174,7 +179,9 @@ class NotificationSyncService : NotificationListenerService() {
         val appName = try {
             val appInfo = pm.getApplicationInfo(packageName, 0)
             pm.getApplicationLabel(appInfo).toString()
-        } catch (_: Exception) {
+        } catch (_: PackageManager.NameNotFoundException) {
+            packageName
+        } catch (_: SecurityException) {
             packageName
         }
 

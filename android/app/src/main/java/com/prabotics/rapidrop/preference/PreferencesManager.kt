@@ -98,7 +98,7 @@ class PreferencesManager(context: Context) {
         val modeName = prefs.getString(KEY_MEDIA_DESTINATION_MODE, null) ?: return MediaDestinationMode.BOTH
         return try {
             MediaDestinationMode.valueOf(modeName)
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             MediaDestinationMode.BOTH
         }
     }
@@ -111,7 +111,7 @@ class PreferencesManager(context: Context) {
         val name = prefs.getString(KEY_APP_THEME_MODE, null) ?: return AppThemeMode.SYSTEM
         return try {
             AppThemeMode.valueOf(name)
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
             AppThemeMode.SYSTEM
         }
     }
@@ -196,7 +196,9 @@ private object KeystoreHelper {
             } else {
                 (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
             }
-        } catch (_: Throwable) {
+        } catch (_: java.security.GeneralSecurityException) {
+            null
+        } catch (_: java.io.IOException) {
             null
         }
     }
@@ -212,7 +214,9 @@ private object KeystoreHelper {
             System.arraycopy(iv, 0, combined, 0, iv.size)
             System.arraycopy(cipherText, 0, combined, iv.size, cipherText.size)
             PREFIX + CryptoEngine.bytesToHex(combined)
-        } catch (_: Throwable) {
+        } catch (_: java.security.GeneralSecurityException) {
+            plainText
+        } catch (_: java.io.IOException) {
             plainText
         }
     }
@@ -232,7 +236,11 @@ private object KeystoreHelper {
             cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, iv))
             val plainBytes = cipher.doFinal(cipherBytes)
             String(plainBytes, Charsets.UTF_8)
-        } catch (_: Throwable) {
+        } catch (_: java.security.GeneralSecurityException) {
+            stored.removePrefix(PREFIX)
+        } catch (_: java.io.IOException) {
+            stored.removePrefix(PREFIX)
+        } catch (_: IllegalArgumentException) {
             stored.removePrefix(PREFIX)
         }
     }

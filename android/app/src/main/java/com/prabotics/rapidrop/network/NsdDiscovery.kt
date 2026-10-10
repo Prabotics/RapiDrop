@@ -167,7 +167,8 @@ class NsdDiscovery(
                     }
                 }
             }
-        } catch (_: Exception) {}
+        } catch (_: java.net.SocketException) {
+        } catch (_: SecurityException) {}
         return null
     }
 
@@ -279,7 +280,12 @@ class NsdDiscovery(
 
         try {
             nsdManager.resolveService(next, resolveListener)
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
+            resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
+            resolveTimeoutRunnable = null
+            isResolving.set(false)
+            processNextResolve()
+        } catch (_: IllegalStateException) {
             resolveTimeoutRunnable?.let { resolveTimeoutHandler.removeCallbacks(it) }
             resolveTimeoutRunnable = null
             isResolving.set(false)

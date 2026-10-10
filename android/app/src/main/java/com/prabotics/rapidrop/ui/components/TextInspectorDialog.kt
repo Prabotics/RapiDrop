@@ -1,5 +1,6 @@
 package com.prabotics.rapidrop.ui.components
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -92,7 +93,7 @@ fun TextInspectorDialog(
         if (isUrl) {
             try {
                 Uri.parse(currentText.trim()).host ?: "Web Link"
-            } catch (_: Exception) {
+            } catch (_: IllegalArgumentException) {
                 "Web Link"
             }
         } else {
@@ -211,7 +212,9 @@ fun TextInspectorDialog(
                                 try {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentText.trim()))
                                     context.startActivity(intent)
-                                } catch (_: Exception) {
+                                } catch (_: ActivityNotFoundException) {
+                                    Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                                } catch (_: SecurityException) {
                                     Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
                                 }
                             },
