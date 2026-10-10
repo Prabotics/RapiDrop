@@ -68,6 +68,22 @@ object HapticManager {
             audio?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_DELETE, 1.0f)
         } catch (_: Exception) {}
     }
+
+    fun performWarning(context: Context) {
+        if (!isHapticEnabled(context)) return
+        try {
+            val vibrator = getVibrator(context)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val timings = longArrayOf(0, 40, 60, 40)
+                val amplitudes = intArrayOf(0, 160, 0, 160)
+                vibrator?.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 40, 60, 40), -1)
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun getVibrator(context: Context): Vibrator? {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

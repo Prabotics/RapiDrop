@@ -1,20 +1,22 @@
 package com.prabotics.rapidrop.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +25,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +44,7 @@ import androidx.compose.material.icons.rounded.Tablet
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -47,8 +52,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -67,6 +83,7 @@ import androidx.compose.ui.unit.sp
 import com.prabotics.rapidrop.network.DeviceNameHelper
 import com.prabotics.rapidrop.network.DiscoveredDevice
 import com.prabotics.rapidrop.ui.HapticManager
+import com.prabotics.rapidrop.ui.theme.LocalStatusColors
 
 @Composable
 fun DeviceDiscoveryRadar(
@@ -77,23 +94,18 @@ fun DeviceDiscoveryRadar(
     onCancelPairing: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    if (pairingDeviceName != null) {
+        OutgoingPairingBottomSheet(
+            deviceName = pairingDeviceName,
+            pin = pairingSasCode,
+            onCancel = onCancelPairing
+        )
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        AnimatedVisibility(
-            visible = pairingDeviceName != null,
-            enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.8f)) + fadeIn(),
-            exit = shrinkVertically(spring(stiffness = 600f, dampingRatio = 0.8f)) + fadeOut()
-        ) {
-            pairingDeviceName?.let { deviceName ->
-                OutgoingPairingCard(
-                    deviceName = deviceName,
-                    pin = pairingSasCode,
-                    onCancel = onCancelPairing
-                )
-            }
-        }
 
         ScanningHeroStage()
 
@@ -340,117 +352,212 @@ private fun DiscoveredDeviceRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OutgoingPairingCard(
+private fun OutgoingPairingBottomSheet(
     deviceName: String,
     pin: String? = null,
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(spring(stiffness = 500f, dampingRatio = 0.8f)),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val deviceIcon = when {
+        deviceName.contains("mac", ignoreCase = true) || deviceName.contains("book", ignoreCase = true) -> Icons.Rounded.Laptop
+        deviceName.contains("pc", ignoreCase = true) || deviceName.contains("windows", ignoreCase = true) -> Icons.Rounded.Computer
+        deviceName.contains("tablet", ignoreCase = true) || deviceName.contains("pad", ignoreCase = true) -> Icons.Rounded.Tablet
+        else -> Icons.Rounded.PhoneAndroid
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onCancel,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 6.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                modifier = Modifier.size(56.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    modifier = Modifier.size(44.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.Devices,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = deviceIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
+            }
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = deviceName,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Connecting to $deviceName",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(15.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Waiting for approval...",
+                        text = "Waiting for approval",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            val formattedSas = if (pin != null && pin.length == 6) {
-                "${pin.take(3)} ${pin.takeLast(3)}"
-            } else pin
-
-            AnimatedVisibility(
-                visible = !formattedSas.isNullOrBlank(),
-                enter = expandVertically(spring(stiffness = 500f, dampingRatio = 0.8f)) + fadeIn(spring(stiffness = 500f, dampingRatio = 0.8f)),
-                exit = shrinkVertically(spring(stiffness = 500f, dampingRatio = 0.8f)) + fadeOut(spring(stiffness = 500f, dampingRatio = 0.8f))
-            ) {
-                formattedSas?.let { sas ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+            if (!pin.isNullOrBlank()) {
+                val cleanPin = pin.filter { it.isDigit() }
+                Row(
+                    modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        cleanPin.take(3).forEach { digit ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                                modifier = Modifier.size(width = 40.dp, height = 52.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = digit.toString(),
+                                        style = MaterialTheme.typography.headlineMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 22.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (cleanPin.length >= 6) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Verification code",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = sas,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            cleanPin.drop(3).take(3).forEach { digit ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                                    modifier = Modifier.size(width = 40.dp, height = 52.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = digit.toString(),
+                                            style = MaterialTheme.typography.headlineMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 22.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            OutlinedButton(
-                onClick = {
-                    HapticManager.performClick(context)
-                    onCancel()
+            var progressTarget by remember { mutableFloatStateOf(1f) }
+            var hasWarnedHaptic by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                progressTarget = 0f
+            }
+            val remainingProgress by animateFloatAsState(
+                targetValue = progressTarget,
+                animationSpec = tween(durationMillis = 30000, easing = LinearEasing),
+                label = "expiryProgress"
+            )
+
+            val statusColors = LocalStatusColors.current
+            val barColor by animateColorAsState(
+                targetValue = when {
+                    remainingProgress <= 0.13f -> MaterialTheme.colorScheme.error.copy(alpha = 0.22f)
+                    remainingProgress <= 0.27f -> statusColors.warning.copy(alpha = 0.22f)
+                    else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                 },
+                animationSpec = tween(400),
+                label = "expiryColor"
+            )
+
+            LaunchedEffect(remainingProgress) {
+                if (remainingProgress <= 0.13f && !hasWarnedHaptic) {
+                    hasWarnedHaptic = true
+                    HapticManager.performWarning(context)
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(44.dp)
+                    .clickable {
+                        HapticManager.performClick(context)
+                        coroutineScope.launch {
+                            try {
+                                sheetState.hide()
+                            } finally {
+                                onCancel()
+                            }
+                        }
+                    }
             ) {
-                Text(text = "Cancel", style = MaterialTheme.typography.labelLarge)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction = remainingProgress)
+                            .fillMaxHeight()
+                            .background(
+                                color = barColor,
+                                shape = RoundedCornerShape(22.dp)
+                            )
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
