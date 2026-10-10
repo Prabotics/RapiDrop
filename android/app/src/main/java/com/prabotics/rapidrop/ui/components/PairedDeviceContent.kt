@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +45,8 @@ import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.Tablet
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -86,12 +89,8 @@ fun PairedDeviceContent(
     isConnecting: Boolean = false,
     deviceInfo: ConnectedDeviceInfo?,
     syncState: SyncState,
-    recentClips: List<ClipItem> = emptyList(),
     onSendMediaClick: () -> Unit,
     onSendClipboardClick: () -> Unit,
-    onOpenHistoryClick: () -> Unit,
-    onCopyClip: (ClipItem) -> Unit = {},
-    onInspectClip: (ClipItem) -> Unit = {},
     onUnpairClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -188,483 +187,181 @@ fun PairedDeviceContent(
         )
     }
 
-    Column(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
-        ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = deviceIcon,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = deviceName,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        val subtitleText = if (modelName != deviceName && modelName.isNotBlank()) modelName else "Local Wi-Fi peer"
-                        Text(
-                            text = subtitleText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Surface(
-                    shape = CircleShape,
-                    color = when {
-                        !isConnected && isConnecting -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
-                        !isConnected -> MaterialTheme.colorScheme.surfaceContainerHigh
-                        deviceInfo?.isCharging == true -> statusColors.connected.copy(alpha = 0.12f)
-                        deviceInfo?.batteryLevel != null -> MaterialTheme.colorScheme.surfaceContainerHigh
-                        else -> animatedBadgeBg
-                    }
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        if (isConnecting) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(MaterialTheme.colorScheme.tertiary, CircleShape)
-                            )
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            modifier = Modifier.size(46.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = deviceIcon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
-                                text = "Connecting...",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                color = MaterialTheme.colorScheme.tertiary
+                                text = deviceName,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                        } else if (!isConnected) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                            )
-                            Text(
-                                text = "Offline",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else if (deviceInfo?.batteryLevel != null && deviceInfo.batteryLevel in 0..100) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(
+                                            if (isConnected) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            CircleShape
+                                        )
+                                )
+                                Text(
+                                    text = if (isConnected) "Connected on Wi-Fi" else "Offline",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        if (deviceInfo?.batteryLevel != null && deviceInfo.batteryLevel in 0..100) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text(
+                                        text = "${deviceInfo.batteryLevel}%",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = if (deviceInfo.isCharging) statusColors.connected else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (deviceInfo.isCharging) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.BatteryChargingFull,
+                                            contentDescription = null,
+                                            tint = statusColors.connected,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                HapticManager.performClick(context)
+                                showUnpairDialog = true
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
                             Icon(
-                                imageVector = if (deviceInfo.isCharging) Icons.Rounded.BatteryChargingFull else batteryIcon(deviceInfo.batteryLevel),
-                                contentDescription = null,
-                                tint = if (deviceInfo.isCharging) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = "${deviceInfo.batteryLevel}%",
-                                color = if (deviceInfo.isCharging) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(statusColors.connected, CircleShape)
-                            )
-                            Text(
-                                text = "Connected",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                color = statusColors.connected
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = isConnected) {
-                            HapticManager.performClick(context)
-                            onSendMediaClick()
-                        }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Folder,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 14.dp, end = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "Send Media",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = if (isConnected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        )
-                        Text(
-                            text = "Share files, photos, or documents",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isConnected) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                    }
-
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Upload,
-                                contentDescription = null,
-                                tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 74.dp, end = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                )
-
-                val clipboardSubtitle = when (syncState) {
-                    SyncState.SUCCESS -> "Sent to $deviceName!"
-                    SyncState.SYNCING -> "Sending clipboard..."
-                    else -> "Send your current clipboard"
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = isConnected && syncState != SyncState.SYNCING) {
-                            HapticManager.performClick(context)
-                            onSendClipboardClick()
-                        }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (syncState == SyncState.SUCCESS) statusColors.connected.copy(alpha = 0.15f) else MaterialTheme.colorScheme.tertiaryContainer,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (syncState == SyncState.SUCCESS) Icons.Rounded.Check else Icons.Rounded.ContentPaste,
-                                contentDescription = null,
-                                tint = if (syncState == SyncState.SUCCESS) statusColors.connected else MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 14.dp, end = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "Send Clipboard",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = if (isConnected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        )
-                        Text(
-                            text = clipboardSubtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (syncState == SyncState.SUCCESS) statusColors.connected else if (isConnected) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                    }
-
-                    Surface(
-                        shape = CircleShape,
-                        color = if (syncState == SyncState.SUCCESS) statusColors.connected.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (syncState == SyncState.SUCCESS) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                                contentDescription = null,
-                                tint = if (syncState == SyncState.SUCCESS) statusColors.connected else if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                                imageVector = Icons.Rounded.LinkOff,
+                                contentDescription = "Unpair",
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
                     }
                 }
-            }
-        }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Recent Activity",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                TextButton(
-                    onClick = {
-                        HapticManager.performClick(context)
-                        onOpenHistoryClick()
-                    },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                ) {
-                    Text(
-                        text = "View all",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            val previewClips = recentClips.take(3)
-            if (previewClips.isNotEmpty()) {
-                Surface(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column {
-                        previewClips.forEachIndexed { index, clip ->
-                            RecentActivityRow(
-                                clip = clip,
-                                onCopy = { onCopyClip(clip) },
-                                onInspect = { onInspectClip(clip) }
-                            )
-                            if (index < previewClips.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = 56.dp, end = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    Button(
+                        onClick = {
+                            HapticManager.performClick(context)
+                            onSendClipboardClick()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        contentPadding = PaddingValues(vertical = 12.dp),
+                        enabled = isConnected
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Rounded.History,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Rounded.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "No transfers yet. Shared items will appear here.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "Send Clip (1)",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            HapticManager.performClick(context)
+                            onSendMediaClick()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        contentPadding = PaddingValues(vertical = 12.dp),
+                        enabled = isConnected
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Folder,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Send Files",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                 }
             }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            TextButton(
-                onClick = { showUnpairDialog = true },
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.LinkOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = "Unpair Device",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                )
-            }
-        }
     }
 }
 
-@Composable
-private fun RecentActivityRow(
-    clip: ClipItem,
-    onCopy: () -> Unit,
-    onInspect: () -> Unit
-) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    var isCopied by remember { mutableStateOf(false) }
-    val statusColors = LocalStatusColors.current
-
-    val bitmap = remember(clip.id) {
-        if (clip.type == ClipContentType.IMAGE && clip.rawData != null && clip.rawData.isNotEmpty()) {
-            ImageMetadataHelper.decodeSampledBitmap(clip.id, clip.rawData, 80, 80)
-        } else null
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                HapticManager.performClick(context)
-                onInspect()
-            }
-            .semantics {
-                role = Role.Button
-                contentDescription = clip.previewText
-            }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.size(36.dp)
-        ) {
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.size(36.dp),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                val icon = when (clip.type) {
-                    ClipContentType.IMAGE -> Icons.Rounded.Image
-                    ClipContentType.URL -> Icons.Rounded.Link
-                    ClipContentType.FILE -> Icons.AutoMirrored.Rounded.InsertDriveFile
-                    ClipContentType.TEXT -> Icons.AutoMirrored.Rounded.Subject
-                }
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = clip.previewText,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = getRelativeTimeSpan(clip.timestamp),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        IconButton(
-            onClick = {
-                HapticManager.performClick(context)
-                onCopy()
-                isCopied = true
-                coroutineScope.launch {
-                    delay(1200)
-                    isCopied = false
-                }
-            },
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                contentDescription = "Copy",
-                tint = if (isCopied) statusColors.connected else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-    }
-}
 private fun batteryIcon(level: Int): ImageVector {
     return when {
         level < 20 -> Icons.Rounded.BatteryAlert

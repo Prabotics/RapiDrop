@@ -20,7 +20,7 @@ import androidx.core.view.WindowCompat
 @Composable
 fun RapiDropTheme(
     themeMode: AppThemeMode = AppThemeMode.SYSTEM,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {

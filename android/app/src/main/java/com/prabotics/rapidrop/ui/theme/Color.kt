@@ -8,15 +8,17 @@ import androidx.compose.ui.graphics.Color
 
 
 
-val PrimaryLight = Color(0xFF1E293B)
-val OnPrimaryLight = Color(0xFFFFFFFF)
-val PrimaryContainerLight = Color(0xFFF1F5F9)
-val OnPrimaryContainerLight = Color(0xFF0F172A)
+val BrandBlue = Color(0xFF0082FA)
 
-val PrimaryDark = Color(0xFFF1F5F9)
-val OnPrimaryDark = Color(0xFF0F172A)
-val PrimaryContainerDark = Color(0xFF1E293B)
-val OnPrimaryContainerDark = Color(0xFFF8FAFC)
+val PrimaryLight = Color(0xFF0082FA)
+val OnPrimaryLight = Color(0xFFFFFFFF)
+val PrimaryContainerLight = Color(0xFFE5F1FF)
+val OnPrimaryContainerLight = Color(0xFF004D99)
+
+val PrimaryDark = Color(0xFF389BFF)
+val OnPrimaryDark = Color(0xFF002B59)
+val PrimaryContainerDark = Color(0xFF004D99)
+val OnPrimaryContainerDark = Color(0xFFCCE4FF)
 @Immutable
 data class StatusColors(
     val connected: Color,
@@ -108,27 +110,27 @@ val DarkColorScheme = darkColorScheme(
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
     onPrimaryContainer = OnPrimaryContainerDark,
-    secondary = Color(0xFF94A3B8),
-    onSecondary = Color(0xFF0F172A),
-    secondaryContainer = Color(0xFF1E293B),
-    onSecondaryContainer = Color(0xFFF8FAFC),
+    secondary = Color(0xFFC4C6D0),
+    onSecondary = Color(0xFF1A1C22),
+    secondaryContainer = Color(0xFF282A31),
+    onSecondaryContainer = Color(0xFFE2E2E9),
     tertiary = Color(0xFF38BDF8),
     onTertiary = Color(0xFF082F49),
     tertiaryContainer = Color(0xFF0369A1),
     onTertiaryContainer = Color(0xFFE0F2FE),
-    background = Color(0xFF0F172A),
-    onBackground = Color(0xFFF8FAFC),
-    surface = Color(0xFF0F172A),
-    onSurface = Color(0xFFF8FAFC),
-    surfaceVariant = Color(0xFF1E293B),
-    onSurfaceVariant = Color(0xFF94A3B8),
-    surfaceContainerLowest = Color(0xFF020617),
-    surfaceContainerLow = Color(0xFF0F172A),
-    surfaceContainer = Color(0xFF1E293B),
-    surfaceContainerHigh = Color(0xFF334155),
-    surfaceContainerHighest = Color(0xFF475569),
-    outline = Color(0xFF475569),
-    outlineVariant = Color(0xFF334155),
+    background = Color(0xFF0F1115),
+    onBackground = Color(0xFFE2E2E8),
+    surface = Color(0xFF0F1115),
+    onSurface = Color(0xFFE2E2E8),
+    surfaceVariant = Color(0xFF1A1C22),
+    onSurfaceVariant = Color(0xFFC4C6D0),
+    surfaceContainerLowest = Color(0xFF0A0C0F),
+    surfaceContainerLow = Color(0xFF14171C),
+    surfaceContainer = Color(0xFF191C22),
+    surfaceContainerHigh = Color(0xFF23262D),
+    surfaceContainerHighest = Color(0xFF2D3038),
+    outline = Color(0xFF8C909A),
+    outlineVariant = Color(0xFF3E4148),
     error = Color(0xFFEF4444),
     onError = Color(0xFF450A0A),
     errorContainer = Color(0xFF7F1D1D),

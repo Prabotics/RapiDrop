@@ -16,6 +16,16 @@ import com.prabotics.rapidrop.preference.PreferencesManager
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.util.regex.Pattern
+import kotlinx.coroutines.flow.MutableStateFlow
+
+data class MirroredNotice(
+    val id: String,
+    val appName: String,
+    val title: String,
+    val text: String,
+    val otpCode: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
 class NotificationSyncService : NotificationListenerService() {
 
@@ -26,6 +36,11 @@ class NotificationSyncService : NotificationListenerService() {
         private val OTP_PATTERN = Pattern.compile("\\b(?:\\d{4,8}|[A-Z0-9]{6})\\b")
         private val OTP_CONTEXT = Pattern.compile("(?i)(code|otp|verification|verify|pin|login|auth|one-time)")
         private val iconCache = LruCache<String, String>(64)
+        val recentNotices = MutableStateFlow<List<MirroredNotice>>(emptyList())
+
+        fun clearNotices() {
+            recentNotices.value = emptyList()
+        }
 
         fun extractAppIconBase64(context: Context, packageName: String): String? {
             iconCache.get(packageName)?.let { return it }
@@ -185,6 +200,15 @@ class NotificationSyncService : NotificationListenerService() {
         }
         Log.d("RapiDrop", "notification.mirroring: pkg=$packageName title=$resolvedTitle")
         SyncService.instance?.sendNotificationEvent(json.toString())
+        val notice = MirroredNotice(
+            id = id,
+            appName = appName,
+            title = resolvedTitle,
+            text = resolvedText,
+            otpCode = detectedOtp,
+            timestamp = sbn.postTime
+        )
+        recentNotices.value = (listOf(notice) + recentNotices.value.filter { it.id != id }).take(30)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {

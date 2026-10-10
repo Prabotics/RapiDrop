@@ -144,6 +144,7 @@ class MainActivity : ComponentActivity() {
                 val isNotificationGranted by isNotificationGrantedState
                 val isBatteryOptimizedIgnored by isBatteryOptimizedIgnoredState
                 val isNotificationListenerGranted by isNotificationListenerGrantedState
+                val recentNotices by NotificationSyncService.recentNotices.collectAsState()
                 MainScreen(
                     state = MainScreenState(
                         activeTransferProgress = activeTransferProgress,
@@ -164,7 +165,8 @@ class MainActivity : ComponentActivity() {
                         isNotificationListenerGranted = isNotificationListenerGranted,
                         incomingPairInvite = incomingPairInvite,
                         outgoingPairInvite = outgoingPairInvite,
-                        pairingError = pairingError
+                        pairingError = pairingError,
+                        recentNotices = recentNotices
                     ),
                     callbacks = MainScreenCallbacks(
                         onCancelTransfer = {
@@ -241,6 +243,14 @@ class MainActivity : ComponentActivity() {
                         },
                         onRequestNotificationListener = {
                             NotificationSyncService.openSettings(this@MainActivity)
+                        },
+                        onCopyOtp = { code ->
+                            ClipboardManagerHelper.writeToClipboard(this@MainActivity, ClipItem(type = ClipContentType.TEXT, textContent = code))
+                            HapticManager.performSuccess(this@MainActivity)
+                            Toast.makeText(this@MainActivity, "Copied code to clipboard", Toast.LENGTH_SHORT).show()
+                        },
+                        onClearNotices = {
+                            NotificationSyncService.clearNotices()
                         }
                     )
                 )
