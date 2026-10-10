@@ -4,6 +4,7 @@ import Foundation
 public final class PasteboardMonitor: @unchecked Sendable {
   private let pasteboard = NSPasteboard.general
   private var lastChangeCount: Int
+  private var lastCapturedHash: Int = 0
   private var timer: DispatchSourceTimer?
   private var isConnected: Bool = false
   private var currentIntervalMs: Int = 1500
@@ -66,6 +67,12 @@ public final class PasteboardMonitor: @unchecked Sendable {
       self?.timer = nil
     }
   }
+  public func syncChangeCount() {
+    queue.async { [weak self] in
+      guard let self else { return }
+      self.lastChangeCount = self.pasteboard.changeCount
+    }
+  }
 
   private func poll() {
     let currentCount = pasteboard.changeCount
@@ -84,12 +91,12 @@ public final class PasteboardMonitor: @unchecked Sendable {
         } else {
           item = ClipItem(type: .text, textContent: stringValue)
         }
-        self.onClipCaptured?(item)
+        self.dispatchCapturedItem(item)
         return
       }
       if let pngData = self.pasteboard.data(forType: .png) {
         if pngData.count <= WireFrame.maxPayloadSize {
-          self.onClipCaptured?(ClipItem(type: .image, rawData: pngData))
+          self.dispatchCapturedItem(ClipItem(type: .image, rawData: pngData))
           return
         }
       }
@@ -100,7 +107,7 @@ public final class PasteboardMonitor: @unchecked Sendable {
                 let convertedPng = imageRep.representation(using: .png, properties: [:]),
                 convertedPng.count <= WireFrame.maxPayloadSize else { return }
           DispatchQueue.main.async {
-            self?.onClipCaptured?(ClipItem(type: .image, rawData: convertedPng))
+            self?.dispatchCapturedItem(ClipItem(type: .image, rawData: convertedPng))
           }
         }
         return
@@ -121,12 +128,18 @@ public final class PasteboardMonitor: @unchecked Sendable {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
               guard let data = try? Data(contentsOf: firstURL) else { return }
               let clip = ClipItem(type: isImage ? .image : .file, fileName: fileName, rawData: data)
-              self?.onClipCaptured?(clip)
+              self?.dispatchCapturedItem(clip)
             }
           }
         }
       }
     }
+  }
+  private func dispatchCapturedItem(_ item: ClipItem) {
+    let hash = item.textContent?.hashValue ?? (item.rawData?.hashValue ?? 0)
+    guard hash != 0 && hash != self.lastCapturedHash else { return }
+    self.lastCapturedHash = hash
+    self.onClipCaptured?(item)
   }
 
   public func readCurrentClip() -> ClipItem? {
@@ -198,6 +211,7 @@ public final class PasteboardMonitor: @unchecked Sendable {
       self.queue.async { [weak self] in
         guard let self else { return }
         self.lastChangeCount = self.pasteboard.changeCount
+        self.lastCapturedHash = item.textContent?.hashValue ?? (item.rawData?.hashValue ?? 0)
       }
     }
   }

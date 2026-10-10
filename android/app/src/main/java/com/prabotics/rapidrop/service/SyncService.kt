@@ -482,17 +482,6 @@ class SyncService : Service() {
                                 }
                             }
                         }
-                        val initialClip = ClipboardManagerHelper.readPrimaryClip(this@SyncService)
-                        if (initialClip != null && (!initialClip.textContent.isNullOrBlank() || initialClip.rawData != null)) {
-                            val currentHash = initialClip.textContent?.hashCode() ?: (initialClip.rawData?.let { java.util.Arrays.hashCode(it) } ?: 0)
-                            if (currentHash != lastReceivedClipHash) {
-                                lastReceivedClipHash = currentHash
-                                addRecentClip(initialClip)
-                                serviceScope.launch {
-                                    socketClient.sendClip(initialClip)
-                                }
-                            }
-                        }
                     } else {
                         releaseWakeLock()
                         releaseWifiLock()

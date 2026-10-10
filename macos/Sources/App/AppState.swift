@@ -93,6 +93,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   public var onRequestClosePopover: (() -> Void)?
   private var syncResetTask: Task<Void, Never>? = nil
   private var lastReceivedClipContentHash: Int = 0
+  private var lastSentClipContentHash: Int = 0
+  private var isSystemSleeping: Bool = false
   private var lastAutoReconnectAttempt: Date = .distantPast
   private var reconnectAttempts: Int = 0
   private var autoReconnectTask: Task<Void, Never>? = nil
@@ -291,6 +293,43 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     self.monitor.start()
     self.monitor.setConnected(self.isConnected)
     self.network.start()
+    let center = NSWorkspace.shared.notificationCenter
+    center.addObserver(
+      forName: NSWorkspace.willSleepNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in
+        self?.handleSystemWillSleep()
+      }
+    }
+    center.addObserver(
+      forName: NSWorkspace.didWakeNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in
+        self?.handleSystemDidWake()
+      }
+    }
+    center.addObserver(
+      forName: NSWorkspace.screensDidSleepNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in
+        self?.handleSystemWillSleep()
+      }
+    }
+    center.addObserver(
+      forName: NSWorkspace.screensDidWakeNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in
+        self?.handleSystemDidWake()
+      }
+    }
 
   }
 
@@ -449,14 +488,25 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     monitor.stop()
     network.stop()
   }
+  private func handleSystemWillSleep() {
+    isSystemSleeping = true
+    monitor.stop()
+  }
+
+  private func handleSystemDidWake() {
+    isSystemSleeping = false
+    monitor.syncChangeCount()
+    monitor.start()
+    monitor.setConnected(isConnected)
+  }
 
   private func handleClipCaptured(_ item: ClipItem) {
-    guard isConnected else { return }
+    guard isConnected, !isSystemSleeping else { return }
     let contentHash = computeContentHash(for: item)
-    if contentHash != 0 && contentHash == lastReceivedClipContentHash {
+    if contentHash != 0 && (contentHash == lastReceivedClipContentHash || contentHash == lastSentClipContentHash) {
       return
     }
-    lastReceivedClipContentHash = 0
+    lastSentClipContentHash = contentHash
     addRecentClip(item)
     network.sendClip(item)
     triggerSyncFeedback()
@@ -829,7 +879,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
         case .text, .url:
           self.monitor.writeToPasteboard(item: item)
         }
-        self.lastReceivedClipContentHash = self.computeContentHash(for: item)
+        let hash = self.computeContentHash(for: item)
+        self.lastReceivedClipContentHash = hash
+        self.lastSentClipContentHash = hash
         self.addRecentClip(item)
         self.playSound("Glass")
         self.triggerSyncFeedback()
@@ -908,9 +960,6 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
           self.triggerHapticFeedback(.alignment)
           let peer = (peerName ?? "device").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "\\", with: "")
           self.showToast("Connected to \(peer)")
-          if let currentClip = self.monitor.readCurrentClip() {
-            self.network.sendClip(currentClip)
-          }
         }
       } else {
         self.peerName = nil
