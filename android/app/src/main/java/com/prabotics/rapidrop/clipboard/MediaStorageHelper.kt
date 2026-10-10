@@ -36,9 +36,9 @@ enum class MediaDestinationMode {
         }
     val description: String
         get() = when (this) {
-            BOTH -> "Save files to dedicated folders and copy to clipboard"
-            FOLDER_ONLY -> "Save files to dedicated folders without touching clipboard"
-            CLIPBOARD_ONLY -> "Copy media to clipboard only without permanent storage"
+            BOTH -> "Save files and copy to clipboard"
+            FOLDER_ONLY -> "Save files to storage only"
+            CLIPBOARD_ONLY -> "Copy to clipboard without saving"
         }
 }
 

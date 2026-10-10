@@ -461,13 +461,11 @@ fun MainScreen(
                     }
 
                     if (showSettings) {
-                        Column(
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxSize()
                                 .widthIn(max = 640.dp)
-                                .padding(horizontal = horizontalPad, vertical = 16.dp)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                                .padding(horizontal = horizontalPad)
                         ) {
                             SettingsContent(
                                 currentMode = mediaDestinationMode,
