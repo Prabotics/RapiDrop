@@ -23,6 +23,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -132,11 +136,13 @@ fun ImageLightboxDialog(
                 TopAppBar(
                     title = {
                         Column {
+                            val headerTitle = if (!clip.fileName.isNullOrBlank()) clip.fileName else "Screenshot"
+                            val timeStr = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(clip.timestamp))
                             Text(
-                                text = clip.displayName.ifBlank { "Image Preview" },
+                                text = headerTitle,
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                             )
-                            val dimText = if (metadata != null) "${metadata.width} × ${metadata.height} px, $formattedSize" else formattedSize
+                            val dimText = if (metadata != null) "${metadata.width} × ${metadata.height} px, $formattedSize, $timeStr" else "$formattedSize, $timeStr"
                             Text(
                                 text = dimText,
                                 style = MaterialTheme.typography.labelSmall,
@@ -187,7 +193,8 @@ fun ImageLightboxDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .background(Color.Black.copy(alpha = 0.05f))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                        .padding(16.dp)
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onDoubleTap = {
@@ -217,26 +224,32 @@ fun ImageLightboxDialog(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Full Preview",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                translationX = offsetX,
-                                translationY = offsetY
-                            )
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                        shadowElevation = 2.dp
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Full Preview",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .graphicsLayer(
+                                    scaleX = scale,
+                                    scaleY = scale,
+                                    translationX = offsetX,
+                                    translationY = offsetY
+                                )
+                        )
+                    }
                 }
-
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
@@ -255,20 +268,20 @@ fun ImageLightboxDialog(
                                 isCopied = true
                                 Toast.makeText(context, "Image copied to clipboard", Toast.LENGTH_SHORT).show()
                             },
-                            shape = MaterialTheme.shapes.medium,
+                            shape = CircleShape,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .height(42.dp)
                         ) {
                             Icon(
                                 imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
                                 contentDescription = "Copy Image",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (isCopied) "Copied" else "Copy",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                             )
                         }
 
@@ -277,20 +290,20 @@ fun ImageLightboxDialog(
                                 HapticManager.performClick(context)
                                 onShare(clip)
                             },
-                            shape = MaterialTheme.shapes.medium,
+                            shape = CircleShape,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .height(42.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Share,
                                 contentDescription = "Share",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Share",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                             )
                         }
 
@@ -299,20 +312,20 @@ fun ImageLightboxDialog(
                                 HapticManager.performSuccess(context)
                                 onSendToDevice(clip)
                             },
-                            shape = MaterialTheme.shapes.medium,
+                            shape = CircleShape,
                             modifier = Modifier
                                 .weight(1.1f)
-                                .height(48.dp)
+                                .height(42.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Laptop,
                                 contentDescription = "Send",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Send",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                             )
                         }
                     }

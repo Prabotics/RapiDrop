@@ -41,6 +41,18 @@ data class ClipItem(
             }
             ClipContentType.FILE -> fileName ?: "File_${id.toString().take(6)}.bin"
         }
+    val formattedTitle: String
+        get() = when (type) {
+            ClipContentType.TEXT, ClipContentType.URL -> textContent ?: ""
+            ClipContentType.IMAGE -> {
+                if (!fileName.isNullOrBlank()) {
+                    fileName
+                } else {
+                    "Screenshot"
+                }
+            }
+            ClipContentType.FILE -> fileName ?: "File_${id.toString().take(6)}.bin"
+        }
 
     val previewText: String
         get() = when (type) {

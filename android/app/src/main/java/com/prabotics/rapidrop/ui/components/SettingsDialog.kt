@@ -52,11 +52,14 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -106,9 +109,11 @@ fun SettingsContent(
     currentMode: MediaDestinationMode,
     currentThemeMode: AppThemeMode,
     showSyncHistory: Boolean = true,
+    pairedDeviceName: String? = null,
     onModeSelected: (MediaDestinationMode) -> Unit,
     onThemeModeSelected: (AppThemeMode) -> Unit,
     onToggleShowSyncHistory: (Boolean) -> Unit = {},
+    onUnpairDevice: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -120,7 +125,7 @@ fun SettingsContent(
     var showReleaseNotesDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showMediaDialog by remember { mutableStateOf(false) }
-
+    var showUnpairDialog by remember { mutableStateOf(false) }
     var isHapticEnabled by remember { mutableStateOf(preferencesManager.isHapticEnabled()) }
     var isNotificationMirroringEnabled by remember { mutableStateOf(preferencesManager.isNotificationMirroringEnabled()) }
     var isNotificationListenerGranted by remember { mutableStateOf(NotificationSyncService.isPermissionGranted(context)) }
@@ -343,6 +348,53 @@ fun SettingsContent(
         )
     }
 
+    if (showUnpairDialog && onUnpairDevice != null && pairedDeviceName != null) {
+        AlertDialog(
+            onDismissRequest = { showUnpairDialog = false },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.LinkOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Unpair $pairedDeviceName?",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+                )
+            },
+            text = {
+                Text(
+                    text = "You will need to pair again to transfer files or sync clipboard with this device.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showUnpairDialog = false
+                        HapticManager.performClick(context)
+                        onUnpairDevice()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Unpair")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUnpairDialog = false }) {
+                    Text("Cancel", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        )
+    }
     val scrollState = rememberScrollState()
     Column(
         modifier = modifier
@@ -397,8 +449,18 @@ fun SettingsContent(
                             preferencesManager.setNotificationMirroringEnabled(false)
                         }
                     },
-                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    shape = if (pairedDeviceName == null) RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp) else RectangleShape
                 )
+                if (pairedDeviceName != null && onUnpairDevice != null) {
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
+                    SettingsNavigationRow(
+                        icon = Icons.Rounded.LinkOff,
+                        title = "Unpair $pairedDeviceName",
+                        subtitle = "Forget device pairing credentials",
+                        onClick = { showUnpairDialog = true },
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
+                }
             }
         }
 

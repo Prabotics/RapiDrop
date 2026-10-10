@@ -13,6 +13,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +27,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.graphics.Color
 import com.prabotics.rapidrop.ui.components.PairedDeviceContent
 import androidx.compose.material.icons.outlined.Close
@@ -52,10 +58,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -262,14 +270,15 @@ fun MainScreen(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = horizontalPad, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                if (inspectingClip == null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = horizontalPad, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                     if (!showSettings) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -296,34 +305,6 @@ fun MainScreen(
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            if (isConnected || isConnecting) {
-                                val statusColors = LocalStatusColors.current
-                                Surface(
-                                    shape = CircleShape,
-                                    color = if (isConnected) statusColors.connected.copy(alpha = 0.15f)
-                                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .background(
-                                                    if (isConnected) statusColors.connected else MaterialTheme.colorScheme.primary,
-                                                    CircleShape
-                                                )
-                                        )
-                                        Text(
-                                            text = if (isConnected) "Connected" else "Connecting",
-                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                            color = if (isConnected) statusColors.connected else MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
                         }
 
                         IconButton(
@@ -371,6 +352,7 @@ fun MainScreen(
                     }
                 }
             }
+        }
         ) { paddingValues ->
             Box(
                 modifier = Modifier
@@ -395,43 +377,6 @@ fun MainScreen(
                     } else null
 
                     val alertsContent: @Composable ColumnScope.() -> Unit = {
-                        AnimatedVisibility(
-                            visible = !isNotificationGranted && !notificationsDismissed,
-                            enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeIn(spring(stiffness = 600f, dampingRatio = 0.78f)),
-                            exit = shrinkVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeOut(spring(stiffness = 600f, dampingRatio = 0.78f))
-                        ) {
-                            PermissionAlertBanner(
-                                title = "Notifications disabled",
-                                actionLabel = "Enable",
-                                onActionClick = onRequestNotificationPermission,
-                                onDismiss = { notificationsDismissed = true }
-                            )
-                        }
-
-                        AnimatedVisibility(
-                            visible = isNotificationGranted && !isBatteryOptimizedIgnored && !batteryDismissed,
-                            enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeIn(spring(stiffness = 600f, dampingRatio = 0.78f)),
-                            exit = shrinkVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeOut(spring(stiffness = 600f, dampingRatio = 0.78f))
-                        ) {
-                            PermissionAlertBanner(
-                                title = "Battery optimization active",
-                                actionLabel = "Allow",
-                                onActionClick = onRequestBatteryExemption,
-                                onDismiss = { batteryDismissed = true }
-                            )
-                        }
-                        AnimatedVisibility(
-                            visible = isPaired && !isNotificationListenerGranted && !listenerDismissed,
-                            enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeIn(spring(stiffness = 600f, dampingRatio = 0.78f)),
-                            exit = shrinkVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeOut(spring(stiffness = 600f, dampingRatio = 0.78f))
-                        ) {
-                            PermissionAlertBanner(
-                                title = "Notification mirroring off",
-                                actionLabel = "Enable",
-                                onActionClick = onRequestNotificationListener,
-                                onDismiss = { listenerDismissed = true }
-                            )
-                        }
                         AnimatedVisibility(
                             visible = activeTransferProgress != null,
                             enter = expandVertically(spring(stiffness = 600f, dampingRatio = 0.78f)) + fadeIn(spring(stiffness = 600f, dampingRatio = 0.78f)),
@@ -483,9 +428,14 @@ fun MainScreen(
                                 currentMode = mediaDestinationMode,
                                 currentThemeMode = appThemeMode,
                                 showSyncHistory = showSyncHistory,
+                                pairedDeviceName = if (isPaired) (effectiveDeviceInfo?.deviceName ?: connectedPeerName) else null,
                                 onModeSelected = onMediaDestinationModeChange,
                                 onThemeModeSelected = onThemeModeChange,
                                 onToggleShowSyncHistory = { _ -> onToggleShowSyncHistory() },
+                                onUnpairDevice = {
+                                    onUnpair()
+                                    showSettings = false
+                                },
                                 onClose = { showSettings = false }
                             )
                         }
@@ -498,7 +448,6 @@ fun MainScreen(
                                 .verticalScroll(scrollState),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            alertsContent()
                             if (isPaired) {
                                 PairedDeviceContent(
                                     isConnected = isConnected,
@@ -509,117 +458,41 @@ fun MainScreen(
                                     onSendClipboardClick = onSendClipboardClick,
                                     onUnpairClick = onUnpair
                                 )
-
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(4.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Surface(
-                                            onClick = {
-                                                HapticManager.performClick(context)
-                                                activeCockpitTab = CockpitTab.HISTORY
-                                            },
-                                            shape = RoundedCornerShape(9.dp),
-                                            color = if (activeCockpitTab == CockpitTab.HISTORY) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(vertical = 10.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "Clipboard History",
-                                                    style = MaterialTheme.typography.labelLarge.copy(
-                                                        fontWeight = if (activeCockpitTab == CockpitTab.HISTORY) FontWeight.Bold else FontWeight.Medium
-                                                    ),
-                                                    color = if (activeCockpitTab == CockpitTab.HISTORY) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                if (recentClips.isNotEmpty()) {
-                                                    Spacer(Modifier.width(6.dp))
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = if (activeCockpitTab == CockpitTab.HISTORY) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest
-                                                    ) {
-                                                        Text(
-                                                            text = "${recentClips.size}",
-                                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                                            color = if (activeCockpitTab == CockpitTab.HISTORY) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                alertsContent()
+                                AnimatedContent(
+                                    targetState = activeCockpitTab,
+                                    transitionSpec = {
+                                        if (targetState == CockpitTab.ALERTS) {
+                                            (slideInHorizontally(spring(stiffness = 500f, dampingRatio = 0.82f)) { it / 4 } + fadeIn(tween(200)))
+                                                .togetherWith(slideOutHorizontally(spring(stiffness = 500f, dampingRatio = 0.82f)) { -it / 4 } + fadeOut(tween(160)))
+                                        } else {
+                                            (slideInHorizontally(spring(stiffness = 500f, dampingRatio = 0.82f)) { -it / 4 } + fadeIn(tween(200)))
+                                                .togetherWith(slideOutHorizontally(spring(stiffness = 500f, dampingRatio = 0.82f)) { it / 4 } + fadeOut(tween(160)))
                                         }
-
-                                        Surface(
-                                            onClick = {
-                                                HapticManager.performClick(context)
-                                                activeCockpitTab = CockpitTab.ALERTS
-                                            },
-                                            shape = RoundedCornerShape(9.dp),
-                                            color = if (activeCockpitTab == CockpitTab.ALERTS) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(vertical = 10.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "Alerts & OTP",
-                                                    style = MaterialTheme.typography.labelLarge.copy(
-                                                        fontWeight = if (activeCockpitTab == CockpitTab.ALERTS) FontWeight.Bold else FontWeight.Medium
-                                                    ),
-                                                    color = if (activeCockpitTab == CockpitTab.ALERTS) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                if (recentNotices.isNotEmpty()) {
-                                                    Spacer(Modifier.width(6.dp))
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = if (activeCockpitTab == CockpitTab.ALERTS) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest
-                                                    ) {
-                                                        Text(
-                                                            text = "${recentNotices.size}",
-                                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                                            color = if (activeCockpitTab == CockpitTab.ALERTS) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    },
+                                    label = "cockpitFeedTransition"
+                                ) { tab ->
+                                    if (tab == CockpitTab.HISTORY) {
+                                        SyncHistoryFeed(
+                                            recentClips = recentClips,
+                                            pinnedClipIds = pinnedClipIds,
+                                            showSyncHistory = showSyncHistory,
+                                            onCopyClip = onCopyClip,
+                                            onShareClip = onShareClip,
+                                            onClearHistory = onClearHistory,
+                                            onDeleteClip = onDeleteClip,
+                                            onSendClip = onSendClip,
+                                            onTogglePinClip = onTogglePinClip,
+                                            onToggleShowSyncHistory = onToggleShowSyncHistory,
+                                            onInspectClip = { clip -> inspectingClip = clip }
+                                        )
+                                    } else {
+                                        AlertsFeed(
+                                            notices = recentNotices,
+                                            onCopyOtp = onCopyOtp,
+                                            onClear = onClearNotices
+                                        )
                                     }
-                                }
-
-                                if (activeCockpitTab == CockpitTab.HISTORY) {
-                                    SyncHistoryFeed(
-                                        recentClips = recentClips,
-                                        pinnedClipIds = pinnedClipIds,
-                                        showSyncHistory = showSyncHistory,
-                                        onCopyClip = onCopyClip,
-                                        onShareClip = onShareClip,
-                                        onClearHistory = onClearHistory,
-                                        onDeleteClip = onDeleteClip,
-                                        onSendClip = onSendClip,
-                                        onTogglePinClip = onTogglePinClip,
-                                        onToggleShowSyncHistory = onToggleShowSyncHistory,
-                                        onInspectClip = { clip -> inspectingClip = clip }
-                                    )
-                                } else {
-                                    AlertsFeed(
-                                        notices = recentNotices,
-                                        onCopyOtp = onCopyOtp,
-                                        onClear = onClearNotices
-                                    )
                                 }
 
                                 val otherDiscovered = discoveredDevices.filter {
@@ -632,7 +505,9 @@ fun MainScreen(
                                         onDeviceSelect = { device -> onSendPairInvite(device, "") }
                                     )
                                 }
+                                Spacer(Modifier.height(84.dp))
                             } else {
+                                alertsContent()
                                 DeviceDiscoveryRadar(
                                     discoveredDevices = discoveredDevices,
                                     pairingDeviceName = outgoingPairInvite?.deviceName,
@@ -660,6 +535,165 @@ fun MainScreen(
                         }
                     }
 
+                    if (!showSettings && isPaired && inspectingClip == null) {
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                                .padding(bottom = 16.dp),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                            shadowElevation = 4.dp
+                        ) {
+                            BoxWithConstraints(
+                                modifier = Modifier
+                                    .padding(3.dp)
+                                    .width(224.dp)
+                                    .height(38.dp)
+                            ) {
+                                val tabWidth = maxWidth / 2
+                                val pillOffset by animateDpAsState(
+                                    targetValue = if (activeCockpitTab == CockpitTab.HISTORY) 0.dp else tabWidth,
+                                    animationSpec = spring(dampingRatio = 0.82f, stiffness = 420f),
+                                    label = "tabPillOffset"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .offset(x = pillOffset)
+                                        .width(tabWidth)
+                                        .fillMaxHeight()
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f))
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val isHistory = activeCockpitTab == CockpitTab.HISTORY
+                                    val historyColor by animateColorAsState(
+                                        targetValue = if (isHistory) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                        animationSpec = tween(180),
+                                        label = "historyColor"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clip(CircleShape)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                if (activeCockpitTab != CockpitTab.HISTORY) {
+                                                    HapticManager.performClick(context)
+                                                    activeCockpitTab = CockpitTab.HISTORY
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.History,
+                                                contentDescription = null,
+                                                tint = historyColor,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Text(
+                                                text = "Clips",
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = if (isHistory) FontWeight.Bold else FontWeight.Medium,
+                                                    fontSize = 13.sp
+                                                ),
+                                                color = historyColor
+                                            )
+                                            if (recentClips.isNotEmpty()) {
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = if (isHistory) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                                ) {
+                                                    Text(
+                                                        text = "${recentClips.size}",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 11.sp
+                                                        ),
+                                                        color = if (isHistory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    val isAlerts = activeCockpitTab == CockpitTab.ALERTS
+                                    val alertsColor by animateColorAsState(
+                                        targetValue = if (isAlerts) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                        animationSpec = tween(180),
+                                        label = "alertsColor"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clip(CircleShape)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                if (activeCockpitTab != CockpitTab.ALERTS) {
+                                                    HapticManager.performClick(context)
+                                                    activeCockpitTab = CockpitTab.ALERTS
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Notifications,
+                                                contentDescription = null,
+                                                tint = alertsColor,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Text(
+                                                text = "Alerts",
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = if (isAlerts) FontWeight.Bold else FontWeight.Medium,
+                                                    fontSize = 13.sp
+                                                ),
+                                                color = alertsColor
+                                            )
+                                            if (recentNotices.isNotEmpty()) {
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = if (isAlerts) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                                ) {
+                                                    Text(
+                                                        text = "${recentNotices.size}",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 11.sp
+                                                        ),
+                                                        color = if (isAlerts) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (!showSettings && !isPaired && discoveredDevices.isEmpty() && recentClips.isEmpty()) {
                         Column(
                             modifier = Modifier
@@ -685,36 +719,36 @@ fun MainScreen(
                 }
             }
 
-            AnimatedVisibility(
-                visible = inspectingClip != null,
-                enter = fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(260)) { it / 4 },
-                exit = fadeOut(animationSpec = tween(180)) + slideOutVertically(animationSpec = tween(220)) { it / 4 }
-            ) {
-                inspectingClip?.let { clip ->
-                    when (clip.type) {
-                        ClipContentType.IMAGE -> ImageLightboxDialog(
-                            clip = clip,
-                            onDismiss = { inspectingClip = null },
-                            onShare = onShareClip,
-                            onSendToDevice = onSendClip,
-                            onDelete = onDeleteClip
-                        )
-                        ClipContentType.TEXT, ClipContentType.URL -> TextInspectorDialog(
-                            clip = clip,
-                            onDismiss = { inspectingClip = null },
-                            onCopy = onCopyClip,
-                            onShare = onShareClip,
-                            onSendToDevice = onSendClip,
-                            onDelete = onDeleteClip
-                        )
-                        ClipContentType.FILE -> FileInspectorDialog(
-                            clip = clip,
-                            onDismiss = { inspectingClip = null },
-                            onShare = onShareClip,
-                            onSendToDevice = onSendClip,
-                            onDelete = onDeleteClip
-                        )
-                    }
+        }
+        AnimatedVisibility(
+            visible = inspectingClip != null,
+            enter = fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(260)) { it / 4 },
+            exit = fadeOut(animationSpec = tween(180)) + slideOutVertically(animationSpec = tween(220)) { it / 4 }
+        ) {
+            inspectingClip?.let { clip ->
+                when (clip.type) {
+                    ClipContentType.IMAGE -> ImageLightboxDialog(
+                        clip = clip,
+                        onDismiss = { inspectingClip = null },
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip
+                    )
+                    ClipContentType.TEXT, ClipContentType.URL -> TextInspectorDialog(
+                        clip = clip,
+                        onDismiss = { inspectingClip = null },
+                        onCopy = onCopyClip,
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip
+                    )
+                    ClipContentType.FILE -> FileInspectorDialog(
+                        clip = clip,
+                        onDismiss = { inspectingClip = null },
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip
+                    )
                 }
             }
         }
@@ -733,19 +767,19 @@ fun AlertsFeed(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Mirrored Alerts (${notices.size})",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            if (notices.isNotEmpty()) {
+        if (notices.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Alerts (${notices.size})",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 TextButton(
                     onClick = {
                         HapticManager.performClick(context)
@@ -763,45 +797,39 @@ fun AlertsFeed(
         }
 
         if (notices.isEmpty()) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 36.dp, horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(52.dp)
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Notifications,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                    Text(
-                        text = "No Mirrored Alerts",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Phone notifications and 1-tap OTP verification codes will appear here in real time.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
                 }
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "All caught up",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Phone notifications and verification codes will appear here in real time.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         } else {
             notices.forEach { notice ->

@@ -63,6 +63,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -225,36 +226,6 @@ fun SyncHistoryFeed(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         if (showSyncHistory && recentClips.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "${recentClips.size} items",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                TextButton(
-                    onClick = {
-                        HapticManager.performClick(context)
-                        showClearConfirmationDialog = true
-                    },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                ) {
-                    Text(
-                        text = "Clear All",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                }
-            }
-        }
-        if (showSyncHistory && recentClips.isNotEmpty()) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -299,39 +270,37 @@ fun SyncHistoryFeed(
                 )
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HistoryCategoryFilter.entries.forEach { filter ->
-                    val isSelected = selectedFilter == filter
-                    FilterChip(
-                        selected = isSelected,
+            if (recentClips.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${recentClips.size} items",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TextButton(
                         onClick = {
                             HapticManager.performClick(context)
-                            selectedFilter = filter
+                            showClearConfirmationDialog = true
                         },
-                        label = {
-                            Text(
-                                text = filter.label,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                                )
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "Clear All",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
                             )
-                        },
-                        shape = CircleShape,
-                        border = null,
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                    )
+                    }
                 }
             }
         }
-
         if (!showSyncHistory) {
             PrivacyModeActiveCard(onEnableHistory = onToggleShowSyncHistory)
         } else {
@@ -547,6 +516,12 @@ private fun SyncHistoryItemRow(
     var isCopied by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
+    LaunchedEffect(isCopied) {
+        if (isCopied) {
+            delay(1600)
+            isCopied = false
+        }
+    }
     val imageMetadata = remember(clip.id) {
         if (clip.type == ClipContentType.IMAGE) {
             ImageMetadataHelper.extractMetadata(clip.rawData)
@@ -602,8 +577,9 @@ private fun SyncHistoryItemRow(
                                 contentDescription = "Image Thumbnail",
                                 modifier = Modifier
                                     .size(44.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .padding(2.dp),
+                                contentScale = ContentScale.Fit
                             )
                         } else {
                             Box(contentAlignment = Alignment.Center) {
@@ -687,7 +663,7 @@ private fun SyncHistoryItemRow(
             }
 
             val titleText = when (clip.type) {
-                ClipContentType.IMAGE, ClipContentType.FILE -> clip.displayName
+                ClipContentType.IMAGE, ClipContentType.FILE -> clip.formattedTitle
                 ClipContentType.TEXT, ClipContentType.URL -> clip.textContent?.replace("\n", " ")?.trim() ?: ""
             }
 
@@ -702,7 +678,9 @@ private fun SyncHistoryItemRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                val relativeTime = remember(clip.timestamp) { getRelativeTimeSpan(clip.timestamp) }
+                val timeLabel = remember(clip.timestamp) {
+                    java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(clip.timestamp))
+                }
                 val metadataLabel = when (clip.type) {
                     ClipContentType.IMAGE -> {
                         val sizeStr = imageMetadata?.formattedSize ?: "${(clip.rawData?.size ?: 0) / 1024} KB"
@@ -746,7 +724,7 @@ private fun SyncHistoryItemRow(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = relativeTime,
+                        text = timeLabel,
                         style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)),
                         maxLines = 1
                     )
@@ -800,7 +778,7 @@ private fun SyncHistoryItemRow(
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(14.dp),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                     ) {
@@ -823,7 +801,7 @@ private fun SyncHistoryItemRow(
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         )
                         DropdownMenuItem(
                             text = {
@@ -844,7 +822,7 @@ private fun SyncHistoryItemRow(
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
@@ -872,7 +850,7 @@ private fun SyncHistoryItemRow(
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
                 }
