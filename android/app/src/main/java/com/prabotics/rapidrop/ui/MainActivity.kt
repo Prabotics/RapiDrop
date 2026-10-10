@@ -75,9 +75,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
-        var isReady = false
-        splashScreen.setKeepOnScreenCondition { !isReady }
         preferencesManager = PreferencesManager(this)
         val initialMode = preferencesManager.getAppThemeMode()
         val isDark = when (initialMode) {
@@ -85,6 +82,15 @@ class MainActivity : ComponentActivity() {
             AppThemeMode.LIGHT -> false
             AppThemeMode.DARK -> true
         }
+        val config = resources.configuration
+        val targetUiMode = if (isDark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+        if ((config.uiMode and Configuration.UI_MODE_NIGHT_MASK) != targetUiMode) {
+            config.uiMode = (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or targetUiMode
+            resources.updateConfiguration(config, resources.displayMetrics)
+        }
+        val splashScreen = installSplashScreen()
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
         enableEdgeToEdge(
             statusBarStyle = if (isDark) {
                 SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)

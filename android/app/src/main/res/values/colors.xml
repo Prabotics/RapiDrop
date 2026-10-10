@@ -4,5 +4,5 @@
     <color name="primary_variant">#0066C4</color>
     <color name="surface">#FFFFFF</color>
     <color name="background">#F8FAFC</color>
-    <color name="splash_background">#FFFFFF</color>
+    <color name="splash_background">#F7F8FA</color>
 </resources>

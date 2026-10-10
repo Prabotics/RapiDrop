@@ -443,60 +443,59 @@ private fun EmptyHistoryCard() {
 @Composable
 private fun PrivacyModeActiveCard(onEnableHistory: () -> Unit) {
     val context = LocalContext.current
-    OutlinedCard(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 18.dp, horizontal = 16.dp),
+                .padding(vertical = 28.dp, horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Rounded.Lock,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
-
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = "Sync History is Off",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 8.dp)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
-
             Text(
-                text = "Clipboard items are synced in-memory only and not saved to disk.",
-                style = MaterialTheme.typography.bodySmall,
+                text = "Clips sync in memory only and never save to disk.",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 2.dp, start = 8.dp, end = 8.dp)
+                textAlign = TextAlign.Center
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
+            Spacer(modifier = Modifier.height(6.dp))
             FilledTonalButton(
                 onClick = {
                     HapticManager.performClick(context)
                     onEnableHistory()
                 },
-                shape = MaterialTheme.shapes.small
+                shape = CircleShape,
+                modifier = Modifier.height(38.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
             ) {
-                Text("Turn on history", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = "Turn on history",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
             }
         }
     }
