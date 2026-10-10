@@ -212,12 +212,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
     appState.refreshDiscovery()
   }
   private func updatePopoverAppearance() {
-    let isDark: Bool = {
-      if let style = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") {
-        return style.lowercased().contains("dark")
-      }
-      return NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-    }()
+    let isDark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
     let targetAppearance = isDark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
     popover?.appearance = targetAppearance
     hostingController?.view.appearance = targetAppearance

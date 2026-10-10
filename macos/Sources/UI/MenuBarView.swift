@@ -160,27 +160,52 @@ public struct MenuBarView: View {
       appState.onRequestClosePopover?()
     }
     .background(
-      Button(action: {
-        if appState.isConnected {
-          if appState.sendClipboardNow() {
-            appState.triggerHapticFeedback(.alignment)
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-              isClipboardSynced = true
-            }
-            Task {
-              try? await Task.sleep(nanoseconds: 1_800_000_000)
-              await MainActor.run {
-                withAnimation {
-                  isClipboardSynced = false
+      Group {
+        Button(action: {
+          if appState.isConnected {
+            if appState.sendClipboardNow() {
+              appState.triggerHapticFeedback(.alignment)
+              withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                isClipboardSynced = true
+              }
+              Task {
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+                await MainActor.run {
+                  withAnimation {
+                    isClipboardSynced = false
+                  }
                 }
               }
             }
           }
+        }) {
+          EmptyView()
         }
-      }) {
-        EmptyView()
+        .keyboardShortcut("v", modifiers: .command)
+
+        Button(action: {
+          withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) {
+            if isViewingSettings {
+              isViewingSettings = false
+            } else {
+              isViewingHistory = false
+              isViewingNotifications = false
+              inspectingClip = nil
+              isViewingSettings = true
+            }
+          }
+        }) {
+          EmptyView()
+        }
+        .keyboardShortcut(",", modifiers: .command)
+
+        Button(action: {
+          handleEscapeKey()
+        }) {
+          EmptyView()
+        }
+        .keyboardShortcut(.cancelAction)
       }
-      .keyboardShortcut("v", modifiers: .command)
       .opacity(0)
       .frame(width: 0, height: 0)
     )
@@ -231,6 +256,25 @@ public struct MenuBarView: View {
         appState.clearHistory()
       }
       Button("Cancel", role: .cancel) {}
+    }
+  }
+  private func handleEscapeKey() {
+    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+      if inspectingClip != nil {
+        inspectingClip = nil
+      } else if isViewingSettings {
+        isViewingSettings = false
+      } else if isViewingHistory {
+        isViewingHistory = false
+      } else if isViewingNotifications {
+        isViewingNotifications = false
+      } else if appState.selectedDeviceForPairing != nil {
+        appState.cancelPairingSelection()
+      } else if appState.incomingPairInvite != nil {
+        appState.declinePairInvite()
+      } else {
+        appState.onRequestClosePopover?()
+      }
     }
   }
   @ViewBuilder
@@ -1300,7 +1344,11 @@ public struct MenuBarView: View {
           .padding(.leading, 48)
 
         Button(action: {
-          NSApp.activate(ignoringOtherApps: true)
+          if #available(macOS 14.0, *) {
+            NSApp.activate()
+          } else {
+            NSApp.activate(ignoringOtherApps: true)
+          }
           let panel = NSOpenPanel()
           panel.canChooseFiles = true
           panel.canChooseDirectories = true
@@ -1517,7 +1565,11 @@ public struct MenuBarView: View {
   }
 
   private func selectCustomFolder() {
-    NSApp.activate(ignoringOtherApps: true)
+    if #available(macOS 14.0, *) {
+      NSApp.activate()
+    } else {
+      NSApp.activate(ignoringOtherApps: true)
+    }
     let panel = NSOpenPanel()
     panel.canChooseFiles = false
     panel.canChooseDirectories = true

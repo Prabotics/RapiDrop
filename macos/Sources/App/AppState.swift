@@ -1045,7 +1045,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
           content: content,
           trigger: nil
         )
-        UNUserNotificationCenter.current().add(request) { _ in }
+        try? await UNUserNotificationCenter.current().add(request)
       }
     }
   }

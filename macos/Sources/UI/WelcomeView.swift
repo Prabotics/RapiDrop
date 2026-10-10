@@ -157,7 +157,11 @@ public final class WelcomeWindowController: NSObject, NSWindowDelegate {
 
     if let win = window {
       win.makeKeyAndOrderFront(nil)
-      NSApp.activate(ignoringOtherApps: true)
+      if #available(macOS 14.0, *) {
+        NSApp.activate()
+      } else {
+        NSApp.activate(ignoringOtherApps: true)
+      }
       return
     }
 
@@ -175,7 +179,7 @@ public final class WelcomeWindowController: NSObject, NSWindowDelegate {
       defer: false
     )
     newWindow.isOpaque = true
-    newWindow.backgroundColor = NSColor(deviceWhite: 0.13, alpha: 1.0)
+    newWindow.backgroundColor = .windowBackgroundColor
     newWindow.titleVisibility = .hidden
     newWindow.titlebarAppearsTransparent = true
     newWindow.isMovableByWindowBackground = true
@@ -191,7 +195,11 @@ public final class WelcomeWindowController: NSObject, NSWindowDelegate {
 
     self.window = newWindow
     newWindow.makeKeyAndOrderFront(nil)
-    NSApp.activate(ignoringOtherApps: true)
+    if #available(macOS 14.0, *) {
+      NSApp.activate()
+    } else {
+      NSApp.activate(ignoringOtherApps: true)
+    }
   }
 
   public func windowWillClose(_ notification: Notification) {
