@@ -1,10 +1,10 @@
 package com.prabotics.rapidrop.ui.theme
 
-
 enum class AppThemeMode {
     SYSTEM,
     LIGHT,
-    DARK;
+    DARK,
+    ;
 
     val displayLabel: String
         get() = when (this) {

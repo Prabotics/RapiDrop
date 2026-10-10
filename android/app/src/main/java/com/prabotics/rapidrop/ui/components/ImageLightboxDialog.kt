@@ -1,9 +1,9 @@
 package com.prabotics.rapidrop.ui.components
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import android.graphics.BitmapFactory
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,14 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -47,12 +44,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,8 +65,6 @@ import com.prabotics.rapidrop.clipboard.MediaStorageHelper
 import com.prabotics.rapidrop.ui.HapticManager
 import kotlinx.coroutines.delay
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageLightboxDialog(
@@ -75,7 +72,7 @@ fun ImageLightboxDialog(
     onDismiss: () -> Unit,
     onShare: (ClipItem) -> Unit,
     onSendToDevice: (ClipItem) -> Unit = {},
-    onDelete: ((ClipItem) -> Unit)? = null
+    onDelete: ((ClipItem) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val raw = clip.rawData ?: return
@@ -88,7 +85,9 @@ fun ImageLightboxDialog(
         } catch (_: OutOfMemoryError) {
             try {
                 ImageMetadataHelper.decodeSampledBitmap(raw, 1024, 1024)
-            } catch (_: Throwable) { null }
+            } catch (_: Throwable) {
+                null
+            }
         } catch (_: Exception) {
             null
         }
@@ -119,19 +118,19 @@ fun ImageLightboxDialog(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surface,
     ) {
         BackHandler {
             onDismiss()
         }
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.TopCenter,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .widthIn(max = 640.dp)
+                    .widthIn(max = 640.dp),
             ) {
                 TopAppBar(
                     title = {
@@ -140,13 +139,13 @@ fun ImageLightboxDialog(
                             val timeStr = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(clip.timestamp))
                             Text(
                                 text = headerTitle,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             )
                             val dimText = if (metadata != null) "${metadata.width} × ${metadata.height} px, $formattedSize, $timeStr" else "$formattedSize, $timeStr"
                             Text(
                                 text = dimText,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     },
@@ -155,12 +154,12 @@ fun ImageLightboxDialog(
                             onClick = {
                                 HapticManager.performClick(context)
                                 onDismiss()
-                            }
+                            },
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     },
@@ -171,20 +170,20 @@ fun ImageLightboxDialog(
                                     HapticManager.performClick(context)
                                     onDelete(clip)
                                     onDismiss()
-                                }
+                                },
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
                                     contentDescription = "Delete Image",
-                                    tint = MaterialTheme.colorScheme.error
+                                    tint = MaterialTheme.colorScheme.error,
                                 )
                             }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -205,7 +204,7 @@ fun ImageLightboxDialog(
                                     } else {
                                         scale = 2.5f
                                     }
-                                }
+                                },
                             )
                         }
                         .pointerInput(Unit) {
@@ -222,13 +221,13 @@ fun ImageLightboxDialog(
                                 }
                             }
                         },
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surface,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
-                        shadowElevation = 2.dp
+                        shadowElevation = 2.dp,
                     ) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
@@ -240,8 +239,8 @@ fun ImageLightboxDialog(
                                     scaleX = scale,
                                     scaleY = scale,
                                     translationX = offsetX,
-                                    translationY = offsetY
-                                )
+                                    translationY = offsetY,
+                                ),
                         )
                     }
                 }
@@ -252,14 +251,14 @@ fun ImageLightboxDialog(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
+                        .navigationBarsPadding(),
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         FilledTonalButton(
                             onClick = {
@@ -271,17 +270,17 @@ fun ImageLightboxDialog(
                             shape = CircleShape,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(42.dp)
+                                .height(42.dp),
                         ) {
                             Icon(
                                 imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
                                 contentDescription = "Copy Image",
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(17.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (isCopied) "Copied" else "Copy",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                             )
                         }
 
@@ -293,17 +292,17 @@ fun ImageLightboxDialog(
                             shape = CircleShape,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(42.dp)
+                                .height(42.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Share,
                                 contentDescription = "Share",
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(17.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Share",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                             )
                         }
 
@@ -315,17 +314,17 @@ fun ImageLightboxDialog(
                             shape = CircleShape,
                             modifier = Modifier
                                 .weight(1.1f)
-                                .height(42.dp)
+                                .height(42.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Laptop,
                                 contentDescription = "Send",
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(17.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Send",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                             )
                         }
                     }

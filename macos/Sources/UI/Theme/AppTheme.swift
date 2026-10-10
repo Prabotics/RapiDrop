@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 public enum AppColors {
   public static let accent = Color(red: 0.0, green: 0.510, blue: 0.980)

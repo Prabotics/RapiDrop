@@ -11,18 +11,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.prabotics.rapidrop.R
 
-
-
 @Composable
 fun RapiDropBrandLogo(
     modifier: Modifier = Modifier,
     size: Dp = 28.dp,
-    tint: Color = MaterialTheme.colorScheme.primary
+    tint: Color = MaterialTheme.colorScheme.primary,
 ) {
     Icon(
         painter = painterResource(id = R.drawable.ic_header_logo),
         contentDescription = "RapiDrop Logo",
         tint = tint,
-        modifier = modifier.size(size)
+        modifier = modifier.size(size),
     )
 }

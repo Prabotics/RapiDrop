@@ -6,8 +6,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-
-
 object HapticManager {
     private var isHapticEnabledCache: Boolean? = null
 

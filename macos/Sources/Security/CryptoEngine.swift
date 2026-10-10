@@ -20,7 +20,9 @@ public struct CryptoEngine: Sendable {
     return SymmetricKey(data: hash)
   }
 
-  public static func generateEphemeralKeypair() -> (privateKey: Curve25519.KeyAgreement.PrivateKey, publicKeyHex: String) {
+  public static func generateEphemeralKeypair() -> (
+    privateKey: Curve25519.KeyAgreement.PrivateKey, publicKeyHex: String
+  ) {
     let priv = Curve25519.KeyAgreement.PrivateKey()
     let pubHex = priv.publicKey.rawRepresentation.map { String(format: "%02x", $0) }.joined()
     return (priv, pubHex)
@@ -189,10 +191,10 @@ public struct CryptoEngine: Sendable {
   }
 
   private static var isTestEnvironment: Bool {
-    ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
-    ProcessInfo.processInfo.processName == "swiftpm-testing-helper" ||
-    ProcessInfo.processInfo.processName == "xctest" ||
-    ProcessInfo.processInfo.arguments.contains(where: { $0.contains("xctest") || $0.contains("Testing") })
+    ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+      || ProcessInfo.processInfo.processName == "swiftpm-testing-helper"
+      || ProcessInfo.processInfo.processName == "xctest"
+      || ProcessInfo.processInfo.arguments.contains(where: { $0.contains("xctest") || $0.contains("Testing") })
   }
 
   public static func saveSecureValue(key: String, value: String) {

@@ -25,8 +25,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.prabotics.rapidrop.ui.HapticManager
 import androidx.compose.ui.unit.dp
+import com.prabotics.rapidrop.ui.HapticManager
 
 @Composable
 fun PermissionAlertBanner(
@@ -58,13 +58,13 @@ fun PermissionAlertBanner(
             }
             .padding(horizontal = 12.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = accentColor,
-            modifier = Modifier.size(15.dp)
+            modifier = Modifier.size(15.dp),
         )
 
         Text(
@@ -73,14 +73,14 @@ fun PermissionAlertBanner(
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
 
         Text(
             text = actionLabel,
             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
             color = accentColor,
-            maxLines = 1
+            maxLines = 1,
         )
 
         if (onDismiss != null) {
@@ -89,13 +89,13 @@ fun PermissionAlertBanner(
                     HapticManager.performClick(context)
                     onDismiss()
                 },
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = "Dismiss",
                     tint = contentColor.copy(alpha = 0.4f),
-                    modifier = Modifier.size(12.dp)
+                    modifier = Modifier.size(12.dp),
                 )
             }
         }

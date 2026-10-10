@@ -1,6 +1,5 @@
 package com.prabotics.rapidrop
 
-import org.json.JSONObject
 import com.prabotics.rapidrop.clipboard.ClipContentType
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.network.DeviceNameHelper
@@ -11,6 +10,7 @@ import com.prabotics.rapidrop.network.WireFrame
 import com.prabotics.rapidrop.security.CryptoEngine
 import com.prabotics.rapidrop.service.SyncService
 import com.prabotics.rapidrop.ui.components.getRelativeTimeSpan
+import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,7 +37,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = nonce,
             ciphertext = ciphertext,
-            tag = tag
+            tag = tag,
         )
 
         val serialized = frame.serialize()
@@ -63,7 +63,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = nonce,
             ciphertext = inviteJson,
-            tag = tag
+            tag = tag,
         )
 
         val serialized = frame.serialize()
@@ -72,6 +72,7 @@ class RapiDropUnitTest {
         assertEquals(PacketType.PAIR_INVITE, deserialized?.type)
         assertArrayEquals(inviteJson, deserialized?.ciphertext)
     }
+
     @Test
     fun testWireFramePairAcceptSerialization() {
         val acceptJson = """{"status":"accepted","pin":"123456"}""".toByteArray(Charsets.UTF_8)
@@ -82,7 +83,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = nonce,
             ciphertext = acceptJson,
-            tag = tag
+            tag = tag,
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -90,6 +91,7 @@ class RapiDropUnitTest {
         assertEquals(PacketType.PAIR_ACCEPT, deserialized?.type)
         assertArrayEquals(acceptJson, deserialized?.ciphertext)
     }
+
     @Test
     fun testWireFramePairFailDeclinedSerialization() {
         val failDeclined = "DECLINED".toByteArray(Charsets.UTF_8)
@@ -98,7 +100,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12),
             ciphertext = failDeclined,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -115,7 +117,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12),
             ciphertext = failCancelled,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -132,7 +134,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12) { 0x01.toByte() },
             ciphertext = configJson,
-            tag = ByteArray(16) { 0x02.toByte() }
+            tag = ByteArray(16) { 0x02.toByte() },
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -140,6 +142,7 @@ class RapiDropUnitTest {
         assertEquals(PacketType.CONFIG_SYNC, deserialized?.type)
         assertArrayEquals(configJson, deserialized?.ciphertext)
     }
+
     @Test
     fun testWireFrameNotificationEventSerialization() {
         val payload = """{"id":"notif_1","packageName":"com.example","appName":"App","title":"Hello","text":"World"}""".toByteArray(Charsets.UTF_8)
@@ -148,7 +151,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12) { 0x05.toByte() },
             ciphertext = payload,
-            tag = ByteArray(16) { 0x06.toByte() }
+            tag = ByteArray(16) { 0x06.toByte() },
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -156,6 +159,7 @@ class RapiDropUnitTest {
         assertEquals(PacketType.NOTIFICATION_EVENT, deserialized?.type)
         assertArrayEquals(payload, deserialized?.ciphertext)
     }
+
     @Test
     fun testWireFrameNotificationEventWithIconSerialization() {
         val payload = """{"id":"notif_icon","packageName":"ump.reguetob.haym","appName":"Plus 1","title":"Chat","text":"Msg","iconBase64":"iVBORw0KGgoAAAANSUhEUg=="}""".toByteArray(Charsets.UTF_8)
@@ -164,7 +168,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12) { 0x05.toByte() },
             ciphertext = payload,
-            tag = ByteArray(16) { 0x06.toByte() }
+            tag = ByteArray(16) { 0x06.toByte() },
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -181,7 +185,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12) { 0x07.toByte() },
             ciphertext = payload,
-            tag = ByteArray(16) { 0x08.toByte() }
+            tag = ByteArray(16) { 0x08.toByte() },
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -206,7 +210,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12) { 0xAA.toByte() },
             ciphertext = filePayload,
-            tag = ByteArray(16) { 0xBB.toByte() }
+            tag = ByteArray(16) { 0xBB.toByte() },
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -223,7 +227,7 @@ class RapiDropUnitTest {
             timestamp = 1700000000000L,
             nonce = ByteArray(12),
             ciphertext = disconnectPayload,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -285,7 +289,7 @@ class RapiDropUnitTest {
             ciphertext = encrypted.ciphertext,
             nonce = encrypted.nonce,
             tag = encrypted.tag,
-            key = secretKey
+            key = secretKey,
         )
 
         assertArrayEquals(payload, decrypted)
@@ -356,7 +360,7 @@ class RapiDropUnitTest {
     fun testClipItemDataModel() {
         val item = ClipItem(
             type = ClipContentType.TEXT,
-            textContent = "Sample Text"
+            textContent = "Sample Text",
         )
         assertEquals("Sample Text", item.previewText)
     }
@@ -420,6 +424,7 @@ class RapiDropUnitTest {
         assertEquals("Light", com.prabotics.rapidrop.ui.theme.AppThemeMode.LIGHT.displayLabel)
         assertEquals("Dark", com.prabotics.rapidrop.ui.theme.AppThemeMode.DARK.displayLabel)
     }
+
     @Test
     fun testMainNavDestinations() {
         val destinations = com.prabotics.rapidrop.ui.MainNavDestination.entries
@@ -428,6 +433,7 @@ class RapiDropUnitTest {
         assertEquals("History", destinations[1].label)
         assertEquals("Settings", destinations[2].label)
     }
+
     @Test
     fun testSettingsDefaultsAndLocalPrivacyIsolation() {
         SyncService.showSyncHistory.value = true
@@ -454,7 +460,7 @@ class RapiDropUnitTest {
             0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x0D.toByte(),
             'I'.code.toByte(), 'H'.code.toByte(), 'D'.code.toByte(), 'R'.code.toByte(),
             0x00.toByte(), 0x00.toByte(), 0x07.toByte(), 0x80.toByte(),
-            0x00.toByte(), 0x00.toByte(), 0x04.toByte(), 0x38.toByte()
+            0x00.toByte(), 0x00.toByte(), 0x04.toByte(), 0x38.toByte(),
         )
         val metadata = com.prabotics.rapidrop.clipboard.ImageMetadataHelper.extractMetadata(pngHeader)
         assertNotNull(metadata)
@@ -530,6 +536,7 @@ class RapiDropUnitTest {
         assertFalse(com.prabotics.rapidrop.network.DeviceNameHelper.isSameDevice("Test Android", "Test Android Phone"))
         assertFalse(com.prabotics.rapidrop.network.DeviceNameHelper.isSameDevice("Test Mac", "Test Android"))
     }
+
     @Test
     fun testDeviceDiscoverySelfFilteringWithIdAndCollisionNames() {
         val localId = "device-uuid-1111"
@@ -591,7 +598,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-uuid-a",
-            receiverId = "device-uuid-b"
+            receiverId = "device-uuid-b",
         )
 
         val keysB = CryptoEngine.deriveHandshakeKeys(
@@ -601,12 +608,13 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-uuid-a",
-            receiverId = "device-uuid-b"
+            receiverId = "device-uuid-b",
         )
 
         assertArrayEquals(keysA.sessionKey.encoded, keysB.sessionKey.encoded)
         assertEquals(keysA.sasCode, keysB.sasCode)
     }
+
     @Test
     fun testPairingStateMachineTransitions() {
         val inviteObj = JSONObject()
@@ -661,7 +669,7 @@ class RapiDropUnitTest {
             type = PacketType.PAIR_FAIL,
             nonce = ByteArray(12),
             ciphertext = payload,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val serialized = frame.serialize()
         val deserialized = WireFrame.deserialize(serialized)
@@ -692,7 +700,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = idA,
-            receiverId = idB
+            receiverId = idB,
         )
 
         assertEquals("2cd9946128df4a5cb0f1a1786e31136a0b7ea489c8f913552b605f6c83638c00", CryptoEngine.bytesToHex(keys.transcriptHash))
@@ -720,7 +728,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-uuid-alice",
-            receiverId = "device-uuid-bob"
+            receiverId = "device-uuid-bob",
         )
 
         val keysTampered = CryptoEngine.deriveHandshakeKeys(
@@ -730,7 +738,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-uuid-attacker",
-            receiverId = "device-uuid-bob"
+            receiverId = "device-uuid-bob",
         )
 
         assertFalse(keysOriginal.sasCode == keysTampered.sasCode)
@@ -744,7 +752,7 @@ class RapiDropUnitTest {
             type = PacketType.FILE_START,
             nonce = ByteArray(12),
             ciphertext = startJson,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val deserializedStart = WireFrame.deserialize(startFrame.serialize())
         assertEquals(PacketType.FILE_START, deserializedStart?.type)
@@ -755,7 +763,7 @@ class RapiDropUnitTest {
             type = PacketType.FILE_END,
             nonce = ByteArray(12),
             ciphertext = endJson,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val deserializedEnd = WireFrame.deserialize(endFrame.serialize())
         assertEquals(PacketType.FILE_END, deserializedEnd?.type)
@@ -766,7 +774,7 @@ class RapiDropUnitTest {
             type = PacketType.FILE_CANCEL,
             nonce = ByteArray(12),
             ciphertext = cancelJson,
-            tag = ByteArray(16)
+            tag = ByteArray(16),
         )
         val deserializedCancel = WireFrame.deserialize(cancelFrame.serialize())
         assertEquals(PacketType.FILE_CANCEL, deserializedCancel?.type)
@@ -823,6 +831,7 @@ class RapiDropUnitTest {
         assertEquals(10240L, totalChunks)
         assertTrue(tenGigabytes > Int.MAX_VALUE.toLong())
     }
+
     @Test
     fun testSasTranscriptSensitivityAndDisplayNameIndependence() {
         val pubA = ByteArray(32) { 0x01 }
@@ -838,7 +847,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-a",
-            receiverId = "device-b"
+            receiverId = "device-b",
         )
 
         val baseSame = CryptoEngine.deriveHandshakeKeys(
@@ -848,7 +857,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-a",
-            receiverId = "device-b"
+            receiverId = "device-b",
         )
         assertEquals(base.sasCode, baseSame.sasCode)
         assertEquals(6, base.sasCode.length)
@@ -860,7 +869,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-a",
-            receiverId = "device-b"
+            receiverId = "device-b",
         )
         assertNotEquals(base.sasCode, diffKeyA.sasCode)
 
@@ -871,7 +880,7 @@ class RapiDropUnitTest {
             initiatorNonce = ByteArray(16) { 0x99.toByte() },
             receiverNonce = nonceB,
             initiatorId = "device-a",
-            receiverId = "device-b"
+            receiverId = "device-b",
         )
         assertNotEquals(base.sasCode, diffNonceA.sasCode)
 
@@ -882,7 +891,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-a-different",
-            receiverId = "device-b"
+            receiverId = "device-b",
         )
         assertNotEquals(base.sasCode, diffIdA.sasCode)
 
@@ -893,7 +902,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "device-a",
-            receiverId = "device-b-different"
+            receiverId = "device-b-different",
         )
         assertNotEquals(base.sasCode, diffIdB.sasCode)
     }
@@ -943,6 +952,7 @@ class RapiDropUnitTest {
         }
         assertFalse(isSelf)
     }
+
     @Test
     fun testNavigationAndThemeModeEnums() {
         val dests = com.prabotics.rapidrop.ui.MainNavDestination.entries
@@ -957,6 +967,7 @@ class RapiDropUnitTest {
         assertEquals("Light", com.prabotics.rapidrop.ui.theme.AppThemeMode.LIGHT.displayLabel)
         assertEquals("Dark", com.prabotics.rapidrop.ui.theme.AppThemeMode.DARK.displayLabel)
     }
+
     @Test
     fun testEndToEndProtocolHandshakeAndroidToMac() {
         val (privA, pubAHex) = CryptoEngine.generateEphemeralKeypair()
@@ -978,7 +989,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "android-uuid-1",
-            receiverId = "mac-uuid-2"
+            receiverId = "mac-uuid-2",
         )
         val keysB = CryptoEngine.deriveHandshakeKeys(
             sharedSecret = secretB,
@@ -987,7 +998,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = "android-uuid-1",
-            receiverId = "mac-uuid-2"
+            receiverId = "mac-uuid-2",
         )
 
         assertEquals(keysA.sasCode, keysB.sasCode)
@@ -1026,6 +1037,7 @@ class RapiDropUnitTest {
         assertEquals(PacketType.PAIR_FAIL, deserialized?.type)
         assertTrue(String(deserialized!!.ciphertext, Charsets.UTF_8).contains("DECLINED"))
     }
+
     @Test
     fun testReconnectWithStoredPreSharedKey() {
         val rawKeyBytes = ByteArray(32) { (it * 7).toByte() }
@@ -1251,7 +1263,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = idA,
-            receiverId = idB
+            receiverId = idB,
         )
 
         val secretA = CryptoEngine.computeSharedSecret(privA, pubBHex)
@@ -1262,7 +1274,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = idA,
-            receiverId = idB
+            receiverId = idB,
         )
 
         assertEquals(keysA.sasCode, keysB.sasCode)
@@ -1331,7 +1343,7 @@ class RapiDropUnitTest {
             initiatorNonce = nonceA,
             receiverNonce = nonceB,
             initiatorId = idA,
-            receiverId = idB
+            receiverId = idB,
         )
 
         val offerKeys = client.handlePairAccept(
@@ -1339,7 +1351,7 @@ class RapiDropUnitTest {
             remoteId = idB,
             remotePublicKeyHex = pubBHex,
             remoteNonceHex = CryptoEngine.bytesToHex(nonceB),
-            isFinal = false
+            isFinal = false,
         )
         assertNotNull(offerKeys)
         assertEquals(expectedKeysB.sasCode, offerKeys!!.sasCode)
@@ -1351,13 +1363,14 @@ class RapiDropUnitTest {
             remoteId = idB,
             remotePublicKeyHex = pubBHex,
             remoteNonceHex = CryptoEngine.bytesToHex(nonceB),
-            isFinal = true
+            isFinal = true,
         )
         assertNotNull(acceptKeys)
         assertEquals(expectedKeysB.sasCode, acceptKeys!!.sasCode)
         assertArrayEquals(expectedKeysB.sessionKey.encoded, acceptKeys.sessionKey.encoded)
         assertFalse(client.hasPendingInitiatorStateForTesting())
     }
+
     @Test
     fun testBuildPairAcceptIncludesId() {
         val acceptJson = JSONObject()
@@ -1410,7 +1423,7 @@ class RapiDropUnitTest {
             initiatorNonce = CryptoEngine.hexToBytes(parsedMacNonce)!!,
             receiverNonce = nonceAndroid,
             initiatorId = parsedMacId,
-            receiverId = androidId
+            receiverId = androidId,
         )
 
         val acceptJson = JSONObject()
@@ -1438,12 +1451,13 @@ class RapiDropUnitTest {
             initiatorNonce = nonceMac,
             receiverNonce = CryptoEngine.hexToBytes(parsedAndroidNonce)!!,
             initiatorId = macId,
-            receiverId = parsedAndroidId
+            receiverId = parsedAndroidId,
         )
 
         assertEquals(androidKeys.sasCode, macKeys.sasCode)
         assertArrayEquals(androidKeys.sessionKey.encoded, macKeys.sessionKey.encoded)
     }
+
     @Test
     fun testPairAcceptSessionKeyAndPayloadContract() {
         val client = SocketClient(context = null)

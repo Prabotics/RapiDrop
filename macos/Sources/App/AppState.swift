@@ -1,8 +1,8 @@
-import UserNotifications
-import ServiceManagement
 import CryptoKit
 import Foundation
+import ServiceManagement
 import SwiftUI
+import UserNotifications
 
 public enum MediaDestinationMode: String, CaseIterable, Sendable, Codable {
   case both = "both"
@@ -102,8 +102,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   @Published public var pairingPin: String = ""
   @Published public var discoveredDevices: [DiscoveredClientDevice] = []
   @Published public var selectedDeviceForPairing: DiscoveredClientDevice? = nil
-  @Published public var incomingPairInvite:
-    (deviceName: String, pin: String?, host: String?, port: Int)? = nil
+  @Published public var incomingPairInvite: (deviceName: String, pin: String?, host: String?, port: Int)? = nil
   @Published public var pendingPairingSasCode: String? = nil
   @Published public var pairingTimeRemaining: Double = 1.0
   @Published public var pairingErrorMessage: String? = nil
@@ -215,8 +214,7 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   }
 
   public var defaultMediaFolderURL: URL {
-    if let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-    {
+    if let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first {
       return downloads.appendingPathComponent("RapiDrop")
     }
     return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("RapiDrop")
@@ -374,7 +372,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
 
     self.isConnecting = true
     if let host = invite.host, !host.isEmpty {
-      let connectPort = (invite.port > 0 && invite.port != Int(WireFrame.defaultClientPort)) ? UInt16(invite.port) : WireFrame.defaultPort
+      let connectPort =
+        (invite.port > 0 && invite.port != Int(WireFrame.defaultClientPort))
+        ? UInt16(invite.port) : WireFrame.defaultPort
       self.network.sendPairAccept(to: host, port: UInt16(invite.port))
       self.network.connect(to: host, port: connectPort)
     }
@@ -722,7 +722,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       }
     }
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let tagName = json["tag_name"] as? String else { return nil }
+      let tagName = json["tag_name"] as? String
+    else { return nil }
     let defaultReleaseUrl = URL(string: "https://github.com/Prabotics/RapiDrop/releases")!
     let htmlUrl = (json["html_url"] as? String).flatMap { URL(string: $0) } ?? defaultReleaseUrl
 
@@ -731,8 +732,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     if let assets = json["assets"] as? [[String: Any]] {
       for asset in assets {
         if let name = asset["name"] as? String,
-           let downloadUrlStr = asset["browser_download_url"] as? String,
-           let downloadUrl = URL(string: downloadUrlStr) {
+          let downloadUrlStr = asset["browser_download_url"] as? String,
+          let downloadUrl = URL(string: downloadUrlStr)
+        {
           if name.hasSuffix(".dmg") {
             assetDownloadUrl = downloadUrl
             assetExt = "dmg"
@@ -760,7 +762,8 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
             showToast("Downloading \(release.tagName)...")
             do {
               let (tempUrl, _) = try await URLSession.shared.download(from: downloadUrl)
-              let downloadsDir = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+              let downloadsDir =
+                FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
                 ?? FileManager.default.temporaryDirectory
               let destUrl = downloadsDir.appendingPathComponent("RapiDrop-\(release.tagName).\(release.assetExt)")
               try? FileManager.default.removeItem(at: destUrl)
@@ -940,7 +943,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
       }
     }
   }
-  nonisolated public func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason) {
+  nonisolated public func networkEngineDidCancelTransfer(
+    _ engine: NetworkEngine, transferId: String, reason: TransferFailureReason
+  ) {
     Task { @MainActor in
       withAnimation(.easeOut(duration: 0.25)) {
         self.activeTransferProgress = nil
@@ -973,7 +978,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
         if !wasConnected {
           self.playSound("Hero")
           self.triggerHapticFeedback(.alignment)
-          let peer = (peerName ?? "device").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "\\", with: "")
+          let peer = (peerName ?? "device").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(
+            of: "\"", with: ""
+          ).replacingOccurrences(of: "\\", with: "")
           self.showToast("Connected to \(peer)")
         }
       } else {
@@ -982,7 +989,9 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
         withAnimation(.easeOut(duration: 0.25)) {
           self.activeTransferProgress = nil
         }
-        if let savedKeyHex = self.storedPairedKey, let keyData = CryptoEngine.hexToData(savedKeyHex), keyData.count == 32 {
+        if let savedKeyHex = self.storedPairedKey, let keyData = CryptoEngine.hexToData(savedKeyHex),
+          keyData.count == 32
+        {
           self.network.setSessionKey(SymmetricKey(data: keyData))
         } else if let savedPin = self.storedPairedPin, self.isPaired {
           self.pairingPin = savedPin
@@ -1005,9 +1014,10 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
   ) {
     Task { @MainActor in
       if let iconBase64 = notification.iconBase64,
-         self.notificationAppIcons[notification.packageName] == nil,
-         let data = Data(base64Encoded: iconBase64),
-         let img = NSImage(data: data) {
+        self.notificationAppIcons[notification.packageName] == nil,
+        let data = Data(base64Encoded: iconBase64),
+        let img = NSImage(data: data)
+      {
         self.notificationAppIcons[notification.packageName] = img
       }
 
@@ -1028,14 +1038,18 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
           content.sound = .default
         }
         if let iconBase64 = notification.iconBase64,
-           let data = Data(base64Encoded: iconBase64) {
-          let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("RapiDropIcons", isDirectory: true)
+          let data = Data(base64Encoded: iconBase64)
+        {
+          let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "RapiDropIcons", isDirectory: true)
           if (try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)) != nil {
             let iconFile = tempDir.appendingPathComponent("\(notification.packageName).png")
             if !FileManager.default.fileExists(atPath: iconFile.path) {
               try? data.write(to: iconFile)
             }
-            if let attachment = try? UNNotificationAttachment(identifier: notification.packageName, url: iconFile, options: nil) {
+            if let attachment = try? UNNotificationAttachment(
+              identifier: notification.packageName, url: iconFile, options: nil)
+            {
               content.attachments = [attachment]
             }
           }

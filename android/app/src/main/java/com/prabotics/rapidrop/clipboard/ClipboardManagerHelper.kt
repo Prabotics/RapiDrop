@@ -6,8 +6,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 
-
-
 object ClipboardManagerHelper {
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -36,9 +34,10 @@ object ClipboardManagerHelper {
         if (description != null) {
             val extras = description.extras
             if (extras != null && (
-                extras.getBoolean("android.content.extra.IS_SENSITIVE", false) ||
-                extras.getInt("android.content.extra.IS_SENSITIVE", 0) == 1
-            )) {
+                    extras.getBoolean("android.content.extra.IS_SENSITIVE", false) ||
+                        extras.getInt("android.content.extra.IS_SENSITIVE", 0) == 1
+                    )
+            ) {
                 return null
             }
         }
@@ -47,13 +46,19 @@ object ClipboardManagerHelper {
             val item = primaryClip.getItemAt(i) ?: continue
             val rawText = item.text?.toString()
                 ?: item.htmlText
-                ?: try { item.coerceToText(context)?.toString() } catch (_: SecurityException) { null } catch (_: RuntimeException) { null }
+                ?: try {
+                    item.coerceToText(context)?.toString()
+                } catch (_: SecurityException) {
+                    null
+                } catch (_: RuntimeException) {
+                    null
+                }
 
             if (!rawText.isNullOrBlank()) {
                 val isUrl = rawText.startsWith("http://", ignoreCase = true) || rawText.startsWith("https://", ignoreCase = true)
                 return ClipItem(
                     type = if (isUrl) ClipContentType.URL else ClipContentType.TEXT,
-                    textContent = rawText
+                    textContent = rawText,
                 )
             }
 
@@ -66,7 +71,11 @@ object ClipboardManagerHelper {
                 val mimeType = context.contentResolver.getType(uri)
                 if (mimeType?.startsWith("image/") == true) {
                     try {
-                        val descriptor = try { context.contentResolver.openFileDescriptor(uri, "r") } catch (_: Exception) { null }
+                        val descriptor = try {
+                            context.contentResolver.openFileDescriptor(uri, "r")
+                        } catch (_: Exception) {
+                            null
+                        }
                         val size = descriptor?.statSize ?: 0L
                         descriptor?.close()
                         if (size in 1..com.prabotics.rapidrop.network.WireFrame.MAX_PAYLOAD_SIZE) {

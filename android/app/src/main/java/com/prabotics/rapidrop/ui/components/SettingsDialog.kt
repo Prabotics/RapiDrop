@@ -1,7 +1,5 @@
 package com.prabotics.rapidrop.ui.components
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -10,25 +8,16 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.material.icons.rounded.BrightnessAuto
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.FolderCopy
-import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,36 +27,35 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.BatteryChargingFull
-import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.FolderCopy
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Laptop
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PowerSettingsNew
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -77,36 +65,41 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.prabotics.rapidrop.R
 import com.prabotics.rapidrop.clipboard.MediaDestinationMode
 import com.prabotics.rapidrop.preference.PreferencesManager
+import com.prabotics.rapidrop.service.NotificationSyncService
 import com.prabotics.rapidrop.service.UpdateChecker
 import com.prabotics.rapidrop.service.UpdateResult
 import com.prabotics.rapidrop.ui.HapticManager
 import com.prabotics.rapidrop.ui.theme.AppThemeMode
-import com.prabotics.rapidrop.service.NotificationSyncService
-import com.prabotics.rapidrop.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun SettingsContent(
@@ -120,7 +113,7 @@ fun SettingsContent(
     onUnpairDevice: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
     onExitApp: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val preferencesManager = remember(context) { PreferencesManager(context) }
@@ -152,11 +145,15 @@ fun SettingsContent(
     }
     val isNotificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    } else true
+    } else {
+        true
+    }
     val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
     val isBatteryOptimizedIgnored = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
-    } else true
+    } else {
+        true
+    }
 
     if (showThemeDialog) {
         AlertDialog(
@@ -166,13 +163,13 @@ fun SettingsContent(
             title = {
                 Text(
                     text = "Choose Theme",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                 )
             },
             text = {
                 Column(
                     modifier = Modifier.selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     AppThemeMode.entries.forEach { mode ->
                         val isSelected = currentThemeMode == mode
@@ -189,7 +186,7 @@ fun SettingsContent(
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = containerColor,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
                                 modifier = Modifier
@@ -201,29 +198,29 @@ fun SettingsContent(
                                             onThemeModeSelected(mode)
                                             showThemeDialog = false
                                         },
-                                        role = Role.RadioButton
+                                        role = Role.RadioButton,
                                     )
                                     .padding(horizontal = 16.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Row(
                                     modifier = Modifier.weight(1f),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 ) {
                                     Icon(
                                         imageVector = modeIcon,
                                         contentDescription = null,
                                         tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(24.dp),
                                     )
                                     Text(
                                         text = mode.displayLabel,
                                         style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                                         ),
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
                                 if (isSelected) {
@@ -231,7 +228,7 @@ fun SettingsContent(
                                         imageVector = Icons.Rounded.Check,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
@@ -243,10 +240,10 @@ fun SettingsContent(
                 TextButton(onClick = { showThemeDialog = false }) {
                     Text(
                         text = "Cancel",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            }
+            },
         )
     }
 
@@ -258,13 +255,13 @@ fun SettingsContent(
             title = {
                 Text(
                     text = "Media Destination",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                 )
             },
             text = {
                 Column(
                     modifier = Modifier.selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     MediaDestinationMode.entries.forEach { mode ->
                         val isSelected = currentMode == mode
@@ -281,7 +278,7 @@ fun SettingsContent(
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = containerColor,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
                                 modifier = Modifier
@@ -293,38 +290,38 @@ fun SettingsContent(
                                             onModeSelected(mode)
                                             showMediaDialog = false
                                         },
-                                        role = Role.RadioButton
+                                        role = Role.RadioButton,
                                     )
                                     .padding(horizontal = 16.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Row(
                                     modifier = Modifier.weight(1f),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 ) {
                                     Icon(
                                         imageVector = modeIcon,
                                         contentDescription = null,
                                         tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(24.dp),
                                     )
                                     Column(
                                         modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
                                     ) {
                                         Text(
                                             text = mode.displayLabel,
                                             style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                                             ),
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                         )
                                         Text(
                                             text = mode.description,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     }
                                 }
@@ -334,7 +331,7 @@ fun SettingsContent(
                                         imageVector = Icons.Rounded.Check,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
@@ -346,10 +343,10 @@ fun SettingsContent(
                 TextButton(onClick = { showMediaDialog = false }) {
                     Text(
                         text = "Cancel",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            }
+            },
         )
     }
 
@@ -363,19 +360,19 @@ fun SettingsContent(
                     imageVector = Icons.Rounded.LinkOff,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(28.dp),
                 )
             },
             title = {
                 Text(
                     text = "Forget $pairedDeviceName?",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
                 )
             },
             text = {
                 Text(
                     text = "Disconnect from this device. You will need to pair again to transfer files or sync clipboard.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -387,8 +384,8 @@ fun SettingsContent(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
                 ) {
                     Text("Forget Device")
                 }
@@ -397,7 +394,7 @@ fun SettingsContent(
                 TextButton(onClick = { showUnpairDialog = false }) {
                     Text("Cancel", style = MaterialTheme.typography.labelLarge)
                 }
-            }
+            },
         )
     }
     val scrollState = rememberScrollState()
@@ -406,7 +403,7 @@ fun SettingsContent(
             .fillMaxWidth()
             .verticalScroll(scrollState)
             .padding(top = 8.dp, bottom = 36.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val cardBorder = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
@@ -417,14 +414,14 @@ fun SettingsContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = cardBorder
+                border = cardBorder,
             ) {
                 SettingsDeviceRow(
                     icon = Icons.Rounded.Laptop,
                     title = pairedDeviceName,
                     subtitle = "Connected on Wi-Fi",
                     onForget = { showUnpairDialog = true },
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(20.dp),
                 )
             }
         }
@@ -434,7 +431,7 @@ fun SettingsContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = cardBorder
+            border = cardBorder,
         ) {
             Column {
                 SettingsNavigationRow(
@@ -442,7 +439,7 @@ fun SettingsContent(
                     title = "Media Destination",
                     subtitle = currentMode.displayLabel,
                     onClick = { showMediaDialog = true },
-                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
                 SettingsSwitchRow(
@@ -452,7 +449,7 @@ fun SettingsContent(
                     checked = showSyncHistory,
                     onCheckedChange = {
                         onToggleShowSyncHistory(it)
-                    }
+                    },
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
                 if (!isNotificationListenerGranted) {
@@ -467,7 +464,7 @@ fun SettingsContent(
                             NotificationSyncService.openSettings(context)
                         },
                         trailingBadge = "Set up",
-                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
                     )
                 } else {
                     SettingsSwitchRow(
@@ -479,7 +476,7 @@ fun SettingsContent(
                             isNotificationMirroringEnabled = enabled
                             preferencesManager.setNotificationMirroringEnabled(enabled)
                         },
-                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
                     )
                 }
             }
@@ -490,7 +487,7 @@ fun SettingsContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = cardBorder
+            border = cardBorder,
         ) {
             Column {
                 SettingsNavigationRow(
@@ -498,7 +495,7 @@ fun SettingsContent(
                     title = "Theme",
                     subtitle = currentThemeMode.displayLabel,
                     onClick = { showThemeDialog = true },
-                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 )
                 HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
                 SettingsSwitchRow(
@@ -510,7 +507,7 @@ fun SettingsContent(
                         isHapticEnabled = it
                         preferencesManager.setHapticEnabled(it)
                     },
-                    shape = if (isBatteryOptimizedIgnored) RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp) else RectangleShape
+                    shape = if (isBatteryOptimizedIgnored) RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp) else RectangleShape,
                 )
                 if (!isBatteryOptimizedIgnored) {
                     HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
@@ -527,7 +524,7 @@ fun SettingsContent(
                                 } catch (_: Exception) {}
                             }
                         },
-                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
                     )
                 }
             }
@@ -538,154 +535,154 @@ fun SettingsContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = cardBorder
+            border = cardBorder,
         ) {
-                Column {
-                    val currentUpdate = updateState
-                    val isUpdateAvailable = currentUpdate is UpdateResult.UpdateAvailable
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                            .clickable(enabled = !isCheckingUpdate) {
-                                if (isUpdateAvailable) {
-                                    HapticManager.performClick(context)
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse((currentUpdate as UpdateResult.UpdateAvailable).releaseUrl))
-                                    context.startActivity(intent)
-                                } else {
-                                    HapticManager.performClick(context)
-                                    isCheckingUpdate = true
-                                    coroutineScope.launch {
-                                        val startTime = System.currentTimeMillis()
-                                        val res = UpdateChecker.checkForUpdates(context)
-                                        val elapsed = System.currentTimeMillis() - startTime
-                                        if (elapsed < 500L) {
-                                            delay(500L - elapsed)
-                                        }
-                                        updateState = res
-                                        isCheckingUpdate = false
-                                        if (res is UpdateResult.UpdateAvailable) {
-                                            HapticManager.performSuccess(context)
-                                        }
+            Column {
+                val currentUpdate = updateState
+                val isUpdateAvailable = currentUpdate is UpdateResult.UpdateAvailable
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                        .clickable(enabled = !isCheckingUpdate) {
+                            if (isUpdateAvailable) {
+                                HapticManager.performClick(context)
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse((currentUpdate as UpdateResult.UpdateAvailable).releaseUrl))
+                                context.startActivity(intent)
+                            } else {
+                                HapticManager.performClick(context)
+                                isCheckingUpdate = true
+                                coroutineScope.launch {
+                                    val startTime = System.currentTimeMillis()
+                                    val res = UpdateChecker.checkForUpdates(context)
+                                    val elapsed = System.currentTimeMillis() - startTime
+                                    if (elapsed < 500L) {
+                                        delay(500L - elapsed)
                                     }
-                                }
-                            }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            RapiDropBrandLogo(size = 24.dp)
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = "RapiDrop",
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                val subtitleText = when {
-                                    isCheckingUpdate -> "Checking for updates..."
-                                    isUpdateAvailable -> "Update available, tap to view"
-                                    currentUpdate is UpdateResult.UpToDate -> "Up to date"
-                                    currentUpdate is UpdateResult.Error -> "Check failed"
-                                    else -> "Tap to check for updates"
-                                }
-                                Crossfade(
-                                    targetState = subtitleText,
-                                    animationSpec = tween(220)
-                                ) { text ->
-                                    Text(
-                                        text = text,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                    updateState = res
+                                    isCheckingUpdate = false
+                                    if (res is UpdateResult.UpdateAvailable) {
+                                        HapticManager.performSuccess(context)
+                                    }
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        RapiDropBrandLogo(size = 24.dp)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            if (isUpdateAvailable && (currentUpdate as UpdateResult.UpdateAvailable).releaseNotes.isNotBlank()) {
-                                IconButton(
-                                    onClick = {
-                                        HapticManager.performClick(context)
-                                        showReleaseNotesDialog = true
-                                    },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Description,
-                                        contentDescription = "Release Notes",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                            Text(
+                                text = "RapiDrop",
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            val subtitleText = when {
+                                isCheckingUpdate -> "Checking for updates..."
+                                isUpdateAvailable -> "Update available, tap to view"
+                                currentUpdate is UpdateResult.UpToDate -> "Up to date"
+                                currentUpdate is UpdateResult.Error -> "Check failed"
+                                else -> "Tap to check for updates"
                             }
                             Crossfade(
-                                targetState = isCheckingUpdate,
-                                animationSpec = tween(220)
-                            ) { checking ->
-                                if (checking) {
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(horizontal = 14.dp, vertical = 4.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            strokeWidth = 2.dp,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
+                                targetState = subtitleText,
+                                animationSpec = tween(220),
+                            ) { text ->
+                                Text(
+                                    text = text,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        if (isUpdateAvailable && (currentUpdate as UpdateResult.UpdateAvailable).releaseNotes.isNotBlank()) {
+                            IconButton(
+                                onClick = {
+                                    HapticManager.performClick(context)
+                                    showReleaseNotesDialog = true
+                                },
+                                modifier = Modifier.size(28.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Description,
+                                    contentDescription = "Release Notes",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
+                        Crossfade(
+                            targetState = isCheckingUpdate,
+                            animationSpec = tween(220),
+                        ) { checking ->
+                            if (checking) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 14.dp, vertical = 4.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            } else {
+                                val pillColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                                val pillTextColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                val versionText = if (isUpdateAvailable) {
+                                    "v${(currentUpdate as UpdateResult.UpdateAvailable).latestVersion}"
                                 } else {
-                                    val pillColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
-                                    val pillTextColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    val versionText = if (isUpdateAvailable) {
-                                        "v${(currentUpdate as UpdateResult.UpdateAvailable).latestVersion}"
-                                    } else {
-                                        "v${UpdateChecker.CURRENT_VERSION}"
-                                    }
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = pillColor
-                                    ) {
-                                        Text(
-                                            text = versionText,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                            color = pillTextColor,
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                        )
-                                    }
+                                    "v${UpdateChecker.CURRENT_VERSION}"
+                                }
+                                Surface(
+                                    shape = CircleShape,
+                                    color = pillColor,
+                                ) {
+                                    Text(
+                                        text = versionText,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = pillTextColor,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    )
                                 }
                             }
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-
-                    SettingsExternalLinkRow(
-                        painter = painterResource(id = R.drawable.ic_github),
-                        title = "GitHub",
-                        subtitle = "github.com/Prabotics/RapiDrop",
-                        onClick = {
-                            HapticManager.performClick(context)
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Prabotics/RapiDrop"))
-                            context.startActivity(intent)
-                        },
-                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                    )
                 }
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+
+                SettingsExternalLinkRow(
+                    painter = painterResource(id = R.drawable.ic_github),
+                    title = "GitHub",
+                    subtitle = "github.com/Prabotics/RapiDrop",
+                    onClick = {
+                        HapticManager.performClick(context)
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Prabotics/RapiDrop"))
+                        context.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
+                )
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -697,21 +694,21 @@ fun SettingsContent(
             shape = CircleShape,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(42.dp)
+                .height(42.dp),
         ) {
             Icon(
                 imageVector = Icons.Rounded.PowerSettingsNew,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = "Exit RapiDrop",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
             )
         }
 
@@ -727,34 +724,34 @@ fun SettingsContent(
                     .padding(16.dp),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 6.dp
+                tonalElevation = 6.dp,
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
                         text = "What's New in ${u.latestVersion}",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
                     )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .verticalScroll(rememberScrollState())
+                            .verticalScroll(rememberScrollState()),
                     ) {
                         Text(
                             text = u.releaseNotes,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
                     ) {
                         TextButton(onClick = { showReleaseNotesDialog = false }) {
                             Text("Close")
@@ -772,18 +769,19 @@ private fun SettingsGroupHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.titleSmall.copy(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         ),
-        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
     )
 }
+
 @Composable
 private fun SettingsDeviceRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
     onForget: () -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
 ) {
     val context = LocalContext.current
     Row(
@@ -792,44 +790,44 @@ private fun SettingsDeviceRow(
             .clip(shape)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(40.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -842,14 +840,14 @@ private fun SettingsDeviceRow(
             shape = CircleShape,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
-                contentColor = MaterialTheme.colorScheme.error
+                contentColor = MaterialTheme.colorScheme.error,
             ),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-            modifier = Modifier.height(34.dp)
+            modifier = Modifier.height(34.dp),
         ) {
             Text(
                 text = "Forget",
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
             )
         }
     }
@@ -865,7 +863,7 @@ private fun SettingsNavigationRow(
     showChevron: Boolean = true,
     titleColor: Color = Color.Unspecified,
     iconTint: Color = Color.Unspecified,
-    trailingBadge: String? = null
+    trailingBadge: String? = null,
 ) {
     val context = LocalContext.current
     Row(
@@ -878,49 +876,49 @@ private fun SettingsNavigationRow(
             }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (iconTint != Color.Unspecified) iconTint else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = if (titleColor != Color.Unspecified) titleColor else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
         if (!trailingBadge.isNullOrBlank()) {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Text(
                     text = trailingBadge,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                 )
             }
         } else if (showChevron) {
@@ -928,7 +926,7 @@ private fun SettingsNavigationRow(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -941,7 +939,7 @@ private fun SettingsSwitchRow(
     subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
 ) {
     val context = LocalContext.current
     Row(
@@ -954,40 +952,40 @@ private fun SettingsSwitchRow(
                 onValueChange = {
                     HapticManager.performClick(context)
                     onCheckedChange(it)
-                }
+                },
             )
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -999,8 +997,8 @@ private fun SettingsSwitchRow(
                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                 uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-            )
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            ),
         )
     }
 }
@@ -1012,7 +1010,7 @@ private fun SettingsPermissionRow(
     subtitle: String,
     isGranted: Boolean,
     onClick: () -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
 ) {
     Row(
         modifier = Modifier
@@ -1021,44 +1019,44 @@ private fun SettingsPermissionRow(
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             Text(
                 text = if (isGranted) "Allowed" else "Optimized",
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             )
         }
     }
@@ -1070,7 +1068,7 @@ private fun SettingsExternalLinkRow(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
 ) {
     Row(
         modifier = Modifier
@@ -1079,32 +1077,32 @@ private fun SettingsExternalLinkRow(
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
                 painter = painter,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -1112,7 +1110,7 @@ private fun SettingsExternalLinkRow(
             imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(18.dp),
         )
     }
 }
@@ -1123,7 +1121,7 @@ private fun SettingsExternalLinkRow(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
 ) {
     Row(
         modifier = Modifier
@@ -1132,32 +1130,32 @@ private fun SettingsExternalLinkRow(
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -1165,7 +1163,7 @@ private fun SettingsExternalLinkRow(
             imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(18.dp),
         )
     }
 }

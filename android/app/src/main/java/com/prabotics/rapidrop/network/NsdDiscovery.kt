@@ -2,9 +2,9 @@ package com.prabotics.rapidrop.network
 
 import android.content.Context
 import android.net.nsd.NsdManager
-import android.util.Log
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.util.Log
 import com.prabotics.rapidrop.preference.PreferencesManager
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -12,10 +12,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 class NsdDiscovery(
     private val context: Context,
-    private val onDevicesUpdated: (List<DiscoveredDevice>) -> Unit
+    private val onDevicesUpdated: (List<DiscoveredDevice>) -> Unit,
 ) {
     private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
     private val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
@@ -105,12 +104,16 @@ class NsdDiscovery(
     fun stopDiscovery() {
         if (!isDiscovering) return
         serverDiscoveryListener?.let {
-            try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+            try {
+                nsdManager.stopServiceDiscovery(it)
+            } catch (e: IllegalArgumentException) {
                 Log.w("RapiDrop", "Failed to stop server discovery", e)
             }
         }
         clientDiscoveryListener?.let {
-            try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+            try {
+                nsdManager.stopServiceDiscovery(it)
+            } catch (e: IllegalArgumentException) {
                 Log.w("RapiDrop", "Failed to stop client discovery", e)
             }
         }
@@ -130,12 +133,16 @@ class NsdDiscovery(
         updateMergedDevices()
         if (isDiscovering) {
             serverDiscoveryListener?.let {
-                try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+                try {
+                    nsdManager.stopServiceDiscovery(it)
+                } catch (e: IllegalArgumentException) {
                     Log.w("RapiDrop", "Failed to stop server discovery during restart", e)
                 }
             }
             clientDiscoveryListener?.let {
-                try { nsdManager.stopServiceDiscovery(it) } catch (e: IllegalArgumentException) {
+                try {
+                    nsdManager.stopServiceDiscovery(it)
+                } catch (e: IllegalArgumentException) {
                     Log.w("RapiDrop", "Failed to stop client discovery during restart", e)
                 }
             }

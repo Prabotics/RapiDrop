@@ -13,10 +13,10 @@ import android.util.Base64
 import android.util.Log
 import android.util.LruCache
 import com.prabotics.rapidrop.preference.PreferencesManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.util.regex.Pattern
-import kotlinx.coroutines.flow.MutableStateFlow
 
 data class MirroredNotice(
     val id: String,
@@ -24,7 +24,7 @@ data class MirroredNotice(
     val title: String,
     val text: String,
     val otpCode: String? = null,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )
 
 class NotificationSyncService : NotificationListenerService() {
@@ -71,7 +71,7 @@ class NotificationSyncService : NotificationListenerService() {
         fun isPermissionGranted(context: Context): Boolean {
             val enabledListeners = Settings.Secure.getString(
                 context.contentResolver,
-                "enabled_notification_listeners"
+                "enabled_notification_listeners",
             ) ?: return false
             val myComponent = "${context.packageName}/${NotificationSyncService::class.java.name}"
             return enabledListeners.split(":").any { it.equals(myComponent, ignoreCase = true) || it.contains(context.packageName) }
@@ -155,8 +155,12 @@ class NotificationSyncService : NotificationListenerService() {
                 val msgText = item.getCharSequence("text")?.toString()?.trim()
                 if (!msgText.isNullOrBlank()) {
                     if (!sender.isNullOrBlank()) "$sender: $msgText" else msgText
-                } else null
-            } else null
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
         }?.joinToString("\n")
 
         val rawText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim()
@@ -217,7 +221,7 @@ class NotificationSyncService : NotificationListenerService() {
             title = resolvedTitle,
             text = resolvedText,
             otpCode = detectedOtp,
-            timestamp = sbn.postTime
+            timestamp = sbn.postTime,
         )
         recentNotices.value = (listOf(notice) + recentNotices.value.filter { it.id != id }).take(30)
     }

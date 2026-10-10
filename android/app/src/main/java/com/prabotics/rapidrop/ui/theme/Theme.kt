@@ -15,13 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-
-
 @Composable
 fun RapiDropTheme(
     themeMode: AppThemeMode = AppThemeMode.SYSTEM,
     dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val darkTheme = when (themeMode) {
         AppThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -51,7 +49,7 @@ fun RapiDropTheme(
                     } else {
                         SystemBarStyle.light(
                             android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
+                            android.graphics.Color.TRANSPARENT,
                         )
                     },
                     navigationBarStyle = if (darkTheme) {
@@ -59,9 +57,9 @@ fun RapiDropTheme(
                     } else {
                         SystemBarStyle.light(
                             android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
+                            android.graphics.Color.TRANSPARENT,
                         )
-                    }
+                    },
                 )
                 val window = act.window
                 if (window != null) {
@@ -78,7 +76,7 @@ fun RapiDropTheme(
             colorScheme = colorScheme,
             typography = Typography,
             shapes = Shapes,
-            content = content
+            content = content,
         )
     }
 }

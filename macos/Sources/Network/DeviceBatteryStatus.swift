@@ -12,14 +12,14 @@ public struct DeviceBatteryStatus: Sendable, Equatable {
 
   public static func current() -> DeviceBatteryStatus? {
     guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-          let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef]
+      let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef]
     else { return nil }
 
     for source in sources {
       guard let desc = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any],
-            let currentCap = desc[kIOPSCurrentCapacityKey] as? Int,
-            let maxCap = desc[kIOPSMaxCapacityKey] as? Int,
-            maxCap > 0
+        let currentCap = desc[kIOPSCurrentCapacityKey] as? Int,
+        let maxCap = desc[kIOPSMaxCapacityKey] as? Int,
+        maxCap > 0
       else { continue }
 
       let percent = max(0, min(100, (currentCap * 100) / maxCap))

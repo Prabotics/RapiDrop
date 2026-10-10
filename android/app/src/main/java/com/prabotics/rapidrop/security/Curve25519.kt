@@ -3,8 +3,6 @@ package com.prabotics.rapidrop.security
 import java.math.BigInteger
 import java.security.SecureRandom
 
-
-
 object Curve25519 {
     private val P: BigInteger = BigInteger.valueOf(2).pow(255).subtract(BigInteger.valueOf(19))
     private val A24: BigInteger = BigInteger.valueOf(121665)

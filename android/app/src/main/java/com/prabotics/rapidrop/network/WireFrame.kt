@@ -3,8 +3,6 @@ package com.prabotics.rapidrop.network
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-
-
 enum class PacketType(val value: Short) {
     PING(0x0001),
     PONG(0x0002),
@@ -25,7 +23,8 @@ enum class PacketType(val value: Short) {
     CONFIG_SYNC(0x0020),
     NOTIFICATION_EVENT(0x0021),
     NOTIFICATION_ACTION(0x0022),
-    DISCONNECT(0x00FF.toShort());
+    DISCONNECT(0x00FF.toShort()),
+    ;
 
     companion object {
         private val map = entries.associateBy { it.value }
@@ -38,7 +37,7 @@ data class WireFrame(
     val timestamp: Long = System.currentTimeMillis(),
     val nonce: ByteArray,
     val ciphertext: ByteArray,
-    val tag: ByteArray
+    val tag: ByteArray,
 ) {
     companion object {
         const val PROTOCOL_VERSION: Short = 0x0001
@@ -88,7 +87,7 @@ data class WireFrame(
                 timestamp = timestamp,
                 nonce = nonce,
                 ciphertext = ciphertext,
-                tag = tag
+                tag = tag,
             )
         }
     }

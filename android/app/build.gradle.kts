@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.diffplug.spotless")
 }
 
 android {
@@ -51,7 +52,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
@@ -94,4 +95,29 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation("org.json:json:20240303")
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        targetExclude("**/build/**")
+        ktlint().editorConfigOverride(
+            mapOf(
+                "max_line_length" to "off",
+                "ktlint_standard_max-line-length" to "disabled",
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_filename" to "disabled",
+            ),
+        )
+    }
+    kotlinGradle {
+        target("**/*.kts")
+        targetExclude("**/build/**")
+        ktlint().editorConfigOverride(
+            mapOf(
+                "max_line_length" to "off",
+                "ktlint_standard_max-line-length" to "disabled",
+            ),
+        )
+    }
 }

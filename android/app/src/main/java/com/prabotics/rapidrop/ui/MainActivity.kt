@@ -1,12 +1,11 @@
 package com.prabotics.rapidrop.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import android.Manifest
-import android.content.Context
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,40 +15,34 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
-import android.view.View
-import android.view.animation.PathInterpolator
-import androidx.core.animation.doOnEnd
-import android.content.res.Configuration
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import com.prabotics.rapidrop.ui.theme.RapiDropTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.content.FileProvider
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.prabotics.rapidrop.clipboard.ClipContentType
-import androidx.compose.runtime.LaunchedEffect
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.clipboard.ClipboardManagerHelper
 import com.prabotics.rapidrop.network.PairInviteInfo
+import com.prabotics.rapidrop.preference.PreferencesManager
+import com.prabotics.rapidrop.service.NotificationSyncService
 import com.prabotics.rapidrop.service.SyncService
+import com.prabotics.rapidrop.ui.theme.AppThemeMode
+import com.prabotics.rapidrop.ui.theme.RapiDropTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.prabotics.rapidrop.preference.PreferencesManager
-import com.prabotics.rapidrop.ui.theme.AppThemeMode
 import java.io.File
-import com.prabotics.rapidrop.service.NotificationSyncService
-
-
 
 class MainActivity : ComponentActivity() {
     private lateinit var preferencesManager: PreferencesManager
@@ -61,13 +54,13 @@ class MainActivity : ComponentActivity() {
     private var isBatteryOptimizedIgnoredState = mutableStateOf(true)
     private var isNotificationListenerGrantedState = mutableStateOf(true)
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
+        ActivityResultContracts.RequestPermission(),
     ) {
         refreshPermissionStates()
     }
 
     private val pickMultipleMediaLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenMultipleDocuments()
+        ActivityResultContracts.OpenMultipleDocuments(),
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
             handleSendMultipleFiles(uris)
@@ -97,7 +90,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 SystemBarStyle.light(
                     android.graphics.Color.TRANSPARENT,
-                    android.graphics.Color.TRANSPARENT
+                    android.graphics.Color.TRANSPARENT,
                 )
             },
             navigationBarStyle = if (isDark) {
@@ -105,9 +98,9 @@ class MainActivity : ComponentActivity() {
             } else {
                 SystemBarStyle.light(
                     android.graphics.Color.TRANSPARENT,
-                    android.graphics.Color.TRANSPARENT
+                    android.graphics.Color.TRANSPARENT,
                 )
-            }
+            },
         )
         super.onCreate(savedInstanceState)
         refreshPermissionStates()
@@ -177,7 +170,7 @@ class MainActivity : ComponentActivity() {
                         incomingPairInvite = incomingPairInvite,
                         outgoingPairInvite = outgoingPairInvite,
                         pairingError = pairingError,
-                        recentNotices = recentNotices
+                        recentNotices = recentNotices,
                     ),
                     callbacks = MainScreenCallbacks(
                         onCancelTransfer = {
@@ -211,7 +204,7 @@ class MainActivity : ComponentActivity() {
                                         syncState = SyncState.IDLE
                                     }
                                 },
-                                onError = { syncState = SyncState.IDLE }
+                                onError = { syncState = SyncState.IDLE },
                             )
                         },
                         onCopyClip = { clip ->
@@ -266,8 +259,8 @@ class MainActivity : ComponentActivity() {
                         onExitApp = {
                             SyncService.stop(this@MainActivity)
                             finishAffinity()
-                        }
-                    )
+                        },
+                    ),
                 )
             }
         }
@@ -337,12 +330,16 @@ class MainActivity : ComponentActivity() {
     private fun refreshPermissionStates() {
         isNotificationGrantedState.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        } else true
+        } else {
+            true
+        }
 
         val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
         isBatteryOptimizedIgnoredState.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             powerManager?.isIgnoringBatteryOptimizations(packageName) ?: true
-        } else true
+        } else {
+            true
+        }
         isNotificationListenerGrantedState.value = NotificationSyncService.isPermissionGranted(this)
     }
 
@@ -400,7 +397,7 @@ class MainActivity : ComponentActivity() {
                         val ext = if (item.type == ClipContentType.IMAGE) "png" else "bin"
                         val tempFile = File(cacheDir, item.fileName ?: "shared_clip_${System.currentTimeMillis()}.$ext")
                         tempFile.writeBytes(bytes)
-                        val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", tempFile)
+                        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                             type = if (item.type == ClipContentType.IMAGE) "image/*" else "application/octet-stream"
                             putExtra(Intent.EXTRA_STREAM, uri)
@@ -463,7 +460,7 @@ class MainActivity : ComponentActivity() {
     private fun handleSyncNowClick(
         onSyncing: () -> Unit,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: () -> Unit,
     ) {
         if (!SyncService.isConnected.value) {
             HapticManager.performError(this)

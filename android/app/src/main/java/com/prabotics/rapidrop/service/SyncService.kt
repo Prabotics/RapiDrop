@@ -12,6 +12,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.prabotics.rapidrop.R
 import com.prabotics.rapidrop.clipboard.ClipContentType
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.clipboard.ClipboardManagerHelper
@@ -22,16 +23,15 @@ import com.prabotics.rapidrop.network.ClientSocketServer
 import com.prabotics.rapidrop.network.DeviceNameHelper
 import com.prabotics.rapidrop.network.DiscoveredDevice
 import com.prabotics.rapidrop.network.NsdDiscovery
+import com.prabotics.rapidrop.network.PacketType
+import com.prabotics.rapidrop.network.PairInviteInfo
 import com.prabotics.rapidrop.network.SocketClient
-import com.prabotics.rapidrop.R
+import com.prabotics.rapidrop.network.WireFrame
+import com.prabotics.rapidrop.preference.PreferencesManager
 import com.prabotics.rapidrop.security.CryptoEngine
 import com.prabotics.rapidrop.security.HandshakeKeys
-import com.prabotics.rapidrop.preference.PreferencesManager
-import com.prabotics.rapidrop.ui.MainActivity
 import com.prabotics.rapidrop.ui.HapticManager
-import com.prabotics.rapidrop.network.PairInviteInfo
-import com.prabotics.rapidrop.network.WireFrame
-import com.prabotics.rapidrop.network.PacketType
+import com.prabotics.rapidrop.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,8 +42,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-
-
 data class TransferProgress(
     val transferId: String,
     val fileName: String,
@@ -52,7 +50,7 @@ data class TransferProgress(
     val fileIndex: Int,
     val totalFiles: Int,
     val isSending: Boolean = false,
-    val speedBytesPerSec: Double = 0.0
+    val speedBytesPerSec: Double = 0.0,
 ) {
     val progressFraction: Float
         get() = if (totalBytes > 0) (bytesTransferred.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f) else 0f
@@ -153,6 +151,7 @@ class SyncService : Service() {
         val pairingError = MutableStateFlow<String?>(null)
         val activeTransferProgress = MutableStateFlow<TransferProgress?>(null)
         var lastReceivedClipHash: Int = 0
+
         @androidx.annotation.VisibleForTesting
         var instance: SyncService? = null
             private set
@@ -293,7 +292,7 @@ class SyncService : Service() {
                                 totalFiles = files.size,
                                 totalBytes = totalBytes,
                                 transferId = transferId,
-                                inputStream = stream
+                                inputStream = stream,
                             ) { bytesInFile ->
                                 val currentOverall = fileOffset + bytesInFile
                                 val (shouldUpdate, speed) = speedTracker.update(currentOverall, totalBytes)
@@ -306,7 +305,7 @@ class SyncService : Service() {
                                         fileIndex = index + 1,
                                         totalFiles = files.size,
                                         isSending = true,
-                                        speedBytesPerSec = speed
+                                        speedBytesPerSec = speed,
                                     )
                                 }
                             }
@@ -320,7 +319,9 @@ class SyncService : Service() {
                     addRecentClip(clip)
                 } finally {
                     for (item in files) {
-                        try { item.third.close() } catch (_: Exception) {}
+                        try {
+                            item.third.close()
+                        } catch (_: Exception) {}
                     }
                     activeTransferProgress.value = null
                     s.releaseWakeLock()
@@ -510,14 +511,14 @@ class SyncService : Service() {
                 connectedDeviceInfo.value = null
                 autoReconnectJob?.cancel()
                 updateNotification()
-            }
+            },
         )
         socketClient.onPeerBatteryUpdated = { battery ->
             val current = connectedDeviceInfo.value
             if (current != null) {
                 connectedDeviceInfo.value = current.copy(
                     batteryLevel = battery?.level,
-                    isCharging = battery?.isCharging ?: false
+                    isCharging = battery?.isCharging ?: false,
                 )
             } else if (battery != null) {
                 val peer = connectedPeerName.value ?: "Device"
@@ -525,7 +526,7 @@ class SyncService : Service() {
                     deviceName = peer,
                     modelName = peer,
                     batteryLevel = battery.level,
-                    isCharging = battery.isCharging
+                    isCharging = battery.isCharging,
                 )
             }
         }
@@ -578,7 +579,7 @@ class SyncService : Service() {
                         fileIndex = index + 1,
                         totalFiles = totalFiles,
                         isSending = false,
-                        speedBytesPerSec = rxSmoothedSpeed
+                        speedBytesPerSec = rxSmoothedSpeed,
                     )
                 }
             }
@@ -689,7 +690,7 @@ class SyncService : Service() {
             },
             onRemoteUnpairedReceived = {
                 unpair()
-            }
+            },
         )
         socketServer?.start()
 
@@ -931,7 +932,7 @@ class SyncService : Service() {
                         type = com.prabotics.rapidrop.network.PacketType.DISCONNECT,
                         nonce = ByteArray(com.prabotics.rapidrop.network.WireFrame.NONCE_SIZE),
                         ciphertext = "UNPAIR".toByteArray(Charsets.UTF_8),
-                        tag = ByteArray(com.prabotics.rapidrop.network.WireFrame.AUTH_TAG_SIZE)
+                        tag = ByteArray(com.prabotics.rapidrop.network.WireFrame.AUTH_TAG_SIZE),
                     )
                     sock.getOutputStream().write(frame.serialize())
                     sock.getOutputStream().flush()
@@ -979,7 +980,7 @@ class SyncService : Service() {
             val foregroundChannel = NotificationChannel(
                 FOREGROUND_CHANNEL_ID,
                 "RapiDrop Background Service",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW,
             ).apply {
                 description = "Shows persistent connection state with paired device"
                 setSound(null, null)
@@ -990,7 +991,7 @@ class SyncService : Service() {
             val pairingChannel = NotificationChannel(
                 PAIRING_CHANNEL_ID,
                 "Pairing Requests",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Alerts for incoming device connection and pairing requests"
                 enableVibration(true)
@@ -1013,7 +1014,7 @@ class SyncService : Service() {
             this,
             102,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val notification = NotificationCompat.Builder(this, PAIRING_CHANNEL_ID)
@@ -1036,7 +1037,7 @@ class SyncService : Service() {
                 startForeground(
                     FOREGROUND_NOTIFICATION_ID,
                     notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
                 )
             } else {
                 startForeground(FOREGROUND_NOTIFICATION_ID, notification)
@@ -1057,7 +1058,7 @@ class SyncService : Service() {
             this,
             0,
             openAppIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
 
         val sendIntent = Intent(this, SendClipActionActivity::class.java).apply {
@@ -1067,7 +1068,7 @@ class SyncService : Service() {
             this,
             1,
             sendIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
 
         val exitIntent = Intent(this, SyncService::class.java).apply {
@@ -1077,7 +1078,7 @@ class SyncService : Service() {
             this,
             2,
             exitIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
         val statusText = if (isConnected.value) {
             "Connected to ${connectedPeerName.value ?: "device"}"

@@ -28,7 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
     if let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
-       let iconImage = NSImage(contentsOf: iconURL) {
+      let iconImage = NSImage(contentsOf: iconURL)
+    {
       NSApp.applicationIconImage = iconImage
     }
 
@@ -110,8 +111,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
       button.sendAction(on: [.leftMouseUp, .rightMouseUp])
       button.image = customMenuBarIcon(
         isConnected: appState.isConnected, isSyncing: appState.isSyncing)
-      button.setAccessibilityLabel(accessibilityLabelForStatus(
-        isConnected: appState.isConnected, isSyncing: appState.isSyncing))
+      button.setAccessibilityLabel(
+        accessibilityLabelForStatus(
+          isConnected: appState.isConnected, isSyncing: appState.isSyncing))
       let dropView = StatusItemDropView(frame: button.bounds)
       dropView.autoresizingMask = [.width, .height]
       dropView.appDelegate = self
@@ -125,8 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
         guard let self else { return }
         self.statusItem?.button?.image = self.customMenuBarIcon(
           isConnected: isConnected, isSyncing: isSyncing)
-        self.statusItem?.button?.setAccessibilityLabel(self.accessibilityLabelForStatus(
-          isConnected: isConnected, isSyncing: isSyncing))
+        self.statusItem?.button?.setAccessibilityLabel(
+          self.accessibilityLabelForStatus(
+            isConnected: isConnected, isSyncing: isSyncing))
       }
       .store(in: &cancellables)
     appState.$incomingPairInvite
@@ -283,18 +286,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate,
   }
   private func customMenuBarIcon(isConnected: Bool, isSyncing: Bool = false) -> NSImage {
     let size = NSSize(width: 20, height: 16)
-    let loadedImage: NSImage? = NSImage(named: "tray_icon") ?? {
-      if let url = Bundle.main.url(forResource: "tray_icon", withExtension: "png") {
-        return NSImage(contentsOf: url)
-      }
-      return nil
-    }()
+    let loadedImage: NSImage? =
+      NSImage(named: "tray_icon")
+      ?? {
+        if let url = Bundle.main.url(forResource: "tray_icon", withExtension: "png") {
+          return NSImage(contentsOf: url)
+        }
+        return nil
+      }()
     if let image = loadedImage {
       image.size = size
       image.isTemplate = true
       return image
     }
-    let fallback = NSImage(systemSymbolName: isSyncing ? "arrow.triangle.2.circlepath" : "paperplane", accessibilityDescription: "RapiDrop") ?? NSImage()
+    let fallback =
+      NSImage(
+        systemSymbolName: isSyncing ? "arrow.triangle.2.circlepath" : "paperplane", accessibilityDescription: "RapiDrop"
+      ) ?? NSImage()
     fallback.size = size
     fallback.isTemplate = true
     return fallback

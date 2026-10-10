@@ -1,15 +1,13 @@
 package com.prabotics.rapidrop.ui.components
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,11 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,8 +47,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,8 +63,6 @@ import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.ui.HapticManager
 import kotlinx.coroutines.delay
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextInspectorDialog(
@@ -73,7 +71,7 @@ fun TextInspectorDialog(
     onCopy: (ClipItem) -> Unit,
     onShare: (ClipItem) -> Unit,
     onSendToDevice: (ClipItem) -> Unit,
-    onDelete: ((ClipItem) -> Unit)? = null
+    onDelete: ((ClipItem) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val currentText = clip.textContent ?: ""
@@ -88,7 +86,7 @@ fun TextInspectorDialog(
     }
 
     val isUrl = clip.type == ClipContentType.URL ||
-            (currentText.startsWith("http://", ignoreCase = true) || currentText.startsWith("https://", ignoreCase = true))
+        (currentText.startsWith("http://", ignoreCase = true) || currentText.startsWith("https://", ignoreCase = true))
 
     val domainHost = remember(currentText, isUrl) {
         if (isUrl) {
@@ -97,7 +95,9 @@ fun TextInspectorDialog(
             } catch (_: Exception) {
                 "Web Link"
             }
-        } else null
+        } else {
+            null
+        }
     }
 
     val lines = remember(currentText) { currentText.lines() }
@@ -113,32 +113,38 @@ fun TextInspectorDialog(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surface,
     ) {
         BackHandler {
             onDismiss()
         }
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.TopCenter,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .widthIn(max = 640.dp)
+                    .widthIn(max = 640.dp),
             ) {
                 TopAppBar(
                     title = {
                         Column {
                             Text(
-                                text = if (isUrl) "Link Details" else if (isCode) "Code Details" else "Text Details",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                                text = if (isUrl) {
+                                    "Link Details"
+                                } else if (isCode) {
+                                    "Code Details"
+                                } else {
+                                    "Text Details"
+                                },
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             )
                             val lineLabel = if (lines.size == 1) "1 line" else "${lines.size} lines"
                             Text(
                                 text = "$charCount chars, $wordCount words, $lineLabel",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     },
@@ -147,12 +153,12 @@ fun TextInspectorDialog(
                             onClick = {
                                 HapticManager.performClick(context)
                                 onDismiss()
-                            }
+                            },
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     },
@@ -161,12 +167,12 @@ fun TextInspectorDialog(
                             onClick = {
                                 HapticManager.performClick(context)
                                 wrapLines = !wrapLines
-                            }
+                            },
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.WrapText,
                                 contentDescription = "Toggle text wrapping",
-                                tint = if (wrapLines) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (wrapLines) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
@@ -176,20 +182,20 @@ fun TextInspectorDialog(
                                     HapticManager.performClick(context)
                                     onDelete(clip)
                                     onDismiss()
-                                }
+                                },
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
                                     contentDescription = "Delete Clip",
-                                    tint = MaterialTheme.colorScheme.error
+                                    tint = MaterialTheme.colorScheme.error,
                                 )
                             }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -208,37 +214,37 @@ fun TextInspectorDialog(
                                 } catch (_: Exception) {
                                     Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
                                 }
-                            }
+                            },
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier.weight(1f, fill = false),
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Link,
                                     contentDescription = "Link",
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(18.dp),
                                 )
                                 Text(
                                     text = domainHost,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                                 contentDescription = "Open Link",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                     }
@@ -253,14 +259,14 @@ fun TextInspectorDialog(
                         .weight(1f)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                 ) {
                     SelectionContainer(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)
                             .verticalScroll(verticalScroll)
-                            .then(if (!wrapLines) Modifier.horizontalScroll(horizontalScroll) else Modifier)
+                            .then(if (!wrapLines) Modifier.horizontalScroll(horizontalScroll) else Modifier),
                     ) {
                         Text(
                             text = currentText,
@@ -269,15 +275,15 @@ fun TextInspectorDialog(
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 13.sp,
                                     lineHeight = 19.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             } else {
                                 MaterialTheme.typography.bodyLarge.copy(
                                     fontSize = 15.sp,
                                     lineHeight = 22.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
-                            }
+                            },
                         )
                     }
                 }
@@ -287,14 +293,14 @@ fun TextInspectorDialog(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
+                        .navigationBarsPadding(),
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         FilledTonalButton(
                             onClick = {
@@ -306,17 +312,17 @@ fun TextInspectorDialog(
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             Icon(
                                 imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
                                 contentDescription = "Copy",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (isCopied) "Copied" else "Copy",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
 
@@ -328,17 +334,17 @@ fun TextInspectorDialog(
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Share,
                                 contentDescription = "Share",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Share",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
 
@@ -350,17 +356,17 @@ fun TextInspectorDialog(
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier
                                 .weight(1.1f)
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Laptop,
                                 contentDescription = "Send",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Send",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
                     }

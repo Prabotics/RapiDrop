@@ -8,12 +8,10 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-
-
 data class EncryptionResult(
     val ciphertext: ByteArray,
     val nonce: ByteArray,
-    val tag: ByteArray
+    val tag: ByteArray,
 )
 
 data class HandshakeKeys(
@@ -21,7 +19,7 @@ data class HandshakeKeys(
     val authKey: ByteArray,
     val pairRecordKey: ByteArray,
     val sasCode: String,
-    val transcriptHash: ByteArray
+    val transcriptHash: ByteArray,
 )
 
 object CryptoEngine {
@@ -87,17 +85,17 @@ object CryptoEngine {
         initiatorNonce: ByteArray,
         receiverNonce: ByteArray,
         initiatorId: String,
-        receiverId: String
+        receiverId: String,
     ): HandshakeKeys {
         val pipe = "|".toByteArray(Charsets.UTF_8)
         val transcript = ByteArray(
             "RapiDrop-v1|".toByteArray(Charsets.UTF_8).size +
-            initiatorPublicKey.size + pipe.size +
-            receiverPublicKey.size + pipe.size +
-            initiatorNonce.size + pipe.size +
-            receiverNonce.size + pipe.size +
-            initiatorId.toByteArray(Charsets.UTF_8).size + pipe.size +
-            receiverId.toByteArray(Charsets.UTF_8).size
+                initiatorPublicKey.size + pipe.size +
+                receiverPublicKey.size + pipe.size +
+                initiatorNonce.size + pipe.size +
+                receiverNonce.size + pipe.size +
+                initiatorId.toByteArray(Charsets.UTF_8).size + pipe.size +
+                receiverId.toByteArray(Charsets.UTF_8).size,
         )
 
         var offset = 0
@@ -138,9 +136,9 @@ object CryptoEngine {
         val pairRecordKey = hkdfExpand(prk, pairInfo, 32)
 
         val val32 = ((authKey[0].toInt() and 0xFF).toLong() shl 24) or
-                    ((authKey[1].toInt() and 0xFF).toLong() shl 16) or
-                    ((authKey[2].toInt() and 0xFF).toLong() shl 8) or
-                    (authKey[3].toInt() and 0xFF).toLong()
+            ((authKey[1].toInt() and 0xFF).toLong() shl 16) or
+            ((authKey[2].toInt() and 0xFF).toLong() shl 8) or
+            (authKey[3].toInt() and 0xFF).toLong()
         val sasNum = (val32 % 1_000_000).toInt()
         val sasCode = String.format(java.util.Locale.US, "%06d", sasNum)
 
@@ -149,7 +147,7 @@ object CryptoEngine {
             authKey = authKey,
             pairRecordKey = pairRecordKey,
             sasCode = sasCode,
-            transcriptHash = transcriptHash
+            transcriptHash = transcriptHash,
         )
     }
 
@@ -208,7 +206,7 @@ object CryptoEngine {
         ciphertext: ByteArray,
         nonce: ByteArray,
         tag: ByteArray,
-        key: SecretKey
+        key: SecretKey,
     ): ByteArray {
         val cipher = getCipher()
         val spec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce)

@@ -101,8 +101,7 @@ extension NetworkEngineDelegate {
   ) {}
   public func networkEngineDidFailPairing(_ engine: NetworkEngine, reason: String) {}
   public func networkEngineDidReceiveDisconnect(_ engine: NetworkEngine) {}
-  public func networkEngine(_ engine: NetworkEngine, didReceivePrivacyModeUpdate privacyMode: Bool)
-  {}
+  public func networkEngine(_ engine: NetworkEngine, didReceivePrivacyModeUpdate privacyMode: Bool) {}
   public func networkEngine(
     _ engine: NetworkEngine, didReceivePairOfferFrom fromName: String, sasCode: String
   ) {}
@@ -113,7 +112,8 @@ extension NetworkEngineDelegate {
     _ engine: NetworkEngine, didUpdateTransferProgress transferId: String, fileName: String,
     bytesTransferred: Int64, totalBytes: Int64, fileIndex: Int, totalFiles: Int, isComplete: Bool
   ) {}
-  public func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason) {}
+  public func networkEngineDidCancelTransfer(_ engine: NetworkEngine, transferId: String, reason: TransferFailureReason)
+  {}
   public func networkEngine(_ engine: NetworkEngine, didUpdatePeerBatteryStatus status: DeviceBatteryStatus?) {}
   public func networkEngine(_ engine: NetworkEngine, didReceiveNotification notification: MirroredNotification) {}
 }
@@ -139,8 +139,10 @@ public final class NetworkEngine: @unchecked Sendable {
   private var connectionGeneration: UInt64 = 0
   private var currentOutgoingConnection: NWConnection?
   private var pendingPairingConnection: NWConnection?
-  private var pendingInitiatorKeypair: (privateKey: Curve25519.KeyAgreement.PrivateKey, publicKeyHex: String, nonceHex: String)?
-  private var pendingReceiverState: (sessionKey: SymmetricKey, sasCode: String, host: String?, port: Int, fromName: String)?
+  private var pendingInitiatorKeypair:
+    (privateKey: Curve25519.KeyAgreement.PrivateKey, publicKeyHex: String, nonceHex: String)?
+  private var pendingReceiverState:
+    (sessionKey: SymmetricKey, sasCode: String, host: String?, port: Int, fromName: String)?
   private var pendingReceiverAcceptPayload: [String: Any]?
   private var pendingHandshakeConnections: [NWConnection] = []
   private let queue = DispatchQueue(label: "com.prabotics.rapidrop.networkengine", qos: .userInitiated)
@@ -158,7 +160,7 @@ public final class NetworkEngine: @unchecked Sendable {
   public weak var delegate: NetworkEngineDelegate?
   public var downloadFolderURL: URL =
     FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-      ?? FileManager.default.temporaryDirectory
+    ?? FileManager.default.temporaryDirectory
   public func uniqueDestinationURL(for url: URL) -> URL {
     var candidate = url
     let ext = url.pathExtension
@@ -173,7 +175,8 @@ public final class NetworkEngine: @unchecked Sendable {
     return candidate
   }
   public static func sanitizeRelativePath(_ path: String, fallbackFileName: String = "file") -> String {
-    let cleanFallback = (fallbackFileName.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+    let cleanFallback = (fallbackFileName.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent
+      .trimmingCharacters(in: .whitespacesAndNewlines)
     let fallback = cleanFallback.isEmpty ? "file" : cleanFallback
     let normalized = path.replacingOccurrences(of: "\\", with: "/")
     let components = normalized.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -740,7 +743,8 @@ public final class NetworkEngine: @unchecked Sendable {
         let remoteNonceHex = json["nonce"] as? String,
         let remotePubData = CryptoEngine.hexToData(remotePubHex),
         let remoteNonceData = CryptoEngine.hexToData(remoteNonceHex),
-        remotePubData.count == 32, remoteNonceData.count == 16 else {
+        remotePubData.count == 32, remoteNonceData.count == 16
+      else {
         return
       }
       let fromName = json["fromDeviceName"] as? String ?? "Unknown Device"
@@ -771,8 +775,10 @@ public final class NetworkEngine: @unchecked Sendable {
       let (privB, pubBHex) = CryptoEngine.generateEphemeralKeypair()
       let nonceBData = CryptoEngine.generateNonce(count: 16)
       let nonceBHex = nonceBData.map { String(format: "%02x", $0) }.joined()
-      guard let sharedSecret = try? CryptoEngine.computeSharedSecret(privateKey: privB, remotePublicKeyHex: remotePubHex),
-            let pubBData = CryptoEngine.hexToData(pubBHex) else {
+      guard
+        let sharedSecret = try? CryptoEngine.computeSharedSecret(privateKey: privB, remotePublicKeyHex: remotePubHex),
+        let pubBData = CryptoEngine.hexToData(pubBHex)
+      else {
         return
       }
       let desc = DeviceDescriptor.current()
@@ -831,7 +837,8 @@ public final class NetworkEngine: @unchecked Sendable {
     if frame.type == .pairFail {
       var reason = "DECLINED"
       if let json = try? JSONSerialization.jsonObject(with: frame.ciphertext) as? [String: Any],
-         let r = json["reason"] as? String {
+        let r = json["reason"] as? String
+      {
         reason = r
       } else if let raw = String(data: frame.ciphertext, encoding: .utf8) {
         reason = raw
@@ -851,7 +858,9 @@ public final class NetworkEngine: @unchecked Sendable {
         let initiatorState = self.pendingInitiatorKeypair,
         let initPubData = CryptoEngine.hexToData(initiatorState.publicKeyHex),
         let initNonceData = CryptoEngine.hexToData(initiatorState.nonceHex),
-        let sharedSecret = try? CryptoEngine.computeSharedSecret(privateKey: initiatorState.privateKey, remotePublicKeyHex: remotePubHex) else {
+        let sharedSecret = try? CryptoEngine.computeSharedSecret(
+          privateKey: initiatorState.privateKey, remotePublicKeyHex: remotePubHex)
+      else {
         return
       }
       let fromName = json["fromDeviceName"] as? String ?? "Device"
@@ -903,12 +912,14 @@ public final class NetworkEngine: @unchecked Sendable {
       return
     }
 
-    guard let decryptedData = try? CryptoEngine.decrypt(
-      ciphertext: frame.ciphertext,
-      nonce: frame.nonce,
-      tag: frame.tag,
-      using: key
-    ) else {
+    guard
+      let decryptedData = try? CryptoEngine.decrypt(
+        ciphertext: frame.ciphertext,
+        nonce: frame.nonce,
+        tag: frame.tag,
+        using: key
+      )
+    else {
       if frame.type == .pairRequest {
         sendPairFail(to: connection, reason: "Pairing failed")
       } else {
@@ -1097,8 +1108,12 @@ public final class NetworkEngine: @unchecked Sendable {
       clipItem = nil
       if var transfer = self.activeIncomingTransfer, decryptedData.count >= 28 {
         let idData = decryptedData.subdata(in: 0..<16)
-        let incomingFileIndex = decryptedData.subdata(in: 16..<20).withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
-        let incomingChunkIndex = decryptedData.subdata(in: 20..<28).withUnsafeBytes { $0.load(as: UInt64.self).bigEndian }
+        let incomingFileIndex = decryptedData.subdata(in: 16..<20).withUnsafeBytes {
+          $0.load(as: UInt32.self).bigEndian
+        }
+        let incomingChunkIndex = decryptedData.subdata(in: 20..<28).withUnsafeBytes {
+          $0.load(as: UInt64.self).bigEndian
+        }
         var expectedId = Data(transfer.transferId.utf8)
         if expectedId.count < 16 {
           expectedId.append(Data(repeating: 0, count: 16 - expectedId.count))
@@ -1209,7 +1224,7 @@ public final class NetworkEngine: @unchecked Sendable {
       }
     case .notificationEvent:
       if let json = (try? JSONSerialization.jsonObject(with: decryptedData)) as? [String: Any],
-         let id = json["id"] as? String
+        let id = json["id"] as? String
       {
         let packageName = (json["packageName"] as? String) ?? "unknown"
         let appName = (json["appName"] as? String) ?? "App"
@@ -1324,74 +1339,74 @@ public final class NetworkEngine: @unchecked Sendable {
       }
     }
   }
-private actor SendWindow {
-  private var inFlight = 0
-  private let maxInFlight: Int
-  private var waiters: [CheckedContinuation<Void, Never>] = []
-  private var emptyWaiters: [CheckedContinuation<Void, Never>] = []
-  private var firstError: Error?
+  private actor SendWindow {
+    private var inFlight = 0
+    private let maxInFlight: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var emptyWaiters: [CheckedContinuation<Void, Never>] = []
+    private var firstError: Error?
 
-  init(maxInFlight: Int = 4) {
-    self.maxInFlight = maxInFlight
-  }
+    init(maxInFlight: Int = 4) {
+      self.maxInFlight = maxInFlight
+    }
 
-  func acquire() async throws {
-    if let error = firstError {
-      throw error
-    }
-    if inFlight < maxInFlight {
-      inFlight += 1
-      return
-    }
-    await withCheckedContinuation { continuation in
-      waiters.append(continuation)
-    }
-    if let error = firstError {
-      throw error
-    }
-  }
-
-  func release(error: Error? = nil) {
-    if let error, firstError == nil {
-      firstError = error
-      let remaining = waiters
-      waiters.removeAll()
-      for w in remaining {
-        w.resume()
-      }
-    }
-    if inFlight > 0 {
-      inFlight -= 1
-    }
-    if firstError == nil && !waiters.isEmpty {
-      inFlight += 1
-      let next = waiters.removeFirst()
-      next.resume()
-    }
-    if inFlight == 0 {
-      let drained = emptyWaiters
-      emptyWaiters.removeAll()
-      for w in drained {
-        w.resume()
-      }
-    }
-  }
-
-  func waitUntilDrained() async throws {
-    if inFlight == 0 {
+    func acquire() async throws {
       if let error = firstError {
         throw error
       }
-      return
+      if inFlight < maxInFlight {
+        inFlight += 1
+        return
+      }
+      await withCheckedContinuation { continuation in
+        waiters.append(continuation)
+      }
+      if let error = firstError {
+        throw error
+      }
     }
-    await withCheckedContinuation { continuation in
-      emptyWaiters.append(continuation)
+
+    func release(error: Error? = nil) {
+      if let error, firstError == nil {
+        firstError = error
+        let remaining = waiters
+        waiters.removeAll()
+        for w in remaining {
+          w.resume()
+        }
+      }
+      if inFlight > 0 {
+        inFlight -= 1
+      }
+      if firstError == nil && !waiters.isEmpty {
+        inFlight += 1
+        let next = waiters.removeFirst()
+        next.resume()
+      }
+      if inFlight == 0 {
+        let drained = emptyWaiters
+        emptyWaiters.removeAll()
+        for w in drained {
+          w.resume()
+        }
+      }
     }
-    if let error = firstError {
-      throw error
+
+    func waitUntilDrained() async throws {
+      if inFlight == 0 {
+        if let error = firstError {
+          throw error
+        }
+        return
+      }
+      await withCheckedContinuation { continuation in
+        emptyWaiters.append(continuation)
+      }
+      if let error = firstError {
+        throw error
+      }
     }
   }
-}
 
   public func sendStreamingFile(
     fileURL: URL,
@@ -1423,7 +1438,7 @@ private actor SendWindow {
       "fileName": fileName,
       "relativePath": relativePath,
       "fileSize": Int64(fileSize),
-      "totalBytes": totalBytes
+      "totalBytes": totalBytes,
     ]
     let startData = try JSONSerialization.data(withJSONObject: startJson)
     let startEnc = try CryptoEngine.encrypt(payload: startData, using: key)
@@ -1503,7 +1518,7 @@ private actor SendWindow {
       "transferId": transferId,
       "fileIndex": fileIndex,
       "sha256": fileDigest,
-      "status": "OK"
+      "status": "OK",
     ]
     let endData = try JSONSerialization.data(withJSONObject: endJson)
     let endEnc = try CryptoEngine.encrypt(payload: endData, using: key)
@@ -1524,10 +1539,11 @@ private actor SendWindow {
     guard let (key, connection) = target else { return }
     let cancelJson: [String: Any] = [
       "transferId": transferId,
-      "reason": reason
+      "reason": reason,
     ]
     guard let cancelData = try? JSONSerialization.data(withJSONObject: cancelJson),
-          let cancelEnc = try? CryptoEngine.encrypt(payload: cancelData, using: key) else { return }
+      let cancelEnc = try? CryptoEngine.encrypt(payload: cancelData, using: key)
+    else { return }
     let cancelFrame = WireFrame(
       type: .fileCancel,
       nonce: cancelEnc.nonce,
@@ -1616,7 +1632,8 @@ private actor SendWindow {
       if let targetHost = targetHost, !targetHost.isEmpty {
         endpoint = NWEndpoint.hostPort(
           host: NWEndpoint.Host(targetHost),
-          port: NWEndpoint.Port(rawValue: UInt16(targetPort)) ?? NWEndpoint.Port(rawValue: WireFrame.defaultClientPort)!)
+          port: NWEndpoint.Port(rawValue: UInt16(targetPort)) ?? NWEndpoint.Port(rawValue: WireFrame.defaultClientPort)!
+        )
       } else {
         endpoint =
           device.endpoint
@@ -1650,13 +1667,15 @@ private actor SendWindow {
               tag: Data(repeating: 0, count: 16)
             )
             let serialized = frame.serialize()
-            conn.send(content: serialized, completion: .contentProcessed { [weak self, weak conn] _ in
-              guard let self, let conn else { return }
-              self.queue.asyncAfter(deadline: .now() + 2.5) {
-                conn.cancel()
-                self.pendingHandshakeConnections.removeAll { $0 === conn }
-              }
-            })
+            conn.send(
+              content: serialized,
+              completion: .contentProcessed { [weak self, weak conn] _ in
+                guard let self, let conn else { return }
+                self.queue.asyncAfter(deadline: .now() + 2.5) {
+                  conn.cancel()
+                  self.pendingHandshakeConnections.removeAll { $0 === conn }
+                }
+              })
           }
         case .failed, .cancelled:
           self.pendingHandshakeConnections.removeAll { $0 === conn }
@@ -1715,8 +1734,10 @@ private actor SendWindow {
     }
   }
   public func connect(to device: DiscoveredClientDevice) {
-    let endpoint = device.endpoint ?? NWEndpoint.service(
-      name: device.name, type: Self.serviceType, domain: "local", interface: nil)
+    let endpoint =
+      device.endpoint
+      ?? NWEndpoint.service(
+        name: device.name, type: Self.serviceType, domain: "local", interface: nil)
     connect(to: endpoint)
   }
 
@@ -1794,15 +1815,16 @@ private actor SendWindow {
         guard let self, let conn else { return }
         switch state {
         case .ready:
-          let payloadDict = self.pendingReceiverAcceptPayload ?? [
-            "version": 1,
-            "id": Self.localDeviceId,
-            "status": "accepted",
-            "fromDeviceName": DeviceDescriptor.current().deviceName,
-            "deviceType": "mac",
-            "host": self.getLocalIPv4() ?? "",
-            "port": Int(Self.servicePort),
-          ]
+          let payloadDict =
+            self.pendingReceiverAcceptPayload ?? [
+              "version": 1,
+              "id": Self.localDeviceId,
+              "status": "accepted",
+              "fromDeviceName": DeviceDescriptor.current().deviceName,
+              "deviceType": "mac",
+              "host": self.getLocalIPv4() ?? "",
+              "port": Int(Self.servicePort),
+            ]
           if let jsonData = try? JSONSerialization.data(withJSONObject: payloadDict) {
             let frame = WireFrame(
               type: .pairAccept,

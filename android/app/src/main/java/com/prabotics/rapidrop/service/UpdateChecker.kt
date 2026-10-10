@@ -8,13 +8,11 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-
-
 sealed class UpdateResult {
     data class UpdateAvailable(
         val latestVersion: String,
         val releaseNotes: String,
-        val releaseUrl: String
+        val releaseUrl: String,
     ) : UpdateResult()
     data class UpToDate(val currentVersion: String) : UpdateResult()
     data class Error(val message: String) : UpdateResult()
@@ -65,7 +63,7 @@ object UpdateChecker {
                 UpdateResult.UpdateAvailable(
                     latestVersion = tagName,
                     releaseNotes = releaseNotes,
-                    releaseUrl = releaseUrl
+                    releaseUrl = releaseUrl,
                 )
             } else {
                 UpdateResult.UpToDate(CURRENT_VERSION)

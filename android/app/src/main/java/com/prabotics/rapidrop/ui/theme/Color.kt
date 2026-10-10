@@ -6,8 +6,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-
-
 val BrandBlue = Color(0xFF0082FA)
 
 val PrimaryLight = Color(0xFF0082FA)
@@ -19,6 +17,7 @@ val PrimaryDark = Color(0xFF389BFF)
 val OnPrimaryDark = Color(0xFF002B59)
 val PrimaryContainerDark = Color(0xFF004D99)
 val OnPrimaryContainerDark = Color(0xFFCCE4FF)
+
 @Immutable
 data class StatusColors(
     val connected: Color,
@@ -34,7 +33,7 @@ data class StatusColors(
     val errorContainer: Color,
     val onErrorContainer: Color,
     val disconnected: Color,
-    val onDisconnected: Color
+    val onDisconnected: Color,
 )
 
 val LightStatusColors = StatusColors(
@@ -51,7 +50,7 @@ val LightStatusColors = StatusColors(
     errorContainer = Color(0xFFFEE2E2),
     onErrorContainer = Color(0xFF7F1D1D),
     disconnected = Color(0xFF64748B),
-    onDisconnected = Color(0xFFFFFFFF)
+    onDisconnected = Color(0xFFFFFFFF),
 )
 
 val DarkStatusColors = StatusColors(
@@ -68,7 +67,7 @@ val DarkStatusColors = StatusColors(
     errorContainer = Color(0xFF7F1D1D),
     onErrorContainer = Color(0xFFFEE2E2),
     disconnected = Color(0xFF94A3B8),
-    onDisconnected = Color(0xFF0F172A)
+    onDisconnected = Color(0xFF0F172A),
 )
 
 val LocalStatusColors = staticCompositionLocalOf { LightStatusColors }
@@ -102,7 +101,7 @@ val LightColorScheme = lightColorScheme(
     error = Color(0xFFDC2626),
     onError = Color(0xFFFFFFFF),
     errorContainer = Color(0xFFFEE2E2),
-    onErrorContainer = Color(0xFF7F1D1D)
+    onErrorContainer = Color(0xFF7F1D1D),
 )
 
 val DarkColorScheme = darkColorScheme(
@@ -134,5 +133,5 @@ val DarkColorScheme = darkColorScheme(
     error = Color(0xFFEF4444),
     onError = Color(0xFF450A0A),
     errorContainer = Color(0xFF7F1D1D),
-    onErrorContainer = Color(0xFFFEE2E2)
+    onErrorContainer = Color(0xFFFEE2E2),
 )

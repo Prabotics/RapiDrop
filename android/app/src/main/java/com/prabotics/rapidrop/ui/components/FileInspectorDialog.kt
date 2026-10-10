@@ -3,6 +3,7 @@ package com.prabotics.rapidrop.ui.components
 import android.content.Intent
 import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,8 +55,6 @@ import com.prabotics.rapidrop.ui.HapticManager
 import java.io.File
 import java.util.Locale
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileInspectorDialog(
@@ -64,7 +62,7 @@ fun FileInspectorDialog(
     onDismiss: () -> Unit,
     onShare: (ClipItem) -> Unit,
     onSendToDevice: (ClipItem) -> Unit,
-    onDelete: ((ClipItem) -> Unit)? = null
+    onDelete: ((ClipItem) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val fileName = clip.displayName
@@ -90,25 +88,25 @@ fun FileInspectorDialog(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surface,
     ) {
         BackHandler {
             onDismiss()
         }
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.TopCenter,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .widthIn(max = 640.dp)
+                    .widthIn(max = 640.dp),
             ) {
                 TopAppBar(
                     title = {
                         Text(
                             text = "File Details",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         )
                     },
                     navigationIcon = {
@@ -116,12 +114,12 @@ fun FileInspectorDialog(
                             onClick = {
                                 HapticManager.performClick(context)
                                 onDismiss()
-                            }
+                            },
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     },
@@ -132,20 +130,20 @@ fun FileInspectorDialog(
                                     HapticManager.performClick(context)
                                     onDelete(clip)
                                     onDismiss()
-                                }
+                                },
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
                                     contentDescription = "Delete File",
-                                    tint = MaterialTheme.colorScheme.error
+                                    tint = MaterialTheme.colorScheme.error,
                                 )
                             }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -157,52 +155,52 @@ fun FileInspectorDialog(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 20.dp, vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     Box(
                         modifier = Modifier
                             .size(72.dp)
                             .clip(RoundedCornerShape(20.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(36.dp),
                         )
                     }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
                             text = fileName,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
 
                         Text(
                             text = if (extension.isNotEmpty()) "$formattedSize, $extension" else formattedSize,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
                     Surface(
                         shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             MetadataRow(label = "Filename", value = fileName)
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
@@ -225,7 +223,7 @@ fun FileInspectorDialog(
                                     val uri = FileProvider.getUriForFile(
                                         context,
                                         "${context.packageName}.fileprovider",
-                                        tempFile
+                                        tempFile,
                                     )
                                     val intent = Intent(Intent.ACTION_VIEW).apply {
                                         setDataAndType(uri, mimeType)
@@ -246,17 +244,17 @@ fun FileInspectorDialog(
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(48.dp),
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Open in app",
-                            style = MaterialTheme.typography.labelLarge
+                            style = MaterialTheme.typography.labelLarge,
                         )
                     }
                 }
@@ -267,14 +265,14 @@ fun FileInspectorDialog(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
+                        .navigationBarsPadding(),
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         FilledTonalButton(
                             onClick = {
@@ -284,17 +282,17 @@ fun FileInspectorDialog(
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Share,
                                 contentDescription = "Share",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Share",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
 
@@ -306,17 +304,17 @@ fun FileInspectorDialog(
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier
                                 .weight(1.1f)
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Laptop,
                                 contentDescription = "Send",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Send",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
                     }
@@ -331,12 +329,12 @@ private fun MetadataRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = value,
@@ -344,7 +342,7 @@ private fun MetadataRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 16.dp)
+            modifier = Modifier.padding(start = 16.dp),
         )
     }
 }

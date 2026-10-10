@@ -1,20 +1,18 @@
 package com.prabotics.rapidrop.clipboard
 
-import android.graphics.BitmapFactory
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.LruCache
-import java.util.UUID
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
-
-
+import java.util.UUID
 
 data class ImageMetadata(
     val width: Int,
     val height: Int,
     val format: String,
-    val formattedSize: String
+    val formattedSize: String,
 ) {
     val resolutionLabel: String
         get() = if (width > 0 && height > 0) "$width × $height" else ""
@@ -74,7 +72,7 @@ object ImageMetadataHelper {
             width = width,
             height = height,
             format = format,
-            formattedSize = formattedSize
+            formattedSize = formattedSize,
         )
     }
     fun decodeSampledBitmap(raw: ByteArray?, reqWidth: Int, reqHeight: Int): Bitmap? {
@@ -172,7 +170,9 @@ object ImageMetadataHelper {
                         val w = buffer.int
                         val h = buffer.int
                         Pair(w, h)
-                    } else null
+                    } else {
+                        null
+                    }
                 }
                 "GIF" -> {
                     if (bytes.size >= 10) {
@@ -180,7 +180,9 @@ object ImageMetadataHelper {
                         val w = buffer.short.toInt() and 0xFFFF
                         val h = buffer.short.toInt() and 0xFFFF
                         Pair(w, h)
-                    } else null
+                    } else {
+                        null
+                    }
                 }
                 "JPG" -> {
                     var i = 2

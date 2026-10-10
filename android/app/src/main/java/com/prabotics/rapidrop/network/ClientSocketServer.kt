@@ -1,6 +1,5 @@
 package com.prabotics.rapidrop.network
 
-import org.json.JSONObject
 import android.content.Context
 import com.prabotics.rapidrop.security.CryptoEngine
 import com.prabotics.rapidrop.security.HandshakeKeys
@@ -12,15 +11,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
-import java.io.InputStream
+import org.json.JSONObject
 import java.io.IOException
+import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-
-
 
 class ClientSocketServer(
     private val context: Context,
@@ -29,7 +27,7 @@ class ClientSocketServer(
     private val onPairInviteReceived: (fromDevice: String, fromId: String, pin: String?, host: String?, port: Int, keys: HandshakeKeys, acceptPayload: String, offerPayload: String) -> Unit,
     private val onPairAcceptReceived: ((fromDevice: String, fromId: String, host: String?, port: Int, remotePublicKeyHex: String, remoteNonceHex: String, status: String) -> Unit)? = null,
     private val onPairDeclinedReceived: ((reason: String) -> Unit)? = null,
-    private val onRemoteUnpairedReceived: (() -> Unit)? = null
+    private val onRemoteUnpairedReceived: (() -> Unit)? = null,
 ) {
     private var serverSocket: ServerSocket? = null
     private var serverJob: Job? = null
@@ -56,7 +54,9 @@ class ClientSocketServer(
                                 clientSemaphore.release()
                             }
                         } else {
-                            try { client.close() } catch (_: IOException) {}
+                            try {
+                                client.close()
+                            } catch (_: IOException) {}
                         }
                     }
                 }
@@ -97,7 +97,11 @@ class ClientSocketServer(
                         when (frame.type) {
                             PacketType.PAIR_INVITE -> {
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)
-                                val json = try { JSONObject(jsonStr) } catch (_: Exception) { return@withContext }
+                                val json = try {
+                                    JSONObject(jsonStr)
+                                } catch (_: Exception) {
+                                    return@withContext
+                                }
                                 val version = json.optInt("version", 1)
                                 val fromName = json.optString("fromDeviceName").takeIf { it.isNotBlank() } ?: "Device"
                                 val remotePubHex = json.optString("publicKey").takeIf { it.isNotBlank() }
@@ -131,7 +135,7 @@ class ClientSocketServer(
                                     initiatorNonce = remoteNonceBytes,
                                     receiverNonce = nonceBBytes,
                                     initiatorId = initiatorId,
-                                    receiverId = receiverId
+                                    receiverId = receiverId,
                                 )
                                 android.util.Log.d("RapiDrop", "authentication.keys_derived")
 
@@ -162,7 +166,11 @@ class ClientSocketServer(
                             PacketType.PAIR_ACCEPT -> {
                                 android.util.Log.d("RapiDrop", "pairing.accept_received")
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)
-                                val json = try { JSONObject(jsonStr) } catch (_: Exception) { return@withContext }
+                                val json = try {
+                                    JSONObject(jsonStr)
+                                } catch (_: Exception) {
+                                    return@withContext
+                                }
                                 val fromName = json.optString("fromDeviceName").takeIf { it.isNotBlank() } ?: "Device"
                                 val remoteId = json.optString("id")
                                 val remotePubHex = json.optString("publicKey")
@@ -175,7 +183,11 @@ class ClientSocketServer(
                             }
                             PacketType.PAIR_FAIL -> {
                                 val raw = String(frame.ciphertext, Charsets.UTF_8)
-                                val reason = try { JSONObject(raw).optString("reason").takeIf { it.isNotBlank() } ?: raw } catch (_: Exception) { raw }
+                                val reason = try {
+                                    JSONObject(raw).optString("reason").takeIf { it.isNotBlank() } ?: raw
+                                } catch (_: Exception) {
+                                    raw
+                                }
                                 onPairDeclinedReceived?.invoke(reason)
                             }
                             PacketType.DISCONNECT -> {

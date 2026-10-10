@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "lineLength": 120,
+  "indentation": {
+    "spaces": 2
+  },
+  "maximumBlankLines": 1,
+  "respectsExistingLineBreaks": true,
+  "rules": {
+    "AllPublicDeclarationsHaveDocumentation": false,
+    "AlwaysUseLowerCamelCase": true,
+    "DoNotUseSemicolons": true,
+    "FileScopedDeclarationPrivacy": true,
+    "NoAssignmentInExpressions": true,
+    "NoBlockComments": true,
+    "NoEmptyTrailingClosureParentheses": true,
+    "NoParensAroundConditions": true,
+    "OneCasePerLine": true,
+    "OneVariableDeclarationPerLine": true,
+    "OrderedImports": true,
+    "ReturnVoidInsteadOfEmptyTuple": true,
+    "TypeNamesShouldBeCapitalized": true,
+    "UseShorthandTypeNames": true,
+    "ValidateDocumentationComments": false
+  }
+}

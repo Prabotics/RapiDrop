@@ -49,6 +49,9 @@ jobs:
           done
           xcodebuild -version
           swift --version
+      - name: Verify Swift Code Formatting
+        run: swift format lint --configuration macos/.swift-format --recursive macos/Sources macos/Tests
+
       - name: Run Swift Unit Tests
         run: swift test --package-path macos
 
@@ -75,10 +78,13 @@ jobs:
       - name: Grant Execute Permission to Gradlew
         run: chmod +x android/gradlew
 
+      - name: Verify Kotlin Code Formatting
+        working-directory: android
+        run: ./gradlew spotlessCheck
+
       - name: Run Android Unit Tests
         working-directory: android
         run: ./gradlew test --stacktrace
-
       - name: Decode Release Keystore
         if: env.HAS_KEYSTORE == 'true'
         env:

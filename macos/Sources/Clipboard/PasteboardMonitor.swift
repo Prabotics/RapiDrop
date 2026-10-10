@@ -104,8 +104,9 @@ public final class PasteboardMonitor: @unchecked Sendable {
       if let tiffData = self.pasteboard.data(forType: .tiff) {
         DispatchQueue.global(qos: .utility).async { [weak self] in
           guard let imageRep = NSBitmapImageRep(data: tiffData),
-                let convertedPng = imageRep.representation(using: .png, properties: [:]),
-                convertedPng.count <= WireFrame.maxPayloadSize else { return }
+            let convertedPng = imageRep.representation(using: .png, properties: [:]),
+            convertedPng.count <= WireFrame.maxPayloadSize
+          else { return }
           DispatchQueue.main.async {
             self?.dispatchCapturedItem(ClipItem(type: .image, rawData: convertedPng))
           }
@@ -114,12 +115,14 @@ public final class PasteboardMonitor: @unchecked Sendable {
       }
 
       if let urls = self.pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL],
-         let firstURL = urls.first, firstURL.isFileURL {
+        let firstURL = urls.first, firstURL.isFileURL
+      {
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue {
           if let attributes = try? FileManager.default.attributesOfItem(atPath: firstURL.path),
-             let fileSize = attributes[.size] as? Int,
-             fileSize > 0, fileSize <= WireFrame.maxPayloadSize {
+            let fileSize = attributes[.size] as? Int,
+            fileSize > 0, fileSize <= WireFrame.maxPayloadSize
+          {
             let ext = firstURL.pathExtension.lowercased()
             let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "heic", "tiff", "bmp"]
             let fileName = firstURL.lastPathComponent

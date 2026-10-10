@@ -11,8 +11,6 @@ import com.prabotics.rapidrop.clipboard.ClipContentType
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.ui.HapticManager
 
-
-
 class ShareActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +110,7 @@ class ShareActivity : Activity() {
             val isUrl = text.startsWith("http://", ignoreCase = true) || text.startsWith("https://", ignoreCase = true)
             val item = ClipItem(
                 type = if (isUrl) ClipContentType.URL else ClipContentType.TEXT,
-                textContent = text
+                textContent = text,
             )
             SyncService.sendClip(this, item)
             HapticManager.performSuccess(this)

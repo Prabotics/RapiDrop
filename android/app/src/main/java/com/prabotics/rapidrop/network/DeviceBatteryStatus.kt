@@ -7,7 +7,7 @@ import android.os.BatteryManager
 
 data class DeviceBatteryStatus(
     val level: Int,
-    val isCharging: Boolean
+    val isCharging: Boolean,
 ) {
     companion object {
         fun current(context: Context?): DeviceBatteryStatus? {

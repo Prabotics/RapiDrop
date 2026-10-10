@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 
-
-
 object DeviceNameHelper {
     fun getDeviceFriendlyName(context: Context): String {
         val userDeviceName = try {

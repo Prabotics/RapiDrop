@@ -9,8 +9,6 @@ import android.widget.Toast
 import com.prabotics.rapidrop.clipboard.ClipboardManagerHelper
 import com.prabotics.rapidrop.ui.HapticManager
 
-
-
 class SendClipActionActivity : Activity() {
     private var processed = false
     private val handler = Handler(Looper.getMainLooper())

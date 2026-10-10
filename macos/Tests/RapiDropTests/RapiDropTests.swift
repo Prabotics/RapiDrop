@@ -124,10 +124,13 @@ struct WireFrameTests {
   }
   @Test("Serialize and deserialize notificationEvent frame")
   func testNotificationEventSerialization() {
-    let payload = Data(#"{"id":"notif_1","packageName":"com.example","appName":"App","title":"Hello","text":"World","timestamp":1700000000000,"canDismiss":true}"#.utf8)
+    let payload = Data(
+      #"{"id":"notif_1","packageName":"com.example","appName":"App","title":"Hello","text":"World","timestamp":1700000000000,"canDismiss":true}"#
+        .utf8)
     let nonce = Data(repeating: 0x05, count: 12)
     let tag = Data(repeating: 0x06, count: 16)
-    let frame = WireFrame(type: .notificationEvent, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
+    let frame = WireFrame(
+      type: .notificationEvent, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
     let serialized = frame.serialize()
     let deserialized = WireFrame.deserialize(from: serialized)
     #expect(deserialized != nil)
@@ -155,7 +158,8 @@ struct WireFrameTests {
     let payload = Data(#"{"id":"notif_1","action":"dismiss"}"#.utf8)
     let nonce = Data(repeating: 0x07, count: 12)
     let tag = Data(repeating: 0x08, count: 16)
-    let frame = WireFrame(type: .notificationAction, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
+    let frame = WireFrame(
+      type: .notificationAction, timestamp: 1_700_000_000_000, nonce: nonce, ciphertext: payload, tag: tag)
     let serialized = frame.serialize()
     let deserialized = WireFrame.deserialize(from: serialized)
     #expect(deserialized != nil)
@@ -348,7 +352,9 @@ struct CryptoEngineTests {
 
     let alicePriv = try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: alicePrivData)
     let sharedSecret = try CryptoEngine.computeSharedSecret(privateKey: alicePriv, remotePublicKeyHex: bobPubHex)
-    #expect(sharedSecret.map { String(format: "%02x", $0) }.joined() == "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742")
+    #expect(
+      sharedSecret.map { String(format: "%02x", $0) }.joined()
+        == "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742")
 
     let nonceA = CryptoEngine.hexToData("000102030405060708090a0b0c0d0e0f")!
     let nonceB = CryptoEngine.hexToData("101112131415161718191a1b1c1d1e1f")!
@@ -367,11 +373,17 @@ struct CryptoEngineTests {
       receiverId: idB
     )
 
-    #expect(keys.transcriptHash.map { String(format: "%02x", $0) }.joined() == "2cd9946128df4a5cb0f1a1786e31136a0b7ea489c8f913552b605f6c83638c00")
+    #expect(
+      keys.transcriptHash.map { String(format: "%02x", $0) }.joined()
+        == "2cd9946128df4a5cb0f1a1786e31136a0b7ea489c8f913552b605f6c83638c00")
     let sessionKeyHex = keys.sessionKey.withUnsafeBytes { Data($0) }.map { String(format: "%02x", $0) }.joined()
     #expect(sessionKeyHex == "c01bcb745e0644d944458b953fe8363beb4b8c7271aadc92f217e45b360b5d17")
-    #expect(keys.authKey.map { String(format: "%02x", $0) }.joined() == "ffe30b48f5f241bfc48233070dc246222312376d9630f1585ef418af6945056a")
-    #expect(keys.pairRecordKey.map { String(format: "%02x", $0) }.joined() == "ba2c59676e4619a4e6ab0ef71d9a2d414815292b97508c926516c5b0a9427838")
+    #expect(
+      keys.authKey.map { String(format: "%02x", $0) }.joined()
+        == "ffe30b48f5f241bfc48233070dc246222312376d9630f1585ef418af6945056a")
+    #expect(
+      keys.pairRecordKey.map { String(format: "%02x", $0) }.joined()
+        == "ba2c59676e4619a4e6ab0ef71d9a2d414815292b97508c926516c5b0a9427838")
     #expect(keys.sasCode == "069640")
   }
 
@@ -491,7 +503,9 @@ struct MediaDestinationModeTests {
   @MainActor
   func testSettingsDefaultsAndPrivacyIsolation() {
     let appState = AppState()
-    #expect(appState.mediaDestinationMode == .both || appState.mediaDestinationMode == .folderOnly || appState.mediaDestinationMode == .clipboardOnly)
+    #expect(
+      appState.mediaDestinationMode == .both || appState.mediaDestinationMode == .folderOnly
+        || appState.mediaDestinationMode == .clipboardOnly)
 
     let initialPrivacy = appState.showSyncHistory
     appState.networkEngine(appState.network, didReceivePrivacyModeUpdate: !initialPrivacy)
@@ -548,15 +562,25 @@ struct StreamingSecurityTests {
   @Test("Sanitize relative paths against directory traversal and backslashes")
   func testSanitizeRelativePath() {
     #expect(NetworkEngine.sanitizeRelativePath("../../etc/passwd", fallbackFileName: "safe.txt") == "etc/passwd")
-    #expect(NetworkEngine.sanitizeRelativePath("..\\..\\windows\\system32\\cmd.exe", fallbackFileName: "safe.txt") == "windows/system32/cmd.exe")
-    #expect(NetworkEngine.sanitizeRelativePath("C:\\Users\\Victim\\Desktop\\evil.sh", fallbackFileName: "safe.txt") == "Users/Victim/Desktop/evil.sh")
-    #expect(NetworkEngine.sanitizeRelativePath("valid/nested/folder/document.pdf", fallbackFileName: "fallback.pdf") == "valid/nested/folder/document.pdf")
-    #expect(NetworkEngine.sanitizeRelativePath("..../..../file.txt", fallbackFileName: "fallback.txt") == "..../..../file.txt")
+    #expect(
+      NetworkEngine.sanitizeRelativePath("..\\..\\windows\\system32\\cmd.exe", fallbackFileName: "safe.txt")
+        == "windows/system32/cmd.exe")
+    #expect(
+      NetworkEngine.sanitizeRelativePath("C:\\Users\\Victim\\Desktop\\evil.sh", fallbackFileName: "safe.txt")
+        == "Users/Victim/Desktop/evil.sh")
+    #expect(
+      NetworkEngine.sanitizeRelativePath("valid/nested/folder/document.pdf", fallbackFileName: "fallback.pdf")
+        == "valid/nested/folder/document.pdf")
+    #expect(
+      NetworkEngine.sanitizeRelativePath("..../..../file.txt", fallbackFileName: "fallback.txt") == "..../..../file.txt"
+    )
     #expect(NetworkEngine.sanitizeRelativePath("", fallbackFileName: "empty.txt") == "empty.txt")
     #expect(NetworkEngine.sanitizeRelativePath(".", fallbackFileName: "dot.txt") == "dot.txt")
     #expect(NetworkEngine.sanitizeRelativePath("..", fallbackFileName: "dotdot.txt") == "dotdot.txt")
     #expect(NetworkEngine.sanitizeRelativePath("/", fallbackFileName: "slash.txt") == "slash.txt")
-    #expect(NetworkEngine.sanitizeRelativePath("C:\\path\\fallback.txt", fallbackFileName: "C:\\path\\fallback.txt") == "path/fallback.txt")
+    #expect(
+      NetworkEngine.sanitizeRelativePath("C:\\path\\fallback.txt", fallbackFileName: "C:\\path\\fallback.txt")
+        == "path/fallback.txt")
   }
 
   @Test("Verify symmetrical cancellation wire frame serialization and parsing")
@@ -577,7 +601,9 @@ struct StreamingSecurityTests {
 
   @Test("Serialize and deserialize streaming file frames")
   func testStreamingFramesSerialization() {
-    let startJson = Data(#"{"transferId":"uuid-123","fileIndex":0,"totalFiles":1,"fileName":"test.png","relativePath":"test.png","fileSize":1024,"totalBytes":1024}"#.utf8)
+    let startJson = Data(
+      #"{"transferId":"uuid-123","fileIndex":0,"totalFiles":1,"fileName":"test.png","relativePath":"test.png","fileSize":1024,"totalBytes":1024}"#
+        .utf8)
     let startFrame = WireFrame(
       type: .fileStart,
       nonce: Data(repeating: 0, count: 12),
@@ -588,7 +614,9 @@ struct StreamingSecurityTests {
     #expect(deserializedStart?.type == .fileStart)
     #expect(deserializedStart?.ciphertext == startJson)
 
-    let endJson = Data(#"{"transferId":"uuid-123","fileIndex":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}"#.utf8)
+    let endJson = Data(
+      #"{"transferId":"uuid-123","fileIndex":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}"#
+        .utf8)
     let endFrame = WireFrame(
       type: .fileEnd,
       nonce: Data(repeating: 0, count: 12),
@@ -677,19 +705,27 @@ struct StreamingSecurityTests {
     let localName = "test mac"
 
     let selfDeviceExact = DiscoveredClientDevice(id: "mac-uuid-1111", name: "Test Mac")
-    let isSelf1 = !selfDeviceExact.id.isEmpty ? (selfDeviceExact.id == localId) : (NetworkEngine.normalizeDeviceName(selfDeviceExact.name) == localName)
+    let isSelf1 =
+      !selfDeviceExact.id.isEmpty
+      ? (selfDeviceExact.id == localId) : (NetworkEngine.normalizeDeviceName(selfDeviceExact.name) == localName)
     #expect(isSelf1 == true)
 
     let selfDeviceRenamed = DiscoveredClientDevice(id: "mac-uuid-1111", name: "Test Mac (2)")
-    let isSelf2 = !selfDeviceRenamed.id.isEmpty ? (selfDeviceRenamed.id == localId) : (NetworkEngine.normalizeDeviceName(selfDeviceRenamed.name) == localName)
+    let isSelf2 =
+      !selfDeviceRenamed.id.isEmpty
+      ? (selfDeviceRenamed.id == localId) : (NetworkEngine.normalizeDeviceName(selfDeviceRenamed.name) == localName)
     #expect(isSelf2 == true)
 
     let remoteSameName = DiscoveredClientDevice(id: "mac-uuid-2222", name: "Test Mac")
-    let isSelf3 = !remoteSameName.id.isEmpty ? (remoteSameName.id == localId) : (NetworkEngine.normalizeDeviceName(remoteSameName.name) == localName)
+    let isSelf3 =
+      !remoteSameName.id.isEmpty
+      ? (remoteSameName.id == localId) : (NetworkEngine.normalizeDeviceName(remoteSameName.name) == localName)
     #expect(isSelf3 == false)
 
     let remotePhone = DiscoveredClientDevice(id: "android-uuid-3333", name: "Test Android")
-    let isSelf4 = !remotePhone.id.isEmpty ? (remotePhone.id == localId) : (NetworkEngine.normalizeDeviceName(remotePhone.name) == localName)
+    let isSelf4 =
+      !remotePhone.id.isEmpty
+      ? (remotePhone.id == localId) : (NetworkEngine.normalizeDeviceName(remotePhone.name) == localName)
     #expect(isSelf4 == false)
   }
 
@@ -768,8 +804,11 @@ struct StreamingSecurityTests {
     let declineJson = Data(#"{"version":1,"reason":"DECLINED"}"#.utf8)
     let cancelJson = Data(#"{"version":1,"reason":"CANCELLED"}"#.utf8)
 
-    let frameDeclined = WireFrame(type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: declineJson, tag: Data(repeating: 0, count: 16))
-    let frameCancelled = WireFrame(type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: cancelJson, tag: Data(repeating: 0, count: 16))
+    let frameDeclined = WireFrame(
+      type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: declineJson, tag: Data(repeating: 0, count: 16)
+    )
+    let frameCancelled = WireFrame(
+      type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: cancelJson, tag: Data(repeating: 0, count: 16))
 
     let deserializedDeclined = WireFrame.deserialize(from: frameDeclined.serialize())
     let deserializedCancelled = WireFrame.deserialize(from: frameCancelled.serialize())
@@ -938,32 +977,43 @@ struct ProtocolIntegrationTests {
     #expect(keysA.sessionKey == keysB.sessionKey)
     #expect(keysA.pairRecordKey == keysB.pairRecordKey)
 
-    let pairReqData = try JSONEncoder().encode(DeviceDescriptor(modelId: "Pixel 9", modelName: "Pixel 9", chip: "Tensor G4", deviceName: "Pixel 9"))
+    let pairReqData = try JSONEncoder().encode(
+      DeviceDescriptor(modelId: "Pixel 9", modelName: "Pixel 9", chip: "Tensor G4", deviceName: "Pixel 9"))
     let reqEncrypted = try CryptoEngine.encrypt(payload: pairReqData, using: keysA.sessionKey)
-    let reqFrame = WireFrame(type: .pairRequest, nonce: reqEncrypted.nonce, ciphertext: reqEncrypted.ciphertext, tag: reqEncrypted.tag)
+    let reqFrame = WireFrame(
+      type: .pairRequest, nonce: reqEncrypted.nonce, ciphertext: reqEncrypted.ciphertext, tag: reqEncrypted.tag)
     let reqSerialized = reqFrame.serialize()
 
     let reqDeserialized = WireFrame.deserialize(from: reqSerialized)
     #expect(reqDeserialized != nil)
-    let reqDecrypted = try CryptoEngine.decrypt(ciphertext: reqDeserialized!.ciphertext, nonce: reqDeserialized!.nonce, tag: reqDeserialized!.tag, using: keysB.sessionKey)
+    let reqDecrypted = try CryptoEngine.decrypt(
+      ciphertext: reqDeserialized!.ciphertext, nonce: reqDeserialized!.nonce, tag: reqDeserialized!.tag,
+      using: keysB.sessionKey)
     let decodedDesc = try JSONDecoder().decode(DeviceDescriptor.self, from: reqDecrypted)
     #expect(decodedDesc.deviceName == "Pixel 9")
 
     let confirmEncrypted = try CryptoEngine.encrypt(payload: Data("OK".utf8), using: keysB.sessionKey)
-    let confirmFrame = WireFrame(type: .pairConfirm, nonce: confirmEncrypted.nonce, ciphertext: confirmEncrypted.ciphertext, tag: confirmEncrypted.tag)
+    let confirmFrame = WireFrame(
+      type: .pairConfirm, nonce: confirmEncrypted.nonce, ciphertext: confirmEncrypted.ciphertext,
+      tag: confirmEncrypted.tag)
     let confirmSerialized = confirmFrame.serialize()
     let confirmDeserialized = WireFrame.deserialize(from: confirmSerialized)
     #expect(confirmDeserialized != nil)
-    let confirmDecrypted = try CryptoEngine.decrypt(ciphertext: confirmDeserialized!.ciphertext, nonce: confirmDeserialized!.nonce, tag: confirmDeserialized!.tag, using: keysA.sessionKey)
+    let confirmDecrypted = try CryptoEngine.decrypt(
+      ciphertext: confirmDeserialized!.ciphertext, nonce: confirmDeserialized!.nonce, tag: confirmDeserialized!.tag,
+      using: keysA.sessionKey)
     #expect(String(data: confirmDecrypted, encoding: .utf8) == "OK")
 
     let clipText = "Synthetic clipboard message"
     let clipEncrypted = try CryptoEngine.encrypt(payload: Data(clipText.utf8), using: keysA.sessionKey)
-    let clipFrame = WireFrame(type: .clipText, nonce: clipEncrypted.nonce, ciphertext: clipEncrypted.ciphertext, tag: clipEncrypted.tag)
+    let clipFrame = WireFrame(
+      type: .clipText, nonce: clipEncrypted.nonce, ciphertext: clipEncrypted.ciphertext, tag: clipEncrypted.tag)
     let clipSerialized = clipFrame.serialize()
     let clipDeserialized = WireFrame.deserialize(from: clipSerialized)
     #expect(clipDeserialized != nil)
-    let clipDecrypted = try CryptoEngine.decrypt(ciphertext: clipDeserialized!.ciphertext, nonce: clipDeserialized!.nonce, tag: clipDeserialized!.tag, using: keysB.sessionKey)
+    let clipDecrypted = try CryptoEngine.decrypt(
+      ciphertext: clipDeserialized!.ciphertext, nonce: clipDeserialized!.nonce, tag: clipDeserialized!.tag,
+      using: keysB.sessionKey)
     #expect(String(data: clipDecrypted, encoding: .utf8) == clipText)
   }
 
@@ -1003,7 +1053,9 @@ struct ProtocolIntegrationTests {
   @Test("Pair decline returns DECLINED and cleans pairing state")
   func testPairDeclineFlow() {
     let declineJson = Data(#"{"version":1,"reason":"DECLINED"}"#.utf8)
-    let frame = WireFrame(type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: declineJson, tag: Data(repeating: 0, count: 16))
+    let frame = WireFrame(
+      type: .pairFail, nonce: Data(repeating: 0, count: 12), ciphertext: declineJson, tag: Data(repeating: 0, count: 16)
+    )
     let serialized = frame.serialize()
     let deserialized = WireFrame.deserialize(from: serialized)
     #expect(deserialized?.type == .pairFail)
@@ -1029,14 +1081,17 @@ struct ProtocolIntegrationTests {
     let loadedKeyData = CryptoEngine.hexToData(keyHex)!
     let restoredKey = SymmetricKey(data: loadedKeyData)
 
-    let desc = DeviceDescriptor(modelId: "Mac15,12", modelName: "MacBook Air", chip: "Apple M3", deviceName: "MacBook Air")
+    let desc = DeviceDescriptor(
+      modelId: "Mac15,12", modelName: "MacBook Air", chip: "Apple M3", deviceName: "MacBook Air")
     let descData = try JSONEncoder().encode(desc)
     let encryptedReq = try CryptoEngine.encrypt(payload: descData, using: restoredKey)
-    let reqFrame = WireFrame(type: .pairRequest, nonce: encryptedReq.nonce, ciphertext: encryptedReq.ciphertext, tag: encryptedReq.tag)
+    let reqFrame = WireFrame(
+      type: .pairRequest, nonce: encryptedReq.nonce, ciphertext: encryptedReq.ciphertext, tag: encryptedReq.tag)
     let deserialized = WireFrame.deserialize(from: reqFrame.serialize())
 
     #expect(deserialized != nil)
-    let decrypted = try CryptoEngine.decrypt(ciphertext: deserialized!.ciphertext, nonce: deserialized!.nonce, tag: deserialized!.tag, using: storedKey)
+    let decrypted = try CryptoEngine.decrypt(
+      ciphertext: deserialized!.ciphertext, nonce: deserialized!.nonce, tag: deserialized!.tag, using: storedKey)
     let decodedDesc = try JSONDecoder().decode(DeviceDescriptor.self, from: decrypted)
     #expect(decodedDesc.deviceName == "MacBook Air")
   }
@@ -1055,7 +1110,8 @@ struct ProtocolIntegrationTests {
 
     let deserialized = WireFrame.deserialize(from: frame.serialize())
     #expect(deserialized != nil)
-    let decrypted = try CryptoEngine.decrypt(ciphertext: deserialized!.ciphertext, nonce: deserialized!.nonce, tag: deserialized!.tag, using: restoredKey)
+    let decrypted = try CryptoEngine.decrypt(
+      ciphertext: deserialized!.ciphertext, nonce: deserialized!.nonce, tag: deserialized!.tag, using: restoredKey)
     #expect(String(data: decrypted, encoding: .utf8) == "Restored session clip content")
   }
 
@@ -1083,7 +1139,8 @@ struct ProtocolIntegrationTests {
     let encrypted = try CryptoEngine.encrypt(payload: payload, using: correctKey)
 
     #expect(throws: (any Error).self) {
-      try CryptoEngine.decrypt(ciphertext: encrypted.ciphertext, nonce: encrypted.nonce, tag: encrypted.tag, using: wrongKey)
+      try CryptoEngine.decrypt(
+        ciphertext: encrypted.ciphertext, nonce: encrypted.nonce, tag: encrypted.tag, using: wrongKey)
     }
   }
 
@@ -1108,11 +1165,13 @@ struct ProtocolIntegrationTests {
     let payloadB = Data("Message intended for Device B".utf8)
     let encryptedB = try CryptoEngine.encrypt(payload: payloadB, using: keyAB)
 
-    let decryptedByB = try CryptoEngine.decrypt(ciphertext: encryptedB.ciphertext, nonce: encryptedB.nonce, tag: encryptedB.tag, using: keyAB)
+    let decryptedByB = try CryptoEngine.decrypt(
+      ciphertext: encryptedB.ciphertext, nonce: encryptedB.nonce, tag: encryptedB.tag, using: keyAB)
     #expect(String(data: decryptedByB, encoding: .utf8) == "Message intended for Device B")
 
     #expect(throws: (any Error).self) {
-      try CryptoEngine.decrypt(ciphertext: encryptedB.ciphertext, nonce: encryptedB.nonce, tag: encryptedB.tag, using: keyAC)
+      try CryptoEngine.decrypt(
+        ciphertext: encryptedB.ciphertext, nonce: encryptedB.nonce, tag: encryptedB.tag, using: keyAC)
     }
   }
 
@@ -1122,24 +1181,30 @@ struct ProtocolIntegrationTests {
     let fileData = Data("Small synthetic test file content for streaming verification".utf8)
     let digest = SHA256.hash(data: fileData).map { String(format: "%02x", $0) }.joined()
 
-    let startJson = Data("{\"transferId\":\"tid-100\",\"fileName\":\"test.txt\",\"fileSize\":60,\"sha256\":\"\(digest)\"}".utf8)
+    let startJson = Data(
+      "{\"transferId\":\"tid-100\",\"fileName\":\"test.txt\",\"fileSize\":60,\"sha256\":\"\(digest)\"}".utf8)
     let startEncrypted = try CryptoEngine.encrypt(payload: startJson, using: key)
-    let startFrame = WireFrame(type: .fileStart, nonce: startEncrypted.nonce, ciphertext: startEncrypted.ciphertext, tag: startEncrypted.tag)
+    let startFrame = WireFrame(
+      type: .fileStart, nonce: startEncrypted.nonce, ciphertext: startEncrypted.ciphertext, tag: startEncrypted.tag)
     let startDeserialized = WireFrame.deserialize(from: startFrame.serialize())
     #expect(startDeserialized?.type == .fileStart)
 
     let chunkEncrypted = try CryptoEngine.encrypt(payload: fileData, using: key)
-    let chunkFrame = WireFrame(type: .fileChunk, nonce: chunkEncrypted.nonce, ciphertext: chunkEncrypted.ciphertext, tag: chunkEncrypted.tag)
+    let chunkFrame = WireFrame(
+      type: .fileChunk, nonce: chunkEncrypted.nonce, ciphertext: chunkEncrypted.ciphertext, tag: chunkEncrypted.tag)
     let chunkDeserialized = WireFrame.deserialize(from: chunkFrame.serialize())
     #expect(chunkDeserialized?.type == .fileChunk)
 
     let endJson = Data("{\"transferId\":\"tid-100\",\"sha256\":\"\(digest)\"}".utf8)
     let endEncrypted = try CryptoEngine.encrypt(payload: endJson, using: key)
-    let endFrame = WireFrame(type: .fileEnd, nonce: endEncrypted.nonce, ciphertext: endEncrypted.ciphertext, tag: endEncrypted.tag)
+    let endFrame = WireFrame(
+      type: .fileEnd, nonce: endEncrypted.nonce, ciphertext: endEncrypted.ciphertext, tag: endEncrypted.tag)
     let endDeserialized = WireFrame.deserialize(from: endFrame.serialize())
     #expect(endDeserialized?.type == .fileEnd)
 
-    let decryptedChunk = try CryptoEngine.decrypt(ciphertext: chunkDeserialized!.ciphertext, nonce: chunkDeserialized!.nonce, tag: chunkDeserialized!.tag, using: key)
+    let decryptedChunk = try CryptoEngine.decrypt(
+      ciphertext: chunkDeserialized!.ciphertext, nonce: chunkDeserialized!.nonce, tag: chunkDeserialized!.tag,
+      using: key)
     let receivedDigest = SHA256.hash(data: decryptedChunk).map { String(format: "%02x", $0) }.joined()
     #expect(receivedDigest == digest)
   }
@@ -1183,27 +1248,37 @@ struct ProtocolIntegrationTests {
 
     let requestPayload = Data("{\"deviceName\":\"MacBook Air\",\"modelId\":\"MacBookAir10,1\"}".utf8)
     let encryptedReq = try CryptoEngine.encrypt(payload: requestPayload, using: keysA.sessionKey)
-    let reqFrame = WireFrame(type: .pairRequest, nonce: encryptedReq.nonce, ciphertext: encryptedReq.ciphertext, tag: encryptedReq.tag)
+    let reqFrame = WireFrame(
+      type: .pairRequest, nonce: encryptedReq.nonce, ciphertext: encryptedReq.ciphertext, tag: encryptedReq.tag)
     let deserializedReq = WireFrame.deserialize(from: reqFrame.serialize())!
     #expect(deserializedReq.type == .pairRequest)
 
-    let decryptedReq = try CryptoEngine.decrypt(ciphertext: deserializedReq.ciphertext, nonce: deserializedReq.nonce, tag: deserializedReq.tag, using: keysB.sessionKey)
+    let decryptedReq = try CryptoEngine.decrypt(
+      ciphertext: deserializedReq.ciphertext, nonce: deserializedReq.nonce, tag: deserializedReq.tag,
+      using: keysB.sessionKey)
     #expect(String(data: decryptedReq, encoding: .utf8) == String(data: requestPayload, encoding: .utf8))
 
     let confirmPayload = Data("OK".utf8)
     let encryptedConfirm = try CryptoEngine.encrypt(payload: confirmPayload, using: keysB.sessionKey)
-    let confirmFrame = WireFrame(type: .pairConfirm, nonce: encryptedConfirm.nonce, ciphertext: encryptedConfirm.ciphertext, tag: encryptedConfirm.tag)
+    let confirmFrame = WireFrame(
+      type: .pairConfirm, nonce: encryptedConfirm.nonce, ciphertext: encryptedConfirm.ciphertext,
+      tag: encryptedConfirm.tag)
     let deserializedConfirm = WireFrame.deserialize(from: confirmFrame.serialize())!
     #expect(deserializedConfirm.type == .pairConfirm)
 
-    let decryptedConfirm = try CryptoEngine.decrypt(ciphertext: deserializedConfirm.ciphertext, nonce: deserializedConfirm.nonce, tag: deserializedConfirm.tag, using: keysA.sessionKey)
+    let decryptedConfirm = try CryptoEngine.decrypt(
+      ciphertext: deserializedConfirm.ciphertext, nonce: deserializedConfirm.nonce, tag: deserializedConfirm.tag,
+      using: keysA.sessionKey)
     #expect(String(data: decryptedConfirm, encoding: .utf8) == "OK")
 
     let clipText = "Authenticated cross-platform clip"
     let encryptedClip = try CryptoEngine.encrypt(payload: Data(clipText.utf8), using: keysA.sessionKey)
-    let clipFrame = WireFrame(type: .clipText, nonce: encryptedClip.nonce, ciphertext: encryptedClip.ciphertext, tag: encryptedClip.tag)
+    let clipFrame = WireFrame(
+      type: .clipText, nonce: encryptedClip.nonce, ciphertext: encryptedClip.ciphertext, tag: encryptedClip.tag)
     let deserializedClip = WireFrame.deserialize(from: clipFrame.serialize())!
-    let decryptedClip = try CryptoEngine.decrypt(ciphertext: deserializedClip.ciphertext, nonce: deserializedClip.nonce, tag: deserializedClip.tag, using: keysB.sessionKey)
+    let decryptedClip = try CryptoEngine.decrypt(
+      ciphertext: deserializedClip.ciphertext, nonce: deserializedClip.nonce, tag: deserializedClip.tag,
+      using: keysB.sessionKey)
     #expect(String(data: decryptedClip, encoding: .utf8) == clipText)
   }
 
@@ -1213,11 +1288,13 @@ struct ProtocolIntegrationTests {
     let keyB = SymmetricKey(size: .bits256)
     let payload = Data("OK".utf8)
     let encrypted = try CryptoEngine.encrypt(payload: payload, using: keyA)
-    let frame = WireFrame(type: .pairConfirm, nonce: encrypted.nonce, ciphertext: encrypted.ciphertext, tag: encrypted.tag)
+    let frame = WireFrame(
+      type: .pairConfirm, nonce: encrypted.nonce, ciphertext: encrypted.ciphertext, tag: encrypted.tag)
     let deserialized = WireFrame.deserialize(from: frame.serialize())!
 
     #expect(throws: (any Error).self) {
-      try CryptoEngine.decrypt(ciphertext: deserialized.ciphertext, nonce: deserialized.nonce, tag: deserialized.tag, using: keyB)
+      try CryptoEngine.decrypt(
+        ciphertext: deserialized.ciphertext, nonce: deserialized.nonce, tag: deserialized.tag, using: keyB)
     }
   }
 }

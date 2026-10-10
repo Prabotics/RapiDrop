@@ -7,8 +7,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-
-
 private val defaultPlatformStyle = PlatformTextStyle(includeFontPadding = false)
 
 val Typography = Typography(
@@ -18,7 +16,7 @@ val Typography = Typography(
         fontSize = 32.sp,
         lineHeight = 38.sp,
         letterSpacing = (-0.5).sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     displayMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -26,7 +24,7 @@ val Typography = Typography(
         fontSize = 28.sp,
         lineHeight = 34.sp,
         letterSpacing = (-0.4).sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -34,7 +32,7 @@ val Typography = Typography(
         fontSize = 24.sp,
         lineHeight = 30.sp,
         letterSpacing = (-0.3).sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -42,7 +40,7 @@ val Typography = Typography(
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = (-0.2).sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     headlineSmall = TextStyle(
         fontFamily = FontFamily.Default,
@@ -50,7 +48,7 @@ val Typography = Typography(
         fontSize = 20.sp,
         lineHeight = 26.sp,
         letterSpacing = (-0.2).sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -58,7 +56,7 @@ val Typography = Typography(
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -66,7 +64,7 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.1.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     titleSmall = TextStyle(
         fontFamily = FontFamily.Default,
@@ -74,7 +72,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -82,7 +80,7 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.25.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -90,7 +88,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.25.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     bodySmall = TextStyle(
         fontFamily = FontFamily.Default,
@@ -98,7 +96,7 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.4.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -106,7 +104,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     labelMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -114,7 +112,7 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
-        platformStyle = defaultPlatformStyle
+        platformStyle = defaultPlatformStyle,
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
@@ -122,6 +120,6 @@ val Typography = Typography(
         fontSize = 11.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
-        platformStyle = defaultPlatformStyle
-    )
+        platformStyle = defaultPlatformStyle,
+    ),
 )

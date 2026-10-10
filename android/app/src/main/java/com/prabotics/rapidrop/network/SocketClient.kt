@@ -1,6 +1,5 @@
 package com.prabotics.rapidrop.network
 
-import org.json.JSONObject
 import android.content.Context
 import android.os.Build
 import android.util.Log
@@ -9,26 +8,25 @@ import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.clipboard.ConnectedDeviceInfo
 import com.prabotics.rapidrop.security.CryptoEngine
 import com.prabotics.rapidrop.security.HandshakeKeys
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.crypto.SecretKey
-
-
 
 class SocketClient(
     private val context: Context? = null,
@@ -41,7 +39,7 @@ class SocketClient(
     var onTransferProgress: ((transferId: String, fileName: String, bytesTransferred: Long, totalBytes: Long, fileIndex: Int, totalFiles: Int, isComplete: Boolean) -> Unit)? = null,
     var onTransferCancelled: ((transferId: String, reason: String) -> Unit)? = null,
     var onPeerBatteryUpdated: ((DeviceBatteryStatus?) -> Unit)? = null,
-    var onNotificationActionReceived: ((id: String, action: String) -> Unit)? = null
+    var onNotificationActionReceived: ((id: String, action: String) -> Unit)? = null,
 ) {
     private var socket: Socket? = null
     private var outputStream: OutputStream? = null
@@ -66,7 +64,7 @@ class SocketClient(
         val targetUri: android.net.Uri?,
         val digest: java.security.MessageDigest = java.security.MessageDigest.getInstance("SHA-256"),
         val writeChannel: Channel<ByteArray> = Channel(capacity = 8),
-        val writerJob: Job? = null
+        val writerJob: Job? = null,
     )
     private var activeIncomingTransfer: IncomingStreamTransfer? = null
 
@@ -105,7 +103,9 @@ class SocketClient(
             if (cleanHost.isBlank()) return@withContext
             sock.connect(InetSocketAddress(cleanHost, port), 4000)
             if (connectionGeneration.get() != currentGen) {
-                try { sock.close() } catch (_: IOException) {}
+                try {
+                    sock.close()
+                } catch (_: IOException) {}
                 return@withContext
             }
             Log.d("RapiDrop", "connection.tcp_connected gen=$currentGen host=$cleanHost port=$port")
@@ -159,7 +159,7 @@ class SocketClient(
                 type = PacketType.PAIR_INVITE,
                 nonce = ByteArray(WireFrame.NONCE_SIZE),
                 ciphertext = json.toByteArray(Charsets.UTF_8),
-                tag = ByteArray(WireFrame.AUTH_TAG_SIZE)
+                tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
             )
             val serialized = frame.serialize()
             out.write(serialized)
@@ -191,7 +191,7 @@ class SocketClient(
                 type = PacketType.PAIR_FAIL,
                 nonce = ByteArray(WireFrame.NONCE_SIZE),
                 ciphertext = json.toByteArray(Charsets.UTF_8),
-                tag = ByteArray(WireFrame.AUTH_TAG_SIZE)
+                tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
             )
             out.write(frame.serialize())
             out.flush()
@@ -233,7 +233,7 @@ class SocketClient(
                 type = PacketType.PAIR_ACCEPT,
                 nonce = ByteArray(WireFrame.NONCE_SIZE),
                 ciphertext = json.toByteArray(Charsets.UTF_8),
-                tag = ByteArray(WireFrame.AUTH_TAG_SIZE)
+                tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
             )
             out.write(frame.serialize())
             out.flush()
@@ -268,7 +268,7 @@ class SocketClient(
             initiatorNonce = initNonce,
             receiverNonce = remoteNonceBytes,
             initiatorId = initiatorId,
-            receiverId = remoteId
+            receiverId = remoteId,
         )
         this.sessionKey = keys.sessionKey
         if (isFinal) {
@@ -293,7 +293,7 @@ class SocketClient(
                 type = PacketType.DISCONNECT,
                 nonce = ByteArray(WireFrame.NONCE_SIZE),
                 ciphertext = "UNPAIR".toByteArray(Charsets.UTF_8),
-                tag = ByteArray(WireFrame.AUTH_TAG_SIZE)
+                tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
             )
             synchronized(out) {
                 out.write(frame.serialize())
@@ -318,7 +318,9 @@ class SocketClient(
         activeIncomingTransfer?.let { transfer ->
             transfer.writeChannel.close()
             transfer.writerJob?.cancel()
-            try { transfer.outputStream.close() } catch (_: IOException) {}
+            try {
+                transfer.outputStream.close()
+            } catch (_: IOException) {}
             context?.let { ctx ->
                 transfer.targetUri?.let { uri ->
                     com.prabotics.rapidrop.clipboard.MediaStorageHelper.deleteDownloadUri(ctx, uri)
@@ -399,7 +401,7 @@ class SocketClient(
                 type = PacketType.PAIR_REQUEST,
                 nonce = enc.nonce,
                 ciphertext = enc.ciphertext,
-                tag = enc.tag
+                tag = enc.tag,
             )
             synchronized(out) {
                 out.write(frame.serialize())
@@ -425,7 +427,7 @@ class SocketClient(
                 type = PacketType.DEVICE_INFO,
                 nonce = enc.nonce,
                 ciphertext = enc.ciphertext,
-                tag = enc.tag
+                tag = enc.tag,
             )
             synchronized(out) {
                 out.write(frame.serialize())
@@ -462,7 +464,7 @@ class SocketClient(
                 type = PacketType.NOTIFICATION_EVENT,
                 nonce = encrypted.nonce,
                 ciphertext = encrypted.ciphertext,
-                tag = encrypted.tag
+                tag = encrypted.tag,
             )
             synchronized(out) {
                 out.write(frame.serialize())
@@ -503,16 +505,23 @@ class SocketClient(
         }
     }
 
-
     private suspend fun processIncomingFrame(frame: WireFrame) {
         if (frame.type == PacketType.PING) {
             val out = outputStream ?: return
             val key = sessionKey ?: return
             try {
-                val decrypted = try { CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key) } catch (_: Exception) { null }
+                val decrypted = try {
+                    CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key)
+                } catch (_: Exception) {
+                    null
+                }
                 if (decrypted != null) {
                     val str = String(decrypted, Charsets.UTF_8)
-                    val json = try { org.json.JSONObject(str) } catch (_: Exception) { null }
+                    val json = try {
+                        org.json.JSONObject(str)
+                    } catch (_: Exception) {
+                        null
+                    }
                     if (json != null && json.has("battery")) {
                         val lvl = json.optInt("battery", -1)
                         val chg = json.optBoolean("charging", false)
@@ -534,7 +543,7 @@ class SocketClient(
                     type = PacketType.PONG,
                     nonce = encrypted.nonce,
                     ciphertext = encrypted.ciphertext,
-                    tag = encrypted.tag
+                    tag = encrypted.tag,
                 )
                 val serialized = responseFrame.serialize()
                 synchronized(out) {
@@ -551,10 +560,18 @@ class SocketClient(
         if (frame.type == PacketType.PONG) {
             val key = sessionKey
             if (key != null) {
-                val decrypted = try { CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key) } catch (_: Exception) { null }
+                val decrypted = try {
+                    CryptoEngine.decrypt(frame.ciphertext, frame.nonce, frame.tag, key)
+                } catch (_: Exception) {
+                    null
+                }
                 if (decrypted != null) {
                     val str = String(decrypted, Charsets.UTF_8)
-                    val json = try { org.json.JSONObject(str) } catch (_: Exception) { null }
+                    val json = try {
+                        org.json.JSONObject(str)
+                    } catch (_: Exception) {
+                        null
+                    }
                     if (json != null && json.has("battery")) {
                         val lvl = json.optInt("battery", -1)
                         val chg = json.optBoolean("charging", false)
@@ -573,7 +590,11 @@ class SocketClient(
         }
         if (frame.type == PacketType.PAIR_FAIL) {
             val raw = String(frame.ciphertext, Charsets.UTF_8)
-            val reason = try { JSONObject(raw).optString("reason").takeIf { it.isNotBlank() } ?: raw } catch (_: Exception) { raw }
+            val reason = try {
+                JSONObject(raw).optString("reason").takeIf { it.isNotBlank() } ?: raw
+            } catch (_: Exception) {
+                raw
+            }
             onPairFailed?.invoke(reason)
             disconnect()
             return
@@ -593,7 +614,9 @@ class SocketClient(
             val privacyMode = try {
                 val obj = JSONObject(jsonStr)
                 if (obj.has("privacyMode")) obj.getBoolean("privacyMode") else null
-            } catch (_: Exception) { null }
+            } catch (_: Exception) {
+                null
+            }
             if (privacyMode != null) {
                 onPrivacyModeUpdated?.invoke(privacyMode)
             }
@@ -621,7 +644,11 @@ class SocketClient(
                 }
                 startHeartbeat(connectionGeneration.get())
                 val jsonStr = String(decrypted, Charsets.UTF_8)
-                val json = try { JSONObject(jsonStr) } catch (_: Exception) { JSONObject() }
+                val json = try {
+                    JSONObject(jsonStr)
+                } catch (_: Exception) {
+                    JSONObject()
+                }
                 val deviceName = json.optString("deviceName").takeIf { it.isNotBlank() } ?: "Device"
                 val modelId = json.optString("modelId").takeIf { it.isNotBlank() } ?: "Android"
                 val modelName = json.optString("modelName").takeIf { it.isNotBlank() } ?: deviceName
@@ -630,7 +657,7 @@ class SocketClient(
                     modelId = modelId,
                     modelName = modelName,
                     chip = chip,
-                    deviceName = deviceName
+                    deviceName = deviceName,
                 )
                 onDeviceInfoReceived(info)
             }
@@ -658,7 +685,11 @@ class SocketClient(
             }
             PacketType.FILE_START -> {
                 val jsonStr = String(decrypted, Charsets.UTF_8)
-                val json = try { JSONObject(jsonStr) } catch (_: Exception) { JSONObject() }
+                val json = try {
+                    JSONObject(jsonStr)
+                } catch (_: Exception) {
+                    JSONObject()
+                }
                 val tid = json.optString("transferId")
                 val fIdx = json.optInt("fileIndex", 0)
                 val totalF = json.optInt("totalFiles", 1)
@@ -670,7 +701,9 @@ class SocketClient(
                 activeIncomingTransfer?.let { old ->
                     old.writeChannel.close()
                     old.writerJob?.cancel()
-                    try { old.outputStream.close() } catch (_: IOException) {}
+                    try {
+                        old.outputStream.close()
+                    } catch (_: IOException) {}
                     context?.let { ctx ->
                         old.targetUri?.let { uri ->
                             com.prabotics.rapidrop.clipboard.MediaStorageHelper.deleteDownloadUri(ctx, uri)
@@ -703,7 +736,7 @@ class SocketClient(
                             outputStream = stream,
                             targetUri = uri,
                             writeChannel = channel,
-                            writerJob = writer
+                            writerJob = writer,
                         )
                         onTransferProgress?.invoke(
                             tid,
@@ -712,7 +745,7 @@ class SocketClient(
                             fSize,
                             fIdx,
                             totalF,
-                            false
+                            false,
                         )
                     }
                 }
@@ -732,7 +765,9 @@ class SocketClient(
                         if (transfer.fileSize > 0L && transfer.bytesReceived + chunkPayloadLength > transfer.fileSize) {
                             transfer.writeChannel.close()
                             transfer.writerJob?.cancel()
-                            try { transfer.outputStream.close() } catch (_: IOException) {}
+                            try {
+                                transfer.outputStream.close()
+                            } catch (_: IOException) {}
                             context?.let { ctx ->
                                 transfer.targetUri?.let { uri ->
                                     com.prabotics.rapidrop.clipboard.MediaStorageHelper.deleteDownloadUri(ctx, uri)
@@ -759,7 +794,7 @@ class SocketClient(
                             transfer.fileSize,
                             transfer.fileIndex,
                             transfer.totalFiles,
-                            false
+                            false,
                         )
                     }
                 }
@@ -776,7 +811,11 @@ class SocketClient(
                     val computedShaBytes = transfer.digest.digest()
                     val computedSha = CryptoEngine.bytesToHex(computedShaBytes)
                     val json = String(decrypted, Charsets.UTF_8)
-                    val sentSha = try { JSONObject(json).optString("sha256").takeIf { it.isNotBlank() } } catch (_: Exception) { null }
+                    val sentSha = try {
+                        JSONObject(json).optString("sha256").takeIf { it.isNotBlank() }
+                    } catch (_: Exception) {
+                        null
+                    }
                     val isSizeValid = transfer.fileSize <= 0L || transfer.bytesReceived == transfer.fileSize
                     if (sentSha != null && sentSha.isNotBlank() && sentSha.equals(computedSha, ignoreCase = true) && isSizeValid) {
                         context?.let { ctx ->
@@ -791,7 +830,7 @@ class SocketClient(
                             transfer.fileSize,
                             transfer.fileIndex,
                             transfer.totalFiles,
-                            true
+                            true,
                         )
                         onClipReceived(ClipItem(type = ClipContentType.FILE, fileName = transfer.fileName, rawData = null))
                         activeIncomingTransfer = null
@@ -854,7 +893,7 @@ class SocketClient(
             type = PacketType.FILE_CANCEL,
             nonce = encrypted.nonce,
             ciphertext = encrypted.ciphertext,
-            tag = encrypted.tag
+            tag = encrypted.tag,
         )
         try {
             out.write(frame.serialize())
@@ -891,7 +930,7 @@ class SocketClient(
                         type = PacketType.CLIP_TEXT,
                         nonce = encrypted.nonce,
                         ciphertext = encrypted.ciphertext,
-                        tag = encrypted.tag
+                        tag = encrypted.tag,
                     )
                     synchronized(out) {
                         out.write(frame.serialize())
@@ -905,7 +944,7 @@ class SocketClient(
                         type = PacketType.CLIP_URL,
                         nonce = encrypted.nonce,
                         ciphertext = encrypted.ciphertext,
-                        tag = encrypted.tag
+                        tag = encrypted.tag,
                     )
                     synchronized(out) {
                         out.write(frame.serialize())
@@ -920,7 +959,7 @@ class SocketClient(
                         type = PacketType.CLIP_IMAGE,
                         nonce = encrypted.nonce,
                         ciphertext = encrypted.ciphertext,
-                        tag = encrypted.tag
+                        tag = encrypted.tag,
                     )
                     synchronized(out) {
                         out.write(frame.serialize())
@@ -946,7 +985,7 @@ class SocketClient(
                         type = PacketType.CLIP_FILE,
                         nonce = encrypted.nonce,
                         ciphertext = encrypted.ciphertext,
-                        tag = encrypted.tag
+                        tag = encrypted.tag,
                     )
                     synchronized(out) {
                         out.write(frame.serialize())
@@ -971,7 +1010,7 @@ class SocketClient(
                 type = PacketType.CONFIG_SYNC,
                 nonce = enc.nonce,
                 ciphertext = enc.ciphertext,
-                tag = enc.tag
+                tag = enc.tag,
             )
             synchronized(out) {
                 out.write(frame.serialize())
@@ -989,7 +1028,7 @@ class SocketClient(
         totalBytes: Long,
         transferId: String,
         inputStream: InputStream,
-        onProgress: (bytesSentForFile: Long) -> Unit
+        onProgress: (bytesSentForFile: Long) -> Unit,
     ) = withContext(Dispatchers.IO) {
         val out = outputStream ?: return@withContext
         val key = sessionKey ?: return@withContext
@@ -1008,7 +1047,7 @@ class SocketClient(
             type = PacketType.FILE_START,
             nonce = startEnc.nonce,
             ciphertext = startEnc.ciphertext,
-            tag = startEnc.tag
+            tag = startEnc.tag,
         )
         synchronized(out) {
             out.write(startFrame.serialize())
@@ -1047,7 +1086,7 @@ class SocketClient(
                 type = PacketType.FILE_CHUNK,
                 nonce = chunkEnc.nonce,
                 ciphertext = chunkEnc.ciphertext,
-                tag = chunkEnc.tag
+                tag = chunkEnc.tag,
             )
             synchronized(out) {
                 chunkFrame.writeTo(out)
@@ -1073,7 +1112,7 @@ class SocketClient(
             type = PacketType.FILE_END,
             nonce = endEnc.nonce,
             ciphertext = endEnc.ciphertext,
-            tag = endEnc.tag
+            tag = endEnc.tag,
         )
         synchronized(out) {
             out.write(endFrame.serialize())

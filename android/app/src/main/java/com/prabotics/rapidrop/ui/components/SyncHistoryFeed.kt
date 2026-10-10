@@ -1,7 +1,5 @@
 package com.prabotics.rapidrop.ui.components
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -17,9 +15,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,8 +30,8 @@ import androidx.compose.material.icons.automirrored.rounded.Subject
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Lock
@@ -43,17 +41,13 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -61,12 +55,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,14 +76,15 @@ import com.prabotics.rapidrop.clipboard.ClipContentType
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.clipboard.ImageMetadataHelper
 import com.prabotics.rapidrop.ui.HapticManager
-
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 enum class HistoryCategoryFilter(val label: String) {
     ALL("All"),
     TEXT("Text"),
     LINKS("Links"),
-    MEDIA("Media")
+    MEDIA("Media"),
 }
 
 @Composable
@@ -106,7 +100,7 @@ fun SyncHistoryFeed(
     onTogglePinClip: (ClipItem) -> Unit = {},
     onToggleShowSyncHistory: () -> Unit = {},
     onInspectClip: ((ClipItem) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var activeInspectorClip by remember { mutableStateOf<ClipItem?>(null) }
@@ -126,19 +120,19 @@ fun SyncHistoryFeed(
                     imageVector = Icons.Rounded.DeleteOutline,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(28.dp),
                 )
             },
             title = {
                 Text(
                     text = "Clear all history?",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
                 )
             },
             text = {
                 Text(
                     text = "All synchronized clips and file records will be permanently removed from this device.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -150,19 +144,19 @@ fun SyncHistoryFeed(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
                 ) {
                     Text("Clear All")
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showClearConfirmationDialog = false }
+                    onClick = { showClearConfirmationDialog = false },
                 ) {
                     Text("Cancel")
                 }
-            }
+            },
         )
     }
 
@@ -188,42 +182,42 @@ fun SyncHistoryFeed(
 
     if (onInspectClip == null) {
         activeInspectorClip?.let { clip ->
-        when (clip.type) {
-            ClipContentType.IMAGE -> {
-                ImageLightboxDialog(
-                    clip = clip,
-                    onDismiss = { activeInspectorClip = null },
-                    onShare = onShareClip,
-                    onSendToDevice = onSendClip,
-                    onDelete = onDeleteClip
-                )
-            }
-            ClipContentType.TEXT, ClipContentType.URL -> {
-                TextInspectorDialog(
-                    clip = clip,
-                    onDismiss = { activeInspectorClip = null },
-                    onCopy = onCopyClip,
-                    onShare = onShareClip,
-                    onSendToDevice = onSendClip,
-                    onDelete = onDeleteClip
-                )
-            }
-            ClipContentType.FILE -> {
-                FileInspectorDialog(
-                    clip = clip,
-                    onDismiss = { activeInspectorClip = null },
-                    onShare = onShareClip,
-                    onSendToDevice = onSendClip,
-                    onDelete = onDeleteClip
-                )
+            when (clip.type) {
+                ClipContentType.IMAGE -> {
+                    ImageLightboxDialog(
+                        clip = clip,
+                        onDismiss = { activeInspectorClip = null },
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip,
+                    )
+                }
+                ClipContentType.TEXT, ClipContentType.URL -> {
+                    TextInspectorDialog(
+                        clip = clip,
+                        onDismiss = { activeInspectorClip = null },
+                        onCopy = onCopyClip,
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip,
+                    )
+                }
+                ClipContentType.FILE -> {
+                    FileInspectorDialog(
+                        clip = clip,
+                        onDismiss = { activeInspectorClip = null },
+                        onShare = onShareClip,
+                        onSendToDevice = onSendClip,
+                        onDelete = onDeleteClip,
+                    )
+                }
             }
         }
-    }
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (showSyncHistory && recentClips.isNotEmpty()) {
             OutlinedTextField(
@@ -234,7 +228,7 @@ fun SyncHistoryFeed(
                     Text(
                         text = "Search clips...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 leadingIcon = {
@@ -242,20 +236,20 @@ fun SyncHistoryFeed(
                         imageVector = Icons.Rounded.Search,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(
                             onClick = { searchQuery = "" },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(28.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Close,
                                 contentDescription = "Clear search",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                         }
                     }
@@ -266,8 +260,8 @@ fun SyncHistoryFeed(
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent
-                )
+                    focusedBorderColor = Color.Transparent,
+                ),
             )
 
             if (recentClips.isNotEmpty()) {
@@ -276,26 +270,26 @@ fun SyncHistoryFeed(
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = "${recentClips.size} items",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     TextButton(
                         onClick = {
                             HapticManager.performClick(context)
                             showClearConfirmationDialog = true
                         },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                     ) {
                         Text(
                             text = "Clear All",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                fontWeight = FontWeight.Medium
-                            )
+                                fontWeight = FontWeight.Medium,
+                            ),
                         )
                     }
                 }
@@ -310,7 +304,7 @@ fun SyncHistoryFeed(
                     fadeIn(spring(stiffness = 500f, dampingRatio = 0.8f)) togetherWith
                         fadeOut(spring(stiffness = 500f, dampingRatio = 0.8f))
                 },
-                label = "emptyOrHistoryTransition"
+                label = "emptyOrHistoryTransition",
             ) { isEmpty ->
                 if (isEmpty) {
                     EmptyHistoryCard()
@@ -318,26 +312,26 @@ fun SyncHistoryFeed(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 32.dp, horizontal = 16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(48.dp),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = Icons.Rounded.Search,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(24.dp),
                                     )
                                 }
                             }
@@ -345,14 +339,14 @@ fun SyncHistoryFeed(
                             Text(
                                 text = "No matching clips",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Try searching for a different term or clear the filter.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             FilledTonalButton(
@@ -361,7 +355,7 @@ fun SyncHistoryFeed(
                                     searchQuery = ""
                                     selectedFilter = HistoryCategoryFilter.ALL
                                 },
-                                shape = RoundedCornerShape(10.dp)
+                                shape = RoundedCornerShape(10.dp),
                             ) {
                                 Text("Clear Filter", style = MaterialTheme.typography.labelMedium)
                             }
@@ -372,7 +366,7 @@ fun SyncHistoryFeed(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateContentSize(spring(stiffness = 600f, dampingRatio = 0.8f)),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         sortedAndFilteredClips.forEach { clip ->
                             key(clip.id) {
@@ -389,7 +383,7 @@ fun SyncHistoryFeed(
                                         } else {
                                             activeInspectorClip = clip
                                         }
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -407,19 +401,19 @@ private fun EmptyHistoryCard() {
             .fillMaxWidth()
             .padding(vertical = 48.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier.size(56.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Rounded.ContentPaste,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(28.dp),
                 )
             }
         }
@@ -428,14 +422,14 @@ private fun EmptyHistoryCard() {
             text = "No clipboard history",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         Text(
             text = "Copied items will appear here.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -447,26 +441,26 @@ private fun PrivacyModeActiveCard(onEnableHistory: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 28.dp, horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Rounded.Lock,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             }
@@ -474,13 +468,13 @@ private fun PrivacyModeActiveCard(onEnableHistory: () -> Unit) {
             Text(
                 text = "Sync History is Off",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = "Clips sync in memory only and never save to disk.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(6.dp))
             FilledTonalButton(
@@ -490,11 +484,11 @@ private fun PrivacyModeActiveCard(onEnableHistory: () -> Unit) {
                 },
                 shape = CircleShape,
                 modifier = Modifier.height(38.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
             ) {
                 Text(
                     text = "Turn on history",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 )
             }
         }
@@ -509,7 +503,7 @@ private fun SyncHistoryItemRow(
     onShare: () -> Unit,
     onDelete: () -> Unit,
     onTogglePin: () -> Unit,
-    onItemClick: () -> Unit
+    onItemClick: () -> Unit,
 ) {
     val context = LocalContext.current
     var isCopied by remember { mutableStateOf(false) }
@@ -524,7 +518,9 @@ private fun SyncHistoryItemRow(
     val imageMetadata = remember(clip.id) {
         if (clip.type == ClipContentType.IMAGE) {
             ImageMetadataHelper.extractMetadata(clip.rawData)
-        } else null
+        } else {
+            null
+        }
     }
 
     var bitmap by remember(clip.id) {
@@ -552,14 +548,14 @@ private fun SyncHistoryItemRow(
             }
             .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
-        color = if (isPinned) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow
+        color = if (isPinned) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             when (clip.type) {
                 ClipContentType.IMAGE -> {
@@ -567,7 +563,7 @@ private fun SyncHistoryItemRow(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier.size(44.dp),
                     ) {
                         val currentBitmap = bitmap
                         if (currentBitmap != null) {
@@ -578,7 +574,7 @@ private fun SyncHistoryItemRow(
                                     .size(44.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .padding(2.dp),
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Fit,
                             )
                         } else {
                             Box(contentAlignment = Alignment.Center) {
@@ -586,7 +582,7 @@ private fun SyncHistoryItemRow(
                                     imageVector = Icons.Rounded.Image,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(22.dp),
                                 )
                             }
                         }
@@ -596,14 +592,14 @@ private fun SyncHistoryItemRow(
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier.size(44.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.Subject,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(22.dp),
                             )
                         }
                     }
@@ -612,14 +608,14 @@ private fun SyncHistoryItemRow(
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier.size(44.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Rounded.Link,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(22.dp),
                             )
                         }
                     }
@@ -629,14 +625,14 @@ private fun SyncHistoryItemRow(
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier.size(44.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(22.dp),
                             )
                             if (ext.isNotEmpty()) {
                                 Surface(
@@ -644,15 +640,15 @@ private fun SyncHistoryItemRow(
                                     color = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
-                                        .padding(2.dp)
+                                        .padding(2.dp),
                                 ) {
                                     Text(
                                         text = ext.take(4),
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             fontSize = 8.sp,
-                                            color = MaterialTheme.colorScheme.onPrimary
+                                            color = MaterialTheme.colorScheme.onPrimary,
                                         ),
-                                        modifier = Modifier.padding(horizontal = 2.dp)
+                                        modifier = Modifier.padding(horizontal = 2.dp),
                                     )
                                 }
                             }
@@ -668,14 +664,14 @@ private fun SyncHistoryItemRow(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
                     text = titleText,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 val timeLabel = remember(clip.timestamp) {
                     java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(clip.timestamp))
@@ -706,32 +702,32 @@ private fun SyncHistoryItemRow(
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (isPinned) {
                         Icon(
                             imageVector = Icons.Rounded.PushPin,
                             contentDescription = "Pinned",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(12.dp)
+                            modifier = Modifier.size(12.dp),
                         )
                     }
                     Text(
                         text = metadataLabel,
                         style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = timeLabel,
                         style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)),
-                        maxLines = 1
+                        maxLines = 1,
                     )
                 }
             }
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
                     onClick = {
@@ -739,7 +735,7 @@ private fun SyncHistoryItemRow(
                         isCopied = true
                         onCopy()
                     },
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(36.dp),
                 ) {
                     AnimatedContent(
                         targetState = isCopied,
@@ -747,13 +743,13 @@ private fun SyncHistoryItemRow(
                             (fadeIn(spring(stiffness = 500f, dampingRatio = 0.7f)) + scaleIn(spring(stiffness = 500f, dampingRatio = 0.6f)))
                                 .togetherWith(fadeOut(tween(100)))
                         },
-                        label = "copyIconMorph"
+                        label = "copyIconMorph",
                     ) { copied ->
                         Icon(
                             imageVector = if (copied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
                             contentDescription = "Copy",
                             tint = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
@@ -764,13 +760,13 @@ private fun SyncHistoryItemRow(
                             HapticManager.performClick(context)
                             showMenu = true
                         },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
                             contentDescription = "More actions",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
 
@@ -779,13 +775,13 @@ private fun SyncHistoryItemRow(
                         onDismissRequest = { showMenu = false },
                         shape = RoundedCornerShape(14.dp),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = if (isPinned) "Unpin clip" else "Pin to top",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                 )
                             },
                             onClick = {
@@ -797,16 +793,16 @@ private fun SyncHistoryItemRow(
                                     imageVector = Icons.Rounded.PushPin,
                                     contentDescription = null,
                                     tint = if (isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(20.dp),
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                         )
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = "Share",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                 )
                             },
                             onClick = {
@@ -818,14 +814,14 @@ private fun SyncHistoryItemRow(
                                     imageVector = Icons.Rounded.Share,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(20.dp),
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                         )
                         DropdownMenuItem(
                             text = {
@@ -833,8 +829,8 @@ private fun SyncHistoryItemRow(
                                     text = "Delete",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
+                                        color = MaterialTheme.colorScheme.error,
+                                    ),
                                 )
                             },
                             onClick = {
@@ -846,10 +842,10 @@ private fun SyncHistoryItemRow(
                                     imageVector = Icons.Rounded.DeleteOutline,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(20.dp),
                                 )
                             },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                         )
                     }
                 }

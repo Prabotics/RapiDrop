@@ -2,13 +2,11 @@ package com.prabotics.rapidrop.clipboard
 
 import java.util.UUID
 
-
-
 enum class ClipContentType {
     TEXT,
     URL,
     IMAGE,
-    FILE
+    FILE,
 }
 
 data class ClipItem(
@@ -17,7 +15,7 @@ data class ClipItem(
     val textContent: String? = null,
     val fileName: String? = null,
     val rawData: ByteArray? = null,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 ) {
     val displayName: String
         get() = when (type) {
@@ -72,7 +70,9 @@ data class ClipItem(
         if (rawData != null) {
             if (other.rawData == null) return false
             if (!rawData.contentEquals(other.rawData)) return false
-        } else if (other.rawData != null) return false
+        } else if (other.rawData != null) {
+            return false
+        }
         if (timestamp != other.timestamp) return false
         return true
     }

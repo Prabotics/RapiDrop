@@ -14,12 +14,11 @@ import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
 
-
-
 enum class MediaDestinationMode {
     BOTH,
     FOLDER_ONLY,
-    CLIPBOARD_ONLY;
+    CLIPBOARD_ONLY,
+    ;
 
     val displayLabel: String
         get() = when (this) {
@@ -55,7 +54,13 @@ object MediaStorageHelper {
                     val isImage = item.type == ClipContentType.IMAGE
                     val sanitizedName = item.fileName?.let { File(it).name.trim() }?.takeIf { it.isNotBlank() }
                     val rawName = sanitizedName ?: if (isImage) "RapiDrop_${System.currentTimeMillis()}.png" else "RapiDrop_${System.currentTimeMillis()}.bin"
-                    val fileName = if (rawName.contains('.')) rawName else if (isImage) "$rawName.png" else rawName
+                    val fileName = if (rawName.contains('.')) {
+                        rawName
+                    } else if (isImage) {
+                        "$rawName.png"
+                    } else {
+                        rawName
+                    }
                     val mimeType = when {
                         fileName.endsWith(".jpg", true) || fileName.endsWith(".jpeg", true) -> "image/jpeg"
                         fileName.endsWith(".png", true) -> "image/png"
@@ -72,7 +77,7 @@ object MediaStorageHelper {
                         put(MediaStore.Downloads.MIME_TYPE, mimeType)
                         put(
                             MediaStore.Downloads.RELATIVE_PATH,
-                            "${Environment.DIRECTORY_DOWNLOADS}/RapiDrop"
+                            "${Environment.DIRECTORY_DOWNLOADS}/RapiDrop",
                         )
                         put(MediaStore.Downloads.IS_PENDING, 1)
                     }
@@ -91,7 +96,7 @@ object MediaStorageHelper {
 
                     val publicPath = File(
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                        "RapiDrop/$fileName"
+                        "RapiDrop/$fileName",
                     ).absolutePath
                     MediaScannerConnection.scanFile(context, arrayOf(publicPath), arrayOf(mimeType), null)
 

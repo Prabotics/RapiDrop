@@ -8,7 +8,6 @@ import android.service.quicksettings.TileService
 import android.widget.Toast
 import com.prabotics.rapidrop.ui.HapticManager
 
-
 class RapiDropTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
@@ -33,7 +32,7 @@ class RapiDropTileService : TileService() {
                 this,
                 0,
                 intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
             startActivityAndCollapse(pendingIntent)
         } else {
