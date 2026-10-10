@@ -53,6 +53,8 @@ ehthumbs_vista.db
 *.log
 *.pem
 *.key
+*.jks
+*.keystore
 .env*
 
 release-assets/

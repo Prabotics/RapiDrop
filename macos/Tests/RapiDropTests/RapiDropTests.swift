@@ -1029,7 +1029,7 @@ struct ProtocolIntegrationTests {
     let loadedKeyData = CryptoEngine.hexToData(keyHex)!
     let restoredKey = SymmetricKey(data: loadedKeyData)
 
-    let desc = DeviceDescriptor(modelId: "Mac15,12", modelName: "MacBook Air", chip: "Apple M3", deviceName: "Samir's MacBook Air")
+    let desc = DeviceDescriptor(modelId: "Mac15,12", modelName: "MacBook Air", chip: "Apple M3", deviceName: "MacBook Air")
     let descData = try JSONEncoder().encode(desc)
     let encryptedReq = try CryptoEngine.encrypt(payload: descData, using: restoredKey)
     let reqFrame = WireFrame(type: .pairRequest, nonce: encryptedReq.nonce, ciphertext: encryptedReq.ciphertext, tag: encryptedReq.tag)
@@ -1038,7 +1038,7 @@ struct ProtocolIntegrationTests {
     #expect(deserialized != nil)
     let decrypted = try CryptoEngine.decrypt(ciphertext: deserialized!.ciphertext, nonce: deserialized!.nonce, tag: deserialized!.tag, using: storedKey)
     let decodedDesc = try JSONDecoder().decode(DeviceDescriptor.self, from: decrypted)
-    #expect(decodedDesc.deviceName == "Samir's MacBook Air")
+    #expect(decodedDesc.deviceName == "MacBook Air")
   }
 
   @Test("Process restart key restoration allows immediate authenticated decryption")

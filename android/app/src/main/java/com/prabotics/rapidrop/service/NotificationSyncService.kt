@@ -209,7 +209,7 @@ class NotificationSyncService : NotificationListenerService() {
                 put("iconBase64", appIconBase64)
             }
         }
-        Log.d("RapiDrop", "notification.mirroring: pkg=$packageName title=$resolvedTitle")
+        Log.d("RapiDrop", "notification.mirroring: pkg=$packageName")
         SyncService.instance?.sendNotificationEvent(json.toString())
         val notice = MirroredNotice(
             id = id,

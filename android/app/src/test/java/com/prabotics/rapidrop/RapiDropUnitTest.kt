@@ -1216,8 +1216,8 @@ class RapiDropUnitTest {
 
     @Test
     fun testNearbyDeviceFilteringExcludesPaired() {
-        val pairedName = "Samir’s MacBook Air"
-        val dev1 = DiscoveredDevice("Samir's MacBook Air", "192.168.1.10", 58240)
+        val pairedName = "MacBook Air"
+        val dev1 = DiscoveredDevice("MacBook Air", "192.168.1.10", 58240)
         val dev2 = DiscoveredDevice("Windows PC", "192.168.1.15", 58240)
         val dev3 = DiscoveredDevice("Pixel 7", "192.168.1.20", 58240)
 
@@ -1227,7 +1227,7 @@ class RapiDropUnitTest {
         assertEquals(2, nearbyOnly.size)
         assertTrue(nearbyOnly.any { it.name == "Windows PC" })
         assertTrue(nearbyOnly.any { it.name == "Pixel 7" })
-        assertFalse(nearbyOnly.any { it.name == "Samir's MacBook Air" })
+        assertFalse(nearbyOnly.any { it.name == "MacBook Air" })
     }
 
     @Test
@@ -1335,7 +1335,7 @@ class RapiDropUnitTest {
         )
 
         val offerKeys = client.handlePairAccept(
-            fromDevice = "Samir's MacBook Air",
+            fromDevice = "MacBook Air",
             remoteId = idB,
             remotePublicKeyHex = pubBHex,
             remoteNonceHex = CryptoEngine.bytesToHex(nonceB),
@@ -1347,7 +1347,7 @@ class RapiDropUnitTest {
         assertTrue(client.hasPendingInitiatorStateForTesting())
 
         val acceptKeys = client.handlePairAccept(
-            fromDevice = "Samir's MacBook Air",
+            fromDevice = "MacBook Air",
             remoteId = idB,
             remotePublicKeyHex = pubBHex,
             remoteNonceHex = CryptoEngine.bytesToHex(nonceB),
@@ -1365,7 +1365,7 @@ class RapiDropUnitTest {
             .put("fromDeviceName", "Pixel 6a")
             .put("publicKey", "0123456789abcdef")
             .put("nonce", "fedcba9876543210")
-            .put("host", "192.168.0.220")
+            .put("host", "192.168.1.50")
             .put("port", 58241)
             .put("id", "pixel-uuid-test")
             .toString()
@@ -1384,10 +1384,10 @@ class RapiDropUnitTest {
 
         val inviteJson = JSONObject()
             .put("version", 1)
-            .put("fromDeviceName", "Samir's MacBook Air")
+            .put("fromDeviceName", "MacBook Air")
             .put("publicKey", pubMacHex)
             .put("nonce", nonceMacHex)
-            .put("host", "192.168.0.249")
+            .put("host", "192.168.1.100")
             .put("port", 58240)
             .put("id", macId)
             .toString()
@@ -1418,7 +1418,7 @@ class RapiDropUnitTest {
             .put("fromDeviceName", "Pixel 6a")
             .put("publicKey", pubAndroidHex)
             .put("nonce", nonceAndroidHex)
-            .put("host", "192.168.0.220")
+            .put("host", "192.168.1.50")
             .put("port", 58241)
             .put("id", androidId)
             .put("status", "offered")
@@ -1459,7 +1459,7 @@ class RapiDropUnitTest {
             .put("fromDeviceName", "Pixel 6a")
             .put("publicKey", "0102030405060708090a0b0c0d0e0f10")
             .put("nonce", "1112131415161718191a1b1c1d1e1f20")
-            .put("host", "192.168.0.220")
+            .put("host", "192.168.1.50")
             .put("port", WireFrame.DEFAULT_CLIENT_PORT)
             .put("id", "test-pixel-device-id")
             .put("status", "accepted")
@@ -1471,7 +1471,7 @@ class RapiDropUnitTest {
         val port = parsed.optInt("port", WireFrame.DEFAULT_PORT)
         assertEquals("accepted", status)
         assertEquals("test-pixel-device-id", id)
-        assertEquals("192.168.0.220", host)
+        assertEquals("192.168.1.50", host)
         assertEquals(WireFrame.DEFAULT_CLIENT_PORT, port)
 
         val connectPort = if (port == WireFrame.DEFAULT_CLIENT_PORT) WireFrame.DEFAULT_PORT else port
