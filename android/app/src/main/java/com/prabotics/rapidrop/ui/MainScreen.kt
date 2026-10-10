@@ -275,12 +275,24 @@ fun MainScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            RapiDropBrandLogo(size = 28.dp)
+                            Surface(
+                                modifier = Modifier.size(36.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    RapiDropBrandLogo(size = 20.dp)
+                                }
+                            }
                             Text(
                                 text = "RapiDrop",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 22.sp
+                                    fontSize = 20.sp,
+                                    letterSpacing = (-0.4).sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface
                             )

@@ -20,6 +20,8 @@ import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FolderCopy
 import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +57,7 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,11 +79,14 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.prabotics.rapidrop.clipboard.MediaDestinationMode
@@ -90,8 +96,9 @@ import com.prabotics.rapidrop.service.UpdateResult
 import com.prabotics.rapidrop.ui.HapticManager
 import com.prabotics.rapidrop.ui.theme.AppThemeMode
 import com.prabotics.rapidrop.service.NotificationSyncService
+import com.prabotics.rapidrop.R
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 
 
 @Composable
@@ -155,7 +162,7 @@ fun SettingsContent(
             text = {
                 Column(
                     modifier = Modifier.selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     AppThemeMode.entries.forEach { mode ->
                         val isSelected = currentThemeMode == mode
@@ -164,9 +171,14 @@ fun SettingsContent(
                             AppThemeMode.LIGHT -> Icons.Rounded.LightMode
                             AppThemeMode.DARK -> Icons.Rounded.DarkMode
                         }
+                        val containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                        }
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent,
+                            color = containerColor,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -201,7 +213,7 @@ fun SettingsContent(
                                         style = MaterialTheme.typography.bodyLarge.copy(
                                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                                         ),
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 if (isSelected) {
@@ -242,7 +254,7 @@ fun SettingsContent(
             text = {
                 Column(
                     modifier = Modifier.selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MediaDestinationMode.entries.forEach { mode ->
                         val isSelected = currentMode == mode
@@ -251,9 +263,14 @@ fun SettingsContent(
                             MediaDestinationMode.FOLDER_ONLY -> Icons.Rounded.Folder
                             MediaDestinationMode.CLIPBOARD_ONLY -> Icons.Rounded.ContentPaste
                         }
+                        val containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                        }
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent,
+                            color = containerColor,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -292,7 +309,7 @@ fun SettingsContent(
                                             style = MaterialTheme.typography.bodyLarge.copy(
                                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                                             ),
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = mode.description,
@@ -334,93 +351,102 @@ fun SettingsContent(
             .padding(top = 8.dp, bottom = 36.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SettingsGroupHeader(title = "Preferences")
+        val cardBorder = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+
+        SettingsGroupHeader(title = "Sync & Transfer")
         Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
-            ) {
-                Column {
-                    SettingsNavigationRow(
-                        icon = Icons.Rounded.Palette,
-                        title = "Theme",
-                        subtitle = currentThemeMode.displayLabel,
-                        onClick = { showThemeDialog = true },
-                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-                    SettingsNavigationRow(
-                        icon = Icons.Rounded.Folder,
-                        title = "Media Destination",
-                        subtitle = currentMode.displayLabel,
-                        onClick = { showMediaDialog = true }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-                    SettingsSwitchRow(
-                        icon = Icons.Rounded.History,
-                        title = "Sync History",
-                        subtitle = "Save clipboard history on device",
-                        checked = showSyncHistory,
-                        onCheckedChange = {
-                            onToggleShowSyncHistory(it)
-                        }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-                    SettingsSwitchRow(
-                        icon = Icons.Rounded.Notifications,
-                        title = "Mirror Notifications",
-                        subtitle = "Forward phone alerts to Mac",
-                        checked = isNotificationMirroringEnabled && isNotificationListenerGranted,
-                        onCheckedChange = { enabled ->
-                            if (enabled) {
-                                preferencesManager.setNotificationMirroringEnabled(true)
-                                isNotificationMirroringEnabled = true
-                                if (!isNotificationListenerGranted) {
-                                    NotificationSyncService.openSettings(context)
-                                }
-                            } else {
-                                isNotificationMirroringEnabled = false
-                                preferencesManager.setNotificationMirroringEnabled(false)
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = cardBorder
+        ) {
+            Column {
+                SettingsNavigationRow(
+                    icon = Icons.Rounded.Folder,
+                    title = "Media Destination",
+                    subtitle = currentMode.displayLabel,
+                    onClick = { showMediaDialog = true },
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                )
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
+                SettingsSwitchRow(
+                    icon = Icons.Rounded.History,
+                    title = "Sync History",
+                    subtitle = "Save clipboard history on device",
+                    checked = showSyncHistory,
+                    onCheckedChange = {
+                        onToggleShowSyncHistory(it)
+                    }
+                )
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
+                SettingsSwitchRow(
+                    icon = Icons.Rounded.Notifications,
+                    title = "Mirror Notifications",
+                    subtitle = "Forward phone alerts to Mac",
+                    checked = isNotificationMirroringEnabled && isNotificationListenerGranted,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            preferencesManager.setNotificationMirroringEnabled(true)
+                            isNotificationMirroringEnabled = true
+                            if (!isNotificationListenerGranted) {
+                                NotificationSyncService.openSettings(context)
                             }
+                        } else {
+                            isNotificationMirroringEnabled = false
+                            preferencesManager.setNotificationMirroringEnabled(false)
                         }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-                    SettingsSwitchRow(
-                        icon = Icons.Rounded.Vibration,
-                        title = "Haptic Feedback",
-                        subtitle = "Vibrate on touch and transfers",
-                        checked = isHapticEnabled,
-                        onCheckedChange = {
-                            isHapticEnabled = it
-                            preferencesManager.setHapticEnabled(it)
+                    },
+                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                )
+            }
+        }
+
+        SettingsGroupHeader(title = "General")
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = cardBorder
+        ) {
+            Column {
+                SettingsNavigationRow(
+                    icon = Icons.Rounded.Palette,
+                    title = "Theme",
+                    subtitle = currentThemeMode.displayLabel,
+                    onClick = { showThemeDialog = true },
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                )
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
+                SettingsSwitchRow(
+                    icon = Icons.Rounded.Vibration,
+                    title = "Haptic Feedback",
+                    subtitle = "Vibrate on touch and transfers",
+                    checked = isHapticEnabled,
+                    onCheckedChange = {
+                        isHapticEnabled = it
+                        preferencesManager.setHapticEnabled(it)
+                    },
+                    shape = if (isBatteryOptimizedIgnored) RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp) else RectangleShape
+                )
+                if (!isBatteryOptimizedIgnored) {
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
+                    SettingsPermissionRow(
+                        icon = Icons.Rounded.BatteryChargingFull,
+                        title = "Battery Optimization",
+                        subtitle = "Allow uninterrupted background sync",
+                        isGranted = false,
+                        onClick = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                try {
+                                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {}
+                            }
                         },
                         shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
                     )
                 }
-            }
-
-        if (!isBatteryOptimizedIgnored) {
-            SettingsGroupHeader(title = "Background Activity")
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow
-            ) {
-                SettingsPermissionRow(
-                    icon = Icons.Rounded.BatteryChargingFull,
-                    title = "Battery Optimization",
-                    subtitle = "Allow uninterrupted background sync",
-                    isGranted = false,
-                    onClick = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            try {
-                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                                context.startActivity(intent)
-                            } catch (_: Exception) {}
-                        }
-                    },
-                    shape = RoundedCornerShape(20.dp)
-                )
             }
         }
 
@@ -428,12 +454,39 @@ fun SettingsContent(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = cardBorder
         ) {
                 Column {
+                    val currentUpdate = updateState
+                    val isUpdateAvailable = currentUpdate is UpdateResult.UpdateAvailable
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                            .clickable(enabled = !isCheckingUpdate) {
+                                if (isUpdateAvailable) {
+                                    HapticManager.performClick(context)
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse((currentUpdate as UpdateResult.UpdateAvailable).releaseUrl))
+                                    context.startActivity(intent)
+                                } else {
+                                    HapticManager.performClick(context)
+                                    isCheckingUpdate = true
+                                    coroutineScope.launch {
+                                        val startTime = System.currentTimeMillis()
+                                        val res = UpdateChecker.checkForUpdates(context)
+                                        val elapsed = System.currentTimeMillis() - startTime
+                                        if (elapsed < 500L) {
+                                            delay(500L - elapsed)
+                                        }
+                                        updateState = res
+                                        isCheckingUpdate = false
+                                        if (res is UpdateResult.UpdateAvailable) {
+                                            HapticManager.performSuccess(context)
+                                        }
+                                    }
+                                }
+                            }
                             .padding(horizontal = 16.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -455,151 +508,100 @@ fun SettingsContent(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                Text(
-                                    text = "Local peer-to-peer sync",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                val subtitleText = when {
+                                    isCheckingUpdate -> "Checking for updates..."
+                                    isUpdateAvailable -> "Update available, tap to view"
+                                    currentUpdate is UpdateResult.UpToDate -> "Up to date"
+                                    currentUpdate is UpdateResult.Error -> "Check failed"
+                                    else -> "Tap to check for updates"
+                                }
+                                Crossfade(
+                                    targetState = subtitleText,
+                                    animationSpec = tween(220)
+                                ) { text ->
+                                    Text(
+                                        text = text,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh
-                        ) {
-                            Text(
-                                text = "v${UpdateChecker.CURRENT_VERSION}",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-
-                    SettingsExternalLinkRow(
-                        icon = Icons.Rounded.Code,
-                        title = "Source Code",
-                        subtitle = "github.com/Prabotics/RapiDrop",
-                        onClick = {
-                            HapticManager.performClick(context)
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Prabotics/RapiDrop"))
-                            context.startActivity(intent)
-                        }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-
-                    SettingsExternalLinkRow(
-                        icon = Icons.Rounded.BugReport,
-                        title = "Report an Issue",
-                        subtitle = "Submit bug report or feedback",
-                        onClick = {
-                            HapticManager.performClick(context)
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Prabotics/RapiDrop/issues"))
-                            context.startActivity(intent)
-                        }
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                            .clickable(enabled = !isCheckingUpdate) {
-                                val current = updateState
-                                if (current is UpdateResult.UpdateAvailable) {
-                                    HapticManager.performClick(context)
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(current.releaseUrl))
-                                    context.startActivity(intent)
-                                } else {
-                                    HapticManager.performClick(context)
-                                    isCheckingUpdate = true
-                                    coroutineScope.launch {
-                                        val res = UpdateChecker.checkForUpdates(context)
-                                        updateState = res
-                                        isCheckingUpdate = false
-                                        if (res is UpdateResult.UpdateAvailable) {
-                                            HapticManager.performSuccess(context)
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
                         Row(
-                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Refresh,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                val titleText = when {
-                                    isCheckingUpdate -> "Checking for updates..."
-                                    updateState is UpdateResult.UpdateAvailable -> "Update Available"
-                                    updateState is UpdateResult.UpToDate -> "Up to Date"
-                                    updateState is UpdateResult.Error -> "Check Failed"
-                                    else -> "Check for Updates"
+                            if (isUpdateAvailable && (currentUpdate as UpdateResult.UpdateAvailable).releaseNotes.isNotBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        HapticManager.performClick(context)
+                                        showReleaseNotesDialog = true
+                                    },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Description,
+                                        contentDescription = "Release Notes",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                                val subtitleText = when {
-                                    isCheckingUpdate -> "Connecting to GitHub releases..."
-                                    updateState is UpdateResult.UpdateAvailable -> {
-                                        val u = updateState as UpdateResult.UpdateAvailable
-                                        "${u.latestVersion}, tap to view release"
-                                    }
-                                    updateState is UpdateResult.UpToDate -> "Up to date"
-                                    updateState is UpdateResult.Error -> (updateState as UpdateResult.Error).message
-                                    else -> "Check GitHub for new releases"
-                                }
-                                Text(
-                                    text = titleText,
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                    color = if (updateState is UpdateResult.UpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = subtitleText,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
                             }
-                        }
-
-                        if (updateState is UpdateResult.UpdateAvailable) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                val u = updateState as UpdateResult.UpdateAvailable
-                                if (u.releaseNotes.isNotBlank()) {
-                                    IconButton(
-                                        onClick = {
-                                            HapticManager.performClick(context)
-                                            showReleaseNotesDialog = true
-                                        },
-                                        modifier = Modifier.size(32.dp)
+                            Crossfade(
+                                targetState = isCheckingUpdate,
+                                animationSpec = tween(220)
+                            ) { checking ->
+                                if (checking) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 14.dp, vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Description,
-                                            contentDescription = "Release Notes",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(18.dp)
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                } else {
+                                    val pillColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                                    val pillTextColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    val versionText = if (isUpdateAvailable) {
+                                        "v${(currentUpdate as UpdateResult.UpdateAvailable).latestVersion}"
+                                    } else {
+                                        "v${UpdateChecker.CURRENT_VERSION}"
+                                    }
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = pillColor
+                                    ) {
+                                        Text(
+                                            text = versionText,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                            color = pillTextColor,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                         )
                                     }
                                 }
                             }
                         }
                     }
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+
+                    SettingsExternalLinkRow(
+                        painter = painterResource(id = R.drawable.ic_github),
+                        title = "GitHub",
+                        subtitle = "github.com/Prabotics/RapiDrop",
+                        onClick = {
+                            HapticManager.performClick(context)
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Prabotics/RapiDrop"))
+                            context.startActivity(intent)
+                        },
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
                 }
         }
     }
@@ -656,11 +658,11 @@ fun SettingsContent(
 private fun SettingsGroupHeader(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.labelLarge.copy(
+        style = MaterialTheme.typography.titleSmall.copy(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold
         ),
-        modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp)
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
     )
 }
 
@@ -852,6 +854,59 @@ private fun SettingsPermissionRow(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsExternalLinkRow(
+    painter: Painter,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    shape: Shape = RectangleShape
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 

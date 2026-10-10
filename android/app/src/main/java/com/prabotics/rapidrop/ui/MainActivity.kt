@@ -78,24 +78,6 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         var isReady = false
         splashScreen.setKeepOnScreenCondition { !isReady }
-        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
-            val splashView = splashScreenViewProvider.view
-            val iconView = splashScreenViewProvider.iconView
-            val scaleX = ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.2f)
-            val scaleY = ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.2f)
-            val iconAlpha = ObjectAnimator.ofFloat(iconView, View.ALPHA, 1f, 0f)
-            val splashAlpha = ObjectAnimator.ofFloat(splashView, View.ALPHA, 1f, 0f)
-
-            AnimatorSet().apply {
-                playTogether(scaleX, scaleY, iconAlpha, splashAlpha)
-                duration = 360L
-                interpolator = PathInterpolator(0.2f, 0f, 0f, 1f)
-                doOnEnd {
-                    splashScreenViewProvider.remove()
-                }
-                start()
-            }
-        }
         preferencesManager = PreferencesManager(this)
         val initialMode = preferencesManager.getAppThemeMode()
         val isDark = when (initialMode) {
