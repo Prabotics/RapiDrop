@@ -118,7 +118,7 @@ private fun ScanningHeroStage() {
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2800, easing = FastOutSlowInEasing),
+            animation = tween(3200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "p1"
@@ -127,7 +127,7 @@ private fun ScanningHeroStage() {
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2800, delayMillis = 930, easing = FastOutSlowInEasing),
+            animation = tween(3200, delayMillis = 1066, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "p2"
@@ -136,7 +136,7 @@ private fun ScanningHeroStage() {
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2800, delayMillis = 1860, easing = FastOutSlowInEasing),
+            animation = tween(3200, delayMillis = 2133, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "p3"
@@ -145,20 +145,19 @@ private fun ScanningHeroStage() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
         Box(
-            modifier = Modifier.size(220.dp),
+            modifier = Modifier.size(180.dp),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(220.dp)) {
+            Canvas(modifier = Modifier.size(180.dp)) {
                 val centerOffset = center
                 val baseRadius = 44.dp.toPx()
-                val maxRadius = size.minDimension / 2f
+                val maxRadius = 80.dp.toPx()
                 val strokeWidth = 1.8.dp.toPx()
-
                 listOf(pulse1, pulse2, pulse3).forEach { p ->
                     val currentRadius = baseRadius + (maxRadius - baseRadius) * p
                     val alpha = (1f - p).coerceIn(0f, 1f) * 0.75f

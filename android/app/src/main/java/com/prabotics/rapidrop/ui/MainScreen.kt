@@ -90,6 +90,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import com.prabotics.rapidrop.service.TransferProgress
 import com.prabotics.rapidrop.service.MirroredNotice
 import androidx.compose.foundation.layout.height
@@ -313,46 +314,38 @@ fun MainScreen(
                             }
                         }
 
-                        Surface(
+                        IconButton(
                             onClick = {
                                 HapticManager.performClick(context)
                                 showSettings = true
                             },
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
                             modifier = Modifier.size(40.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = "Settings",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = "Settings",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Surface(
+                            IconButton(
                                 onClick = {
                                     HapticManager.performClick(context)
                                     showSettings = false
                                 },
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 modifier = Modifier.size(40.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                        contentDescription = "Back",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                             Text(
                                 text = "Settings",
@@ -630,47 +623,53 @@ fun MainScreen(
                                     )
                                 }
                             } else {
-                                val isScanningAlone = discoveredDevices.isEmpty() && recentClips.isEmpty()
-                                if (isScanningAlone) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .defaultMinSize(minHeight = (containerHeight - 160.dp).coerceAtLeast(320.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        DeviceDiscoveryRadar(
-                                            discoveredDevices = discoveredDevices,
-                                            pairingDeviceName = outgoingPairInvite?.deviceName,
-                                            pairingSasCode = outgoingPairInvite?.pin,
-                                            onDeviceSelect = { device -> onSendPairInvite(device, "") },
-                                            onCancelPairing = onCancelOutgoingInvite
-                                        )
-                                    }
-                                } else {
-                                    DeviceDiscoveryRadar(
-                                        discoveredDevices = discoveredDevices,
-                                        pairingDeviceName = outgoingPairInvite?.deviceName,
-                                        pairingSasCode = outgoingPairInvite?.pin,
-                                        onDeviceSelect = { device -> onSendPairInvite(device, "") },
-                                        onCancelPairing = onCancelOutgoingInvite
+                                DeviceDiscoveryRadar(
+                                    discoveredDevices = discoveredDevices,
+                                    pairingDeviceName = outgoingPairInvite?.deviceName,
+                                    pairingSasCode = outgoingPairInvite?.pin,
+                                    onDeviceSelect = { device -> onSendPairInvite(device, "") },
+                                    onCancelPairing = onCancelOutgoingInvite,
+                                    modifier = Modifier.padding(top = 16.dp)
+                                )
+                                if (recentClips.isNotEmpty()) {
+                                    SyncHistoryFeed(
+                                        recentClips = recentClips,
+                                        pinnedClipIds = pinnedClipIds,
+                                        showSyncHistory = showSyncHistory,
+                                        onCopyClip = onCopyClip,
+                                        onShareClip = onShareClip,
+                                        onClearHistory = onClearHistory,
+                                        onDeleteClip = onDeleteClip,
+                                        onSendClip = onSendClip,
+                                        onTogglePinClip = onTogglePinClip,
+                                        onToggleShowSyncHistory = onToggleShowSyncHistory,
+                                        onInspectClip = { clip -> inspectingClip = clip }
                                     )
-                                    if (recentClips.isNotEmpty()) {
-                                        SyncHistoryFeed(
-                                            recentClips = recentClips,
-                                            pinnedClipIds = pinnedClipIds,
-                                            showSyncHistory = showSyncHistory,
-                                            onCopyClip = onCopyClip,
-                                            onShareClip = onShareClip,
-                                            onClearHistory = onClearHistory,
-                                            onDeleteClip = onDeleteClip,
-                                            onSendClip = onSendClip,
-                                            onTogglePinClip = onTogglePinClip,
-                                            onToggleShowSyncHistory = onToggleShowSyncHistory,
-                                            onInspectClip = { clip -> inspectingClip = clip }
-                                        )
-                                    }
                                 }
                             }
+                        }
+                    }
+
+                    if (!showSettings && !isPaired && discoveredDevices.isEmpty() && recentClips.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(horizontal = horizontalPad, vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = "Devices appear automatically on local Wi-Fi",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Open RapiDrop on your Mac to connect",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 }
