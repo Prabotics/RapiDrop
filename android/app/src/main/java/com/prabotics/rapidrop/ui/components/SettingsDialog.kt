@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Laptop
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
@@ -59,6 +61,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -363,13 +366,13 @@ fun SettingsContent(
             },
             title = {
                 Text(
-                    text = "Unpair $pairedDeviceName?",
+                    text = "Forget $pairedDeviceName?",
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
                 )
             },
             text = {
                 Text(
-                    text = "You will need to pair again to transfer files or sync clipboard with this device.",
+                    text = "Disconnect from this device. You will need to pair again to transfer files or sync clipboard.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -385,7 +388,7 @@ fun SettingsContent(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Unpair")
+                    Text("Forget Device")
                 }
             },
             dismissButton = {
@@ -405,6 +408,24 @@ fun SettingsContent(
     ) {
         val cardBorder = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+
+        if (pairedDeviceName != null && onUnpairDevice != null) {
+            SettingsGroupHeader(title = "Paired Device")
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = cardBorder
+            ) {
+                SettingsDeviceRow(
+                    icon = Icons.Rounded.Laptop,
+                    title = pairedDeviceName,
+                    subtitle = "Connected on Wi-Fi",
+                    onForget = { showUnpairDialog = true },
+                    shape = RoundedCornerShape(20.dp)
+                )
+            }
+        }
 
         SettingsGroupHeader(title = "Sync & Transfer")
         Surface(
@@ -449,18 +470,8 @@ fun SettingsContent(
                             preferencesManager.setNotificationMirroringEnabled(false)
                         }
                     },
-                    shape = if (pairedDeviceName == null) RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp) else RectangleShape
+                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
                 )
-                if (pairedDeviceName != null && onUnpairDevice != null) {
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp, end = 16.dp), color = dividerColor)
-                    SettingsNavigationRow(
-                        icon = Icons.Rounded.LinkOff,
-                        title = "Unpair $pairedDeviceName",
-                        subtitle = "Forget device pairing credentials",
-                        onClick = { showUnpairDialog = true },
-                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                    )
-                }
             }
         }
 
@@ -727,6 +738,83 @@ private fun SettingsGroupHeader(title: String) {
         modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
     )
 }
+@Composable
+private fun SettingsDeviceRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onForget: () -> Unit,
+    shape: Shape = RectangleShape
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        FilledTonalButton(
+            onClick = {
+                HapticManager.performClick(context)
+                onForget()
+            },
+            shape = CircleShape,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.error
+            ),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+            modifier = Modifier.height(34.dp)
+        ) {
+            Text(
+                text = "Forget",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+            )
+        }
+    }
+}
 
 @Composable
 private fun SettingsNavigationRow(
@@ -734,7 +822,10 @@ private fun SettingsNavigationRow(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    shape: Shape = RectangleShape
+    shape: Shape = RectangleShape,
+    showChevron: Boolean = true,
+    titleColor: Color = Color.Unspecified,
+    iconTint: Color = Color.Unspecified
 ) {
     val context = LocalContext.current
     Row(
@@ -757,7 +848,7 @@ private fun SettingsNavigationRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (iconTint != Color.Unspecified) iconTint else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
             Column(
@@ -767,7 +858,7 @@ private fun SettingsNavigationRow(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (titleColor != Color.Unspecified) titleColor else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -780,12 +871,14 @@ private fun SettingsNavigationRow(
                 )
             }
         }
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.size(20.dp)
-        )
+        if (showChevron) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 

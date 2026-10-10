@@ -542,7 +542,8 @@ fun MainScreen(
                                 .navigationBarsPadding()
                                 .padding(bottom = 16.dp),
                             shape = CircleShape,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
                             shadowElevation = 4.dp
                         ) {
                             BoxWithConstraints(
@@ -564,7 +565,7 @@ fun MainScreen(
                                         .width(tabWidth)
                                         .fillMaxHeight()
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f))
+                                        .background(MaterialTheme.colorScheme.surface)
                                 )
 
                                 Row(
@@ -573,7 +574,7 @@ fun MainScreen(
                                 ) {
                                     val isHistory = activeCockpitTab == CockpitTab.HISTORY
                                     val historyColor by animateColorAsState(
-                                        targetValue = if (isHistory) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                        targetValue = if (isHistory) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                         animationSpec = tween(180),
                                         label = "historyColor"
                                     )
@@ -615,7 +616,7 @@ fun MainScreen(
                                             if (recentClips.isNotEmpty()) {
                                                 Surface(
                                                     shape = CircleShape,
-                                                    color = if (isHistory) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                                    color = if (isHistory) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerHigh
                                                 ) {
                                                     Text(
                                                         text = "${recentClips.size}",
@@ -623,7 +624,7 @@ fun MainScreen(
                                                             fontWeight = FontWeight.Bold,
                                                             fontSize = 11.sp
                                                         ),
-                                                        color = if (isHistory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        color = if (isHistory) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
                                                     )
                                                 }
@@ -633,7 +634,7 @@ fun MainScreen(
 
                                     val isAlerts = activeCockpitTab == CockpitTab.ALERTS
                                     val alertsColor by animateColorAsState(
-                                        targetValue = if (isAlerts) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                        targetValue = if (isAlerts) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                         animationSpec = tween(180),
                                         label = "alertsColor"
                                     )
@@ -675,7 +676,7 @@ fun MainScreen(
                                             if (recentNotices.isNotEmpty()) {
                                                 Surface(
                                                     shape = CircleShape,
-                                                    color = if (isAlerts) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                                    color = if (isAlerts) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerHigh
                                                 ) {
                                                     Text(
                                                         text = "${recentNotices.size}",
@@ -683,7 +684,7 @@ fun MainScreen(
                                                             fontWeight = FontWeight.Bold,
                                                             fontSize = 11.sp
                                                         ),
-                                                        color = if (isAlerts) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        color = if (isAlerts) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
                                                     )
                                                 }
