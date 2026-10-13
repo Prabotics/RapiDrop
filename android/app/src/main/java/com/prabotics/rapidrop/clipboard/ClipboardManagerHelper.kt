@@ -35,9 +35,14 @@ object ClipboardManagerHelper {
             val extras = description.extras
             if (extras != null && (
                     extras.getBoolean("android.content.extra.IS_SENSITIVE", false) ||
-                        extras.getInt("android.content.extra.IS_SENSITIVE", 0) == 1
+                        extras.getInt("android.content.extra.IS_SENSITIVE", 0) == 1 ||
+                        extras.getBoolean("com.android.browser.sensitive_data", false) ||
+                        extras.getBoolean("is_sensitive", false)
                     )
             ) {
+                return null
+            }
+            if (description.hasMimeType("text/password")) {
                 return null
             }
         }

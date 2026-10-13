@@ -218,7 +218,8 @@ fun FileInspectorDialog(
                             try {
                                 val bytes = clip.rawData
                                 if (bytes != null) {
-                                    val tempFile = File(context.cacheDir, fileName)
+                                    val safeName = File(fileName.replace('\\', '/')).name.trim().ifBlank { "file" }
+                                    val tempFile = File(context.cacheDir, safeName)
                                     tempFile.writeBytes(bytes)
                                     val uri = FileProvider.getUriForFile(
                                         context,

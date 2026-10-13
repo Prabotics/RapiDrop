@@ -122,7 +122,7 @@ class SyncService : Service() {
     private val batteryReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (isConnected.value) {
-                serviceScope.launch {
+                serviceScope.launch(Dispatchers.IO) {
                     socketClient.sendBatteryUpdate()
                 }
             }
@@ -470,7 +470,7 @@ class SyncService : Service() {
                     if (connected) {
                         startAutoReconnect()
                         acquireWifiLock()
-                        serviceScope.launch {
+                        serviceScope.launch(Dispatchers.IO) {
                             socketClient.sendBatteryUpdate()
                         }
                         android.util.Log.d("RapiDrop", "connection.connected")
@@ -771,7 +771,9 @@ class SyncService : Service() {
     }
     fun sendNotificationEvent(payloadJson: String) {
         if (!isConnected.value) return
-        socketClient.sendNotificationEvent(payloadJson)
+        serviceScope.launch(Dispatchers.IO) {
+            socketClient.sendNotificationEvent(payloadJson)
+        }
     }
     private fun acquireWifiLock() {
         try {

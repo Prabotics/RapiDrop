@@ -210,8 +210,14 @@ fun TextInspectorDialog(
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .clickable {
                                 try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentText.trim()))
-                                    context.startActivity(intent)
+                                    val uri = Uri.parse(currentText.trim())
+                                    val scheme = uri.scheme?.lowercase()
+                                    if (scheme == "http" || scheme == "https") {
+                                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                                        context.startActivity(intent)
+                                    } else {
+                                        Toast.makeText(context, "Invalid web address", Toast.LENGTH_SHORT).show()
+                                    }
                                 } catch (_: ActivityNotFoundException) {
                                     Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
                                 } catch (_: SecurityException) {

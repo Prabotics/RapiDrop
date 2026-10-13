@@ -1939,7 +1939,7 @@ public struct MenuBarView: View {
       } else if isHovered {
         HStack(spacing: 3) {
           if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr),
-            url.scheme != nil
+            let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https"
           {
             Button(action: {
               NSWorkspace.shared.open(url)
@@ -2059,7 +2059,9 @@ public struct MenuBarView: View {
       Button("Inspect Details") {
         inspectingClip = clip
       }
-      if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr) {
+      if clip.type == .url, let urlStr = clip.textContent, let url = URL(string: urlStr),
+        let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https"
+      {
         Button("Open in Browser") {
           NSWorkspace.shared.open(url)
         }

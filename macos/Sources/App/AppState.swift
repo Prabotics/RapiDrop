@@ -1043,12 +1043,17 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
           let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
             "RapiDropIcons", isDirectory: true)
           if (try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)) != nil {
-            let iconFile = tempDir.appendingPathComponent("\(notification.packageName).png")
+            let safePkg = (notification.packageName as NSString).lastPathComponent
+              .replacingOccurrences(of: "/", with: "")
+              .replacingOccurrences(of: "\\", with: "")
+              .trimmingCharacters(in: .whitespacesAndNewlines)
+            let cleanPkg = safePkg.isEmpty ? "app" : safePkg
+            let iconFile = tempDir.appendingPathComponent("\(cleanPkg).png")
             if !FileManager.default.fileExists(atPath: iconFile.path) {
               try? data.write(to: iconFile)
             }
             if let attachment = try? UNNotificationAttachment(
-              identifier: notification.packageName, url: iconFile, options: nil)
+              identifier: cleanPkg, url: iconFile, options: nil)
             {
               content.attachments = [attachment]
             }

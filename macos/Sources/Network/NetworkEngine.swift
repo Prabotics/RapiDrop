@@ -569,6 +569,10 @@ public final class NetworkEngine: @unchecked Sendable {
       guard let self, let connection else { return }
       switch state {
       case .ready:
+        guard self.pendingIncomingConnections.count < 16 else {
+          connection.cancel()
+          return
+        }
         self.lastActivityTimestamp = Date()
         self.pendingIncomingConnections[ObjectIdentifier(connection)] = (connection, Date())
         self.receiveFrame(from: connection)
@@ -737,6 +741,11 @@ public final class NetworkEngine: @unchecked Sendable {
   }
 
   private func processFrame(_ frame: WireFrame, from connection: NWConnection) {
+    let nowMs = UInt64(Date().timeIntervalSince1970 * 1000)
+    let diff = nowMs >= frame.timestamp ? (nowMs - frame.timestamp) : (frame.timestamp - nowMs)
+    guard diff <= 60_000 else {
+      return
+    }
     if frame.type == .pairInvite {
       guard let json = try? JSONSerialization.jsonObject(with: frame.ciphertext) as? [String: Any],
         let remotePubHex = json["publicKey"] as? String,
@@ -898,12 +907,6 @@ public final class NetworkEngine: @unchecked Sendable {
         self.sessionKey = keys.sessionKey
         delegate?.networkEngine(self, didReceivePairAcceptFrom: fromName, sasCode: keys.sasCode, host: host, port: port)
       }
-      return
-    }
-
-    if frame.type == .disconnect {
-      delegate?.networkEngineDidReceiveDisconnect(self)
-      connection.cancel()
       return
     }
 
@@ -1249,6 +1252,10 @@ public final class NetworkEngine: @unchecked Sendable {
         delegate?.networkEngine(self, didReceiveNotification: notif)
       }
       clipItem = nil
+    case .disconnect:
+      delegate?.networkEngineDidReceiveDisconnect(self)
+      connection.cancel()
+      return
     default:
       clipItem = nil
     }
@@ -1961,12 +1968,24 @@ public final class NetworkEngine: @unchecked Sendable {
       guard let self else { return }
       self.pendingPairingConnection?.cancel()
       self.pendingPairingConnection = nil
-      let frame = WireFrame(
-        type: .disconnect,
-        nonce: Data(repeating: 0, count: 12),
-        ciphertext: Data("UNPAIR".utf8),
-        tag: Data(repeating: 0, count: 16)
-      )
+      let frame: WireFrame
+      if let key = self.sessionKey,
+        let encrypted = try? CryptoEngine.encrypt(payload: Data("UNPAIR".utf8), using: key)
+      {
+        frame = WireFrame(
+          type: .disconnect,
+          nonce: encrypted.nonce,
+          ciphertext: encrypted.ciphertext,
+          tag: encrypted.tag
+        )
+      } else {
+        frame = WireFrame(
+          type: .disconnect,
+          nonce: Data(repeating: 0, count: 12),
+          ciphertext: Data("UNPAIR".utf8),
+          tag: Data(repeating: 0, count: 16)
+        )
+      }
       let serialized = frame.serialize()
       for connection in self.activeConnections {
         connection.send(

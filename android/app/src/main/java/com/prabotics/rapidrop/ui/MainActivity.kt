@@ -395,7 +395,9 @@ class MainActivity : ComponentActivity() {
                     val bytes = item.rawData
                     if (bytes != null && bytes.isNotEmpty()) {
                         val ext = if (item.type == ClipContentType.IMAGE) "png" else "bin"
-                        val tempFile = File(cacheDir, item.fileName ?: "shared_clip_${System.currentTimeMillis()}.$ext")
+                        val rawName = item.fileName?.let { File(it.replace('\\', '/')).name.trim() }?.takeIf { it.isNotBlank() }
+                        val safeName = rawName ?: "shared_clip_${System.currentTimeMillis()}.$ext"
+                        val tempFile = File(cacheDir, safeName)
                         tempFile.writeBytes(bytes)
                         val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {

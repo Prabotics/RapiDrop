@@ -289,12 +289,23 @@ class SocketClient(
     suspend fun sendDisconnect() = withContext(Dispatchers.IO) {
         try {
             val out = outputStream ?: return@withContext
-            val frame = WireFrame(
-                type = PacketType.DISCONNECT,
-                nonce = ByteArray(WireFrame.NONCE_SIZE),
-                ciphertext = "UNPAIR".toByteArray(Charsets.UTF_8),
-                tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
-            )
+            val key = sessionKey
+            val frame = if (key != null) {
+                val enc = CryptoEngine.encrypt("UNPAIR".toByteArray(Charsets.UTF_8), key)
+                WireFrame(
+                    type = PacketType.DISCONNECT,
+                    nonce = enc.nonce,
+                    ciphertext = enc.ciphertext,
+                    tag = enc.tag,
+                )
+            } else {
+                WireFrame(
+                    type = PacketType.DISCONNECT,
+                    nonce = ByteArray(WireFrame.NONCE_SIZE),
+                    ciphertext = "UNPAIR".toByteArray(Charsets.UTF_8),
+                    tag = ByteArray(WireFrame.AUTH_TAG_SIZE),
+                )
+            }
             synchronized(out) {
                 out.write(frame.serialize())
                 out.flush()
@@ -411,9 +422,9 @@ class SocketClient(
         } catch (_: SecurityException) {}
     }
 
-    fun sendDeviceInfo() {
-        val out = outputStream ?: return
-        val key = sessionKey ?: return
+    suspend fun sendDeviceInfo() = withContext(Dispatchers.IO) {
+        val out = outputStream ?: return@withContext
+        val key = sessionKey ?: return@withContext
         try {
             val deviceName = getFriendlyDeviceName()
             val json = JSONObject()
@@ -436,10 +447,10 @@ class SocketClient(
         } catch (_: IOException) {
         } catch (_: SecurityException) {}
     }
-    fun sendBatteryUpdate() {
-        val out = outputStream ?: return
-        val key = sessionKey ?: return
-        val localBattery = DeviceBatteryStatus.current(context) ?: return
+    suspend fun sendBatteryUpdate() = withContext(Dispatchers.IO) {
+        val out = outputStream ?: return@withContext
+        val key = sessionKey ?: return@withContext
+        val localBattery = DeviceBatteryStatus.current(context) ?: return@withContext
         val payload = org.json.JSONObject().apply {
             put("type", "ping")
             put("battery", localBattery.level)
@@ -455,10 +466,10 @@ class SocketClient(
         } catch (_: IOException) {
         } catch (_: SecurityException) {}
     }
-    fun sendNotificationEvent(payloadJson: String): Boolean {
-        val out = outputStream ?: return false
-        val key = sessionKey ?: return false
-        return try {
+    suspend fun sendNotificationEvent(payloadJson: String): Boolean = withContext(Dispatchers.IO) {
+        val out = outputStream ?: return@withContext false
+        val key = sessionKey ?: return@withContext false
+        return@withContext try {
             val bytes = payloadJson.toByteArray(Charsets.UTF_8)
             val encrypted = CryptoEngine.encrypt(bytes, key)
             val frame = WireFrame(
@@ -509,6 +520,8 @@ class SocketClient(
     }
 
     private suspend fun processIncomingFrame(frame: WireFrame) {
+        val now = System.currentTimeMillis()
+        if (Math.abs(now - frame.timestamp) > 60000L) return
         if (frame.type == PacketType.PING) {
             val out = outputStream ?: return
             val key = sessionKey ?: return
@@ -586,11 +599,6 @@ class SocketClient(
             }
             return
         }
-        if (frame.type == PacketType.DISCONNECT) {
-            onRemoteUnpaired?.invoke()
-            disconnect()
-            return
-        }
         if (frame.type == PacketType.PAIR_FAIL) {
             val raw = String(frame.ciphertext, Charsets.UTF_8)
             val reason = try {
@@ -632,6 +640,11 @@ class SocketClient(
             return
         }
         when (frame.type) {
+            PacketType.DISCONNECT -> {
+                onRemoteUnpaired?.invoke()
+                disconnect()
+                return
+            }
             PacketType.PAIR_CONFIRM -> {
                 Log.d("RapiDrop", "pairing.confirm_received state=connected")
                 if (isConnectedState.compareAndSet(false, true)) {
