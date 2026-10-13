@@ -46,7 +46,11 @@ class ClientSocketServer(
                 }
                 serverSocket = server
                 while (isActive && !server.isClosed) {
-                    val client = server.accept()
+                    val client = server.accept().apply {
+                        tcpNoDelay = true
+                        sendBufferSize = 4 * 1024 * 1024
+                        receiveBufferSize = 4 * 1024 * 1024
+                    }
                     serverScope.launch {
                         if (clientSemaphore.tryAcquire()) {
                             try {

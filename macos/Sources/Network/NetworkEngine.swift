@@ -329,6 +329,7 @@ public final class NetworkEngine: @unchecked Sendable {
     tcpOptions.noDelay = true
     tcpOptions.enableKeepalive = true
     let params = NWParameters(tls: nil, tcp: tcpOptions)
+    params.serviceClass = .responsiveData
     return params
   }
   private func setupListener() {
@@ -1102,6 +1103,9 @@ public final class NetworkEngine: @unchecked Sendable {
         let partURL = destURL.appendingPathExtension("rapidrop_part")
         FileManager.default.createFile(atPath: partURL.path, contents: nil)
         if let handle = try? FileHandle(forWritingTo: partURL) {
+          if fileSize > 0 {
+            try? handle.truncate(atOffset: UInt64(fileSize))
+          }
           self.activeIncomingTransfer = IncomingStreamTransfer(
             transferId: transferId,
             fileIndex: fileIndex,
@@ -1167,7 +1171,7 @@ public final class NetworkEngine: @unchecked Sendable {
         ioQueue.async {
           try? handle.write(contentsOf: chunkPayload)
         }
-        transfer.hasher.update(data: chunkPayload)
+        transfer.hasher.update(data: decryptedData[28...])
         transfer.bytesReceived += Int64(chunkPayload.count)
         transfer.nextChunkIndex += 1
         self.activeIncomingTransfer = transfer
@@ -1486,7 +1490,15 @@ public final class NetworkEngine: @unchecked Sendable {
     var chunkIndex: UInt64 = 0
     var bytesSentForFile: Int64 = 0
     let chunkSize = WireFrame.streamingChunkSize
-    let window = SendWindow(maxInFlight: 4)
+    let window = SendWindow(maxInFlight: 8)
+    var idData = Data(transferId.utf8)
+    if idData.count < 16 {
+      idData.append(Data(repeating: 0, count: 16 - idData.count))
+    } else {
+      idData = idData.prefix(16)
+    }
+    var fileIndexBig = UInt32(fileIndex).bigEndian
+    let fileIndexData = Data(bytes: &fileIndexBig, count: 4)
 
     while true {
       if Task.isCancelled {
@@ -1496,24 +1508,12 @@ public final class NetworkEngine: @unchecked Sendable {
       if rawChunk.isEmpty { break }
       hasher.update(data: rawChunk)
 
-      var chunkHeader = Data(capacity: 28)
-      var idData = Data(transferId.utf8)
-      if idData.count < 16 {
-        idData.append(Data(repeating: 0, count: 16 - idData.count))
-      } else {
-        idData = idData.prefix(16)
-      }
-      chunkHeader.append(idData)
-
-      var fileIndexBig = UInt32(fileIndex).bigEndian
-      chunkHeader.append(Data(bytes: &fileIndexBig, count: 4))
-
       var chunkIndexBig = chunkIndex.bigEndian
-      chunkHeader.append(Data(bytes: &chunkIndexBig, count: 8))
-
-      var chunkPayload = chunkHeader
+      var chunkPayload = Data(capacity: 28 + rawChunk.count)
+      chunkPayload.append(idData)
+      chunkPayload.append(fileIndexData)
+      chunkPayload.append(Data(bytes: &chunkIndexBig, count: 8))
       chunkPayload.append(rawChunk)
-
       let chunkEnc = try CryptoEngine.encrypt(payload: chunkPayload, using: key)
       let chunkFrame = WireFrame(
         type: .fileChunk,

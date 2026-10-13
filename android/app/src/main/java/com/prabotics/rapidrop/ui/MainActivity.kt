@@ -303,14 +303,16 @@ class MainActivity : ComponentActivity() {
 
     private fun syncForegroundClipboard() {
         if (!SyncService.isConnected.value) return
-        val clip = ClipboardManagerHelper.readPrimaryClip(this) ?: return
-        if (clip.textContent.isNullOrBlank() && clip.rawData == null) return
-        val currentHash = clip.textContent?.hashCode() ?: (clip.rawData?.let { java.util.Arrays.hashCode(it) } ?: 0)
-        if (currentHash == SyncService.lastReceivedClipHash || currentHash == lastSentClipHash) {
-            return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val clip = ClipboardManagerHelper.readPrimaryClip(this@MainActivity) ?: return@launch
+            if (clip.textContent.isNullOrBlank() && clip.rawData == null) return@launch
+            val currentHash = clip.textContent?.hashCode() ?: (clip.rawData?.let { java.util.Arrays.hashCode(it) } ?: 0)
+            if (currentHash == SyncService.lastReceivedClipHash || currentHash == lastSentClipHash) {
+                return@launch
+            }
+            lastSentClipHash = currentHash
+            SyncService.sendClip(this@MainActivity, clip)
         }
-        lastSentClipHash = currentHash
-        SyncService.sendClip(this, clip)
     }
 
     private fun refreshPermissionStates() {

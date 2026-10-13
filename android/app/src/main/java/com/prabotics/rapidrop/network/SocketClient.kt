@@ -11,6 +11,7 @@ import com.prabotics.rapidrop.security.HandshakeKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -51,6 +52,11 @@ class SocketClient(
     private val connectionGeneration = java.util.concurrent.atomic.AtomicLong(0)
     private var heartbeatJob: Job? = null
     private val seenNonces = android.util.LruCache<String, Long>(512)
+    private data class StreamChunk(
+        val buffer: ByteArray,
+        val offset: Int,
+        val length: Int,
+    )
     private data class IncomingStreamTransfer(
         val transferId: String,
         val fileIndex: Int,
@@ -64,7 +70,7 @@ class SocketClient(
         val outputStream: java.io.OutputStream,
         val targetUri: android.net.Uri?,
         val digest: java.security.MessageDigest = java.security.MessageDigest.getInstance("SHA-256"),
-        val writeChannel: Channel<ByteArray> = Channel(capacity = 8),
+        val writeChannel: Channel<StreamChunk> = Channel(capacity = 8),
         val writerJob: Job? = null,
     )
     private var activeIncomingTransfer: IncomingStreamTransfer? = null
@@ -737,11 +743,11 @@ class SocketClient(
                     val (rawStream, uri) = com.prabotics.rapidrop.clipboard.MediaStorageHelper.openOutputStreamForDownload(ctx, fName, relPath)
                     val stream = rawStream?.let { java.io.BufferedOutputStream(it, WireFrame.STREAMING_CHUNK_SIZE) }
                     if (stream != null) {
-                        val channel = Channel<ByteArray>(capacity = 8)
-                        val writer = CoroutineScope(Dispatchers.IO).launch {
+                        val channel = Channel<StreamChunk>(capacity = 8)
+                        val writer = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
                             try {
                                 for (chunk in channel) {
-                                    stream.write(chunk)
+                                    stream.write(chunk.buffer, chunk.offset, chunk.length)
                                 }
                                 stream.flush()
                             } catch (_: IOException) {}
@@ -800,12 +806,11 @@ class SocketClient(
                             onTransferCancelled?.invoke(tid, "Oversized chunk received")
                             return
                         }
-                        val payload = decrypted.copyOfRange(28, 28 + chunkPayloadLength)
-                        transfer.digest.update(payload)
+                        transfer.digest.update(decrypted, 28, chunkPayloadLength)
                         transfer.bytesReceived += chunkPayloadLength
                         transfer.nextChunkIndex += 1L
                         try {
-                            transfer.writeChannel.send(payload)
+                            transfer.writeChannel.send(StreamChunk(decrypted, 28, chunkPayloadLength))
                         } catch (_: kotlinx.coroutines.channels.ClosedSendChannelException) {
                             return
                         }

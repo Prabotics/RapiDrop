@@ -117,22 +117,21 @@ public final class PasteboardMonitor: @unchecked Sendable {
       if let urls = self.pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL],
         let firstURL = urls.first, firstURL.isFileURL
       {
-        var isDir: ObjCBool = false
-        if FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue {
-          if let attributes = try? FileManager.default.attributesOfItem(atPath: firstURL.path),
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+          var isDir: ObjCBool = false
+          guard FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue else { return }
+          guard let attributes = try? FileManager.default.attributesOfItem(atPath: firstURL.path),
             let fileSize = attributes[.size] as? Int,
             fileSize > 0, fileSize <= WireFrame.maxPayloadSize
-          {
-            let ext = firstURL.pathExtension.lowercased()
-            let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "heic", "tiff", "bmp"]
-            let fileName = firstURL.lastPathComponent
-            let isImage = imageExtensions.contains(ext)
-
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-              guard let data = try? Data(contentsOf: firstURL) else { return }
-              let clip = ClipItem(type: isImage ? .image : .file, fileName: fileName, rawData: data)
-              self?.dispatchCapturedItem(clip)
-            }
+          else { return }
+          let ext = firstURL.pathExtension.lowercased()
+          let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "heic", "tiff", "bmp"]
+          let fileName = firstURL.lastPathComponent
+          let isImage = imageExtensions.contains(ext)
+          guard let data = try? Data(contentsOf: firstURL) else { return }
+          let clip = ClipItem(type: isImage ? .image : .file, fileName: fileName, rawData: data)
+          DispatchQueue.main.async {
+            self?.dispatchCapturedItem(clip)
           }
         }
       }
