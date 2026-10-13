@@ -1,16 +1,14 @@
-<p align="center">
+<div align="center">
   <img src="assets/brand/logo.svg" alt="RapiDrop" width="96" height="96" />
-</p>
-
-# RapiDrop
-
-Copy on Mac, paste on Android. Share files over local Wi-Fi without cloud servers.
-
-[![CI](https://img.shields.io/github/actions/workflow/status/Prabotics/RapiDrop/ci.yml?branch=main&label=CI&logo=github&style=flat)](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Prabotics/RapiDrop?include_prereleases&label=Release&color=2ea44f&style=flat)](https://github.com/Prabotics/RapiDrop/releases/latest)
-[![License](https://img.shields.io/badge/License-MIT-0969da?style=flat)](LICENSE)
-[![Platforms](https://img.shields.io/badge/Platforms-macOS%20%7C%20Android-57606a?style=flat)](#downloads)
-
+  <h1>RapiDrop</h1>
+  <p>Copy on Mac, paste on Android. Share files over local Wi-Fi without cloud servers.</p>
+  <p>
+    <a href="https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Prabotics/RapiDrop/ci.yml?branch=main&label=CI&logo=github&style=flat" alt="CI" /></a>
+    <a href="https://github.com/Prabotics/RapiDrop/releases/latest"><img src="https://img.shields.io/github/v/release/Prabotics/RapiDrop?include_prereleases&label=Release&color=2ea44f&style=flat" alt="Release" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-0969da?style=flat" alt="License" /></a>
+    <a href="#downloads"><img src="https://img.shields.io/badge/Platforms-macOS%20%7C%20Android-57606a?style=flat" alt="Platforms" /></a>
+  </p>
+</div>
 RapiDrop links your devices directly across your local network. Your data stays on your personal devices: zero cloud servers, zero accounts, zero analytics, and zero external relays.
 
 ## What It Does
