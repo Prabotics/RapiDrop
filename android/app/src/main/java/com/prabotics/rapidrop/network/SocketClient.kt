@@ -50,6 +50,7 @@ class SocketClient(
     private val isConnectedState = java.util.concurrent.atomic.AtomicBoolean(false)
     private val connectionGeneration = java.util.concurrent.atomic.AtomicLong(0)
     private var heartbeatJob: Job? = null
+    private val seenNonces = android.util.LruCache<String, Long>(512)
     private data class IncomingStreamTransfer(
         val transferId: String,
         val fileIndex: Int,
@@ -522,6 +523,11 @@ class SocketClient(
     private suspend fun processIncomingFrame(frame: WireFrame) {
         val now = System.currentTimeMillis()
         if (Math.abs(now - frame.timestamp) > 60000L) return
+        val nonceHex = CryptoEngine.bytesToHex(frame.nonce)
+        if (nonceHex.isNotEmpty()) {
+            if (seenNonces.get(nonceHex) != null) return
+            seenNonces.put(nonceHex, now)
+        }
         if (frame.type == PacketType.PING) {
             val out = outputStream ?: return
             val key = sessionKey ?: return

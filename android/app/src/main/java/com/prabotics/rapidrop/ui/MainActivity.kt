@@ -32,7 +32,6 @@ import androidx.lifecycle.lifecycleScope
 import com.prabotics.rapidrop.clipboard.ClipContentType
 import com.prabotics.rapidrop.clipboard.ClipItem
 import com.prabotics.rapidrop.clipboard.ClipboardManagerHelper
-import com.prabotics.rapidrop.network.PairInviteInfo
 import com.prabotics.rapidrop.preference.PreferencesManager
 import com.prabotics.rapidrop.service.NotificationSyncService
 import com.prabotics.rapidrop.service.SyncService
@@ -104,14 +103,10 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         refreshPermissionStates()
-        val initDevice = intent?.getStringExtra("EXTRA_PAIR_DEVICE")
-        val initPin = intent?.getStringExtra("EXTRA_PAIR_PIN")
-        if (initDevice != null) {
-            if (!SyncService.isConnected.value && SyncService.pairingPin.value == null) {
-                SyncService.incomingPairInvite.value = PairInviteInfo(initDevice, initPin)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
-            intent?.removeExtra("EXTRA_PAIR_DEVICE")
-            intent?.removeExtra("EXTRA_PAIR_PIN")
         }
 
         handleIntentActions(intent)
@@ -282,15 +277,6 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntentActions(intent)
-        val device = intent.getStringExtra("EXTRA_PAIR_DEVICE")
-        val pin = intent.getStringExtra("EXTRA_PAIR_PIN")
-        if (device != null) {
-            if (!SyncService.isConnected.value && SyncService.pairingPin.value == null) {
-                SyncService.incomingPairInvite.value = PairInviteInfo(device, pin)
-            }
-            intent.removeExtra("EXTRA_PAIR_DEVICE")
-            intent.removeExtra("EXTRA_PAIR_PIN")
-        }
     }
 
     override fun onResume() {
@@ -348,16 +334,23 @@ class MainActivity : ComponentActivity() {
             val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
             if (powerManager != null && !powerManager.isIgnoringBatteryOptimizations(packageName)) {
                 try {
-                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
                     startActivity(intent)
-                } catch (_: android.content.ActivityNotFoundException) {
+                } catch (_: Exception) {
                     try {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.parse("package:$packageName")
-                        }
+                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                         startActivity(intent)
-                    } catch (_: android.content.ActivityNotFoundException) {}
-                } catch (_: SecurityException) {}
+                    } catch (_: android.content.ActivityNotFoundException) {
+                        try {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.parse("package:$packageName")
+                            }
+                            startActivity(intent)
+                        } catch (_: android.content.ActivityNotFoundException) {}
+                    } catch (_: SecurityException) {}
+                }
             }
         }
     }

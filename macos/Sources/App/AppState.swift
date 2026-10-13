@@ -226,6 +226,14 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
 
   public let monitor: PasteboardMonitor
   public let network: NetworkEngine
+  private var workspaceObservers: [NSObjectProtocol] = []
+
+  isolated deinit {
+    let center = NSWorkspace.shared.notificationCenter
+    for observer in workspaceObservers {
+      center.removeObserver(observer)
+    }
+  }
 
   public init() {
     let savedModeStr =
@@ -293,43 +301,50 @@ public final class AppState: ObservableObject, NetworkEngineDelegate {
     self.monitor.setConnected(self.isConnected)
     self.network.start()
     let center = NSWorkspace.shared.notificationCenter
-    center.addObserver(
-      forName: NSWorkspace.willSleepNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      Task { @MainActor in
-        self?.handleSystemWillSleep()
+    workspaceObservers.append(
+      center.addObserver(
+        forName: NSWorkspace.willSleepNotification,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.handleSystemWillSleep()
+        }
       }
-    }
-    center.addObserver(
-      forName: NSWorkspace.didWakeNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      Task { @MainActor in
-        self?.handleSystemDidWake()
+    )
+    workspaceObservers.append(
+      center.addObserver(
+        forName: NSWorkspace.didWakeNotification,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.handleSystemDidWake()
+        }
       }
-    }
-    center.addObserver(
-      forName: NSWorkspace.screensDidSleepNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      Task { @MainActor in
-        self?.handleSystemWillSleep()
+    )
+    workspaceObservers.append(
+      center.addObserver(
+        forName: NSWorkspace.screensDidSleepNotification,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.handleSystemWillSleep()
+        }
       }
-    }
-    center.addObserver(
-      forName: NSWorkspace.screensDidWakeNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      Task { @MainActor in
-        self?.handleSystemDidWake()
+    )
+    workspaceObservers.append(
+      center.addObserver(
+        forName: NSWorkspace.screensDidWakeNotification,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.handleSystemDidWake()
+        }
       }
-    }
-
+    )
   }
 
   public func refreshDiscovery() {

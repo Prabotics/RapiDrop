@@ -32,6 +32,7 @@ class ClientSocketServer(
     private var serverSocket: ServerSocket? = null
     private var serverJob: Job? = null
     private val clientSemaphore = Semaphore(8)
+    private val seenNonces = android.util.LruCache<String, Long>(512)
 
     fun start() {
         stop()
@@ -94,6 +95,11 @@ class ClientSocketServer(
                         val frame = WireFrame.deserialize(fullFrameBytes) ?: return@withContext
                         val now = System.currentTimeMillis()
                         if (Math.abs(now - frame.timestamp) > 60000L) return@withContext
+                        val nonceHex = CryptoEngine.bytesToHex(frame.nonce)
+                        if (nonceHex.isNotEmpty()) {
+                            if (seenNonces.get(nonceHex) != null) return@withContext
+                            seenNonces.put(nonceHex, now)
+                        }
                         when (frame.type) {
                             PacketType.PAIR_INVITE -> {
                                 val jsonStr = String(frame.ciphertext, Charsets.UTF_8)

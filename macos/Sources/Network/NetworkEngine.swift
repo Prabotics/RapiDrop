@@ -156,6 +156,7 @@ public final class NetworkEngine: @unchecked Sendable {
   private var isConnectionNotified = false
   private var isSessionEstablished = false
   private var pendingIncomingConnections: [ObjectIdentifier: (connection: NWConnection, timestamp: Date)] = [:]
+  private var seenNonces: [Data: UInt64] = [:]
   public var onDiscoveredDevicesChanged: (@Sendable ([DiscoveredClientDevice]) -> Void)?
   public weak var delegate: NetworkEngineDelegate?
   public var downloadFolderURL: URL =
@@ -211,6 +212,17 @@ public final class NetworkEngine: @unchecked Sendable {
   deinit {
     self.watchdogTimer?.cancel()
     self.watchdogTimer = nil
+    if let transfer = self.activeIncomingTransfer {
+      try? transfer.fileHandle.close()
+      try? FileManager.default.removeItem(at: transfer.partURL)
+      self.activeIncomingTransfer = nil
+    }
+    self.pendingPairingConnection?.cancel()
+    self.pendingPairingConnection = nil
+    for connection in self.pendingHandshakeConnections {
+      connection.cancel()
+    }
+    self.pendingHandshakeConnections.removeAll()
     for connection in self.activeConnections {
       connection.cancel()
     }
@@ -745,6 +757,16 @@ public final class NetworkEngine: @unchecked Sendable {
     let diff = nowMs >= frame.timestamp ? (nowMs - frame.timestamp) : (frame.timestamp - nowMs)
     guard diff <= 60_000 else {
       return
+    }
+    if !frame.nonce.isEmpty {
+      if seenNonces[frame.nonce] != nil {
+        return
+      }
+      seenNonces[frame.nonce] = nowMs
+      if seenNonces.count > 512 {
+        let cutoff = nowMs > 60_000 ? nowMs - 60_000 : 0
+        seenNonces = seenNonces.filter { $0.value >= cutoff }
+      }
     }
     if frame.type == .pairInvite {
       guard let json = try? JSONSerialization.jsonObject(with: frame.ciphertext) as? [String: Any],

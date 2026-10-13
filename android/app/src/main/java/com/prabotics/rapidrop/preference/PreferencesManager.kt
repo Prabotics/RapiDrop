@@ -221,13 +221,13 @@ private object KeystoreHelper {
         }
     }
 
-    fun decrypt(stored: String): String {
+    fun decrypt(stored: String): String? {
         if (!stored.startsWith(PREFIX)) return stored
-        val key = getOrCreateKey() ?: return stored.removePrefix(PREFIX)
+        val key = getOrCreateKey() ?: return null
         return try {
             val hex = stored.removePrefix(PREFIX)
-            val combined = CryptoEngine.hexToBytes(hex) ?: return stored
-            if (combined.size < 12) return stored
+            val combined = CryptoEngine.hexToBytes(hex) ?: return null
+            if (combined.size < 12) return null
             val iv = ByteArray(12)
             val cipherBytes = ByteArray(combined.size - 12)
             System.arraycopy(combined, 0, iv, 0, 12)
@@ -237,11 +237,11 @@ private object KeystoreHelper {
             val plainBytes = cipher.doFinal(cipherBytes)
             String(plainBytes, Charsets.UTF_8)
         } catch (_: java.security.GeneralSecurityException) {
-            stored.removePrefix(PREFIX)
+            null
         } catch (_: java.io.IOException) {
-            stored.removePrefix(PREFIX)
+            null
         } catch (_: IllegalArgumentException) {
-            stored.removePrefix(PREFIX)
+            null
         }
     }
 }

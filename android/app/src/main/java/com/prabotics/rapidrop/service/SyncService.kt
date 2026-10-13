@@ -130,11 +130,12 @@ class SyncService : Service() {
     }
 
     companion object {
-        const val FOREGROUND_CHANNEL_ID = "rapidrop_status_channel"
+        const val FOREGROUND_CHANNEL_ID = "rapidrop_status_channel_v2"
         const val PAIRING_CHANNEL_ID = "rapidrop_pairing_channel"
         const val FOREGROUND_NOTIFICATION_ID = 1001
         const val PAIRING_NOTIFICATION_ID = 1002
         const val ACTION_STOP_SERVICE = "com.prabotics.rapidrop.ACTION_STOP_SERVICE"
+        const val ACTION_DISCONNECT = "com.prabotics.rapidrop.ACTION_DISCONNECT"
         val isConnected = MutableStateFlow(false)
         val isConnecting = MutableStateFlow(false)
         val connectedPeerName = MutableStateFlow<String?>(null)
@@ -950,17 +951,26 @@ class SyncService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP_SERVICE) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-            } else {
-                @Suppress("DEPRECATION")
-                stopForeground(true)
+        when (intent?.action) {
+            ACTION_STOP_SERVICE -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(true)
+                }
+                stopSelf()
+                return START_NOT_STICKY
             }
-            stopSelf()
-            return START_NOT_STICKY
+            ACTION_DISCONNECT -> {
+                unpair()
+                return START_STICKY
+            }
         }
         startInForeground()
+        if (!isConnected.value && pairingPin.value != null) {
+            startAutoReconnect()
+        }
         return START_STICKY
     }
 
@@ -983,10 +993,14 @@ class SyncService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
 
+            try {
+                manager.deleteNotificationChannel("rapidrop_status_channel")
+            } catch (_: Exception) {}
+
             val foregroundChannel = NotificationChannel(
                 FOREGROUND_CHANNEL_ID,
                 "RapiDrop Background Service",
-                NotificationManager.IMPORTANCE_LOW,
+                NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 description = "Shows persistent connection state with paired device"
                 setSound(null, null)
@@ -1013,8 +1027,6 @@ class SyncService : Service() {
         val manager = getSystemService(NotificationManager::class.java) ?: return
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("EXTRA_PAIR_DEVICE", fromDevice)
-            putExtra("EXTRA_PAIR_PIN", pin)
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -1079,19 +1091,11 @@ class SyncService : Service() {
             PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val exitIntent = Intent(this, SyncService::class.java).apply {
-            action = ACTION_STOP_SERVICE
-        }
-        val exitPendingIntent = PendingIntent.getService(
-            this,
-            2,
-            exitIntent,
-            PendingIntent.FLAG_IMMUTABLE,
-        )
         val statusText = if (isConnected.value) {
-            "Connected to ${connectedPeerName.value ?: "device"}"
+            val peer = connectedPeerName.value
+            if (!peer.isNullOrBlank()) "Connected to $peer" else "Connected"
         } else {
-            "Not connected to any device"
+            "Ready to connect"
         }
 
         val builder = NotificationCompat.Builder(this, FOREGROUND_CHANNEL_ID)
@@ -1101,12 +1105,14 @@ class SyncService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
         if (isConnected.value) {
-            builder.addAction(R.drawable.ic_notification, "Push Clipboard", sendPendingIntent)
+            builder.addAction(R.drawable.ic_notification, "Send Clipboard", sendPendingIntent)
         }
-        builder.addAction(R.drawable.ic_notification, "Exit", exitPendingIntent)
 
         return builder.build()
     }
