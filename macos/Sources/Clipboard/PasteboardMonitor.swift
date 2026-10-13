@@ -119,7 +119,9 @@ public final class PasteboardMonitor: @unchecked Sendable {
       {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
           var isDir: ObjCBool = false
-          guard FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue else { return }
+          guard FileManager.default.fileExists(atPath: firstURL.path, isDirectory: &isDir), !isDir.boolValue else {
+            return
+          }
           guard let attributes = try? FileManager.default.attributesOfItem(atPath: firstURL.path),
             let fileSize = attributes[.size] as? Int,
             fileSize > 0, fileSize <= WireFrame.maxPayloadSize
