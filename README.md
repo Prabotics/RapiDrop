@@ -1,96 +1,61 @@
+<p align="center">
+  <img src="assets/brand/logo.svg" alt="RapiDrop" width="96" height="96" />
+</p>
+
 # RapiDrop
 
-[![CI](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml/badge.svg)](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Prabotics/RapiDrop?include_prereleases&label=release&color=emerald)](https://github.com/Prabotics/RapiDrop/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Android-lightgrey.svg)](#supported-platforms)
+Copy on Mac, paste on Android. Share files over local Wi-Fi without cloud servers.
 
-> Fast, private, peer-to-peer clipboard synchronization and local file sharing between macOS and Android.
+[![CI](https://img.shields.io/github/actions/workflow/status/Prabotics/RapiDrop/ci.yml?branch=main&label=CI&logo=github&style=flat)](https://github.com/Prabotics/RapiDrop/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Prabotics/RapiDrop?include_prereleases&label=Release&color=2ea44f&style=flat)](https://github.com/Prabotics/RapiDrop/releases/latest)
+[![License](https://img.shields.io/badge/License-MIT-0969da?style=flat)](LICENSE)
+[![Platforms](https://img.shields.io/badge/Platforms-macOS%20%7C%20Android-57606a?style=flat)](#downloads)
 
-**RapiDrop** connects your devices directly over local Wi-Fi using end-to-end encrypted TCP connections. Your data never leaves your local network: zero cloud servers, zero telemetry, zero accounts, and zero third-party relays.
+RapiDrop links your devices directly across your local network. Your data stays on your personal devices: zero cloud servers, zero accounts, zero analytics, and zero external relays.
+
+## What It Does
+
+* **Instant Clipboard Sync**: Copy text, links, or images on one device and paste them on the other in real time.
+* **Direct File Transfer**: Send large files, videos, and documents directly between devices at local network speeds.
+* **Works Offline**: Operates over your local wireless network without requiring internet access or cloud servers.
+* **End to End Encrypted**: Transfers stay private and encrypted directly between your devices.
+* **Protects Passwords**: Automatically ignores copied passwords from 1Password, Bitwarden, KeePass, and Apple Keychain.
+* **Tap to Pair**: Discover nearby devices on screen and verify a matching 6 digit PIN to establish trust.
 
 ## Downloads
 
-Download the latest pre-compiled binaries from [GitHub Releases](https://github.com/Prabotics/RapiDrop/releases/latest):
+| Platform | Download |
+| :--- | :--- |
+| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) |
+| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) |
 
-| Platform | Download | Requirements |
-| :--- | :--- | :--- |
-| **macOS** | [`RapiDrop-macOS.dmg`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop-macOS.dmg) | macOS 14.0+ (Universal Apple Silicon & Intel) |
-| **Android** | [`RapiDrop.apk`](https://github.com/Prabotics/RapiDrop/releases/latest/download/RapiDrop.apk) | Android 10+ (API 29-35+, ARM64 & x86_64) |
-
-> Looking for portable ZIP archives (`.zip`) or cryptographic checksums? Visit the [Latest Release Page](https://github.com/Prabotics/RapiDrop/releases/latest).
-
-### macOS
-1. Open `RapiDrop-macOS.dmg` and drag **RapiDrop** into your `/Applications` folder.
-2. Launch RapiDrop from `/Applications`. The icon will appear in your menu bar.
-
-> [!NOTE]
-> **macOS Gatekeeper**: On first launch, macOS may report that the developer cannot be verified. Right-click `RapiDrop.app` in `/Applications` and choose **Open**, or run:
-> ```bash
-> xattr -cr /Applications/RapiDrop.app
-> ```
-
-### Android
-1. Download and open `RapiDrop.apk` on your phone to install.
-2. Open the app and allow notification permission so background sync stays active.
-3. (Optional) Add the **RapiDrop** tile to your Quick Settings notification shade for instant one-tap sharing.
-
-## Key Highlights
-
-* **Instant Clipboard Sync**: Copy text, links, or screenshots on one device and paste them on another in milliseconds.
-* **Large File Streaming**: Stream multi-gigabyte files and folders at wire speed in bounded 1 MB chunks with streaming SHA-256 integrity verification.
-* **Interactive Radar Pairing**: Tap a nearby peer on the radar screen. The receiver accepts with a matching 6-digit Short Authentication String (SAS) code.
-* **Pure Local-First Privacy**: Operates strictly within your local subnet (`_clipsync._tcp` via mDNS). Zero cloud tracking, zero telemetry.
-* **End-to-End Encryption**: Every packet is encrypted with AES-256-GCM using fresh ephemeral keys negotiated via X25519 key agreement with HKDF-SHA256 transcript hashing.
-* **Password Manager Protection**: Automatically detects and ignores sensitive transient clips from 1Password, Bitwarden, KeePass, and Apple Keychain.
-
-## Supported Platforms
-
-| Platform | Native Architecture | System Integration |
-| :--- | :--- | :--- |
-| **macOS** | Swift 6 / Apple `Network.framework` | Menu Bar Accessory (`LSUIElement`) & `NSPasteboard` 400ms polling |
-| **Android** | Kotlin 2.0 / Jetpack Compose | `connectedDevice` Foreground Service & MediaStore Scoped Storage |
 ## Documentation
 
-### For Users
-* [Getting Started](docs/user/getting-started.md): First-time setup and overview.
-* [Pairing Devices](docs/user/pairing-devices.md): How discovery and SAS verification work.
-* [Clipboard Synchronization](docs/user/clipboard-sync.md): Cross-device copy and paste behavior.
-* [Sharing Files](docs/user/sharing-files.md): Sending files and folders over Wi-Fi.
-* [Privacy & Security FAQ](docs/user/privacy-and-security.md): Plain-language security answers.
-* [Troubleshooting](docs/user/troubleshooting.md): Common connection questions.
+### User Guides
+* [Getting Started](docs/user/getting-started.md): Installation and setup walkthrough.
+* [Pairing Devices](docs/user/pairing-devices.md): Device discovery and PIN verification.
+* [Clipboard Synchronization](docs/user/clipboard-sync.md): How copy and paste works.
+* [Sharing Files](docs/user/sharing-files.md): File transfers and download folders.
+* [Privacy & Security FAQ](docs/user/privacy-and-security.md): How your data stays private.
+* [Troubleshooting](docs/user/troubleshooting.md): Local connection diagnostics.
 
-### For Developers
-* [Architecture Overview](docs/developer/architecture.md): Component breakdown and data flows.
-* [Wire Protocol Specification](docs/developer/protocol.md): 28-byte framing, opcodes, and chunk format.
-* [Cryptographic Specification](docs/developer/security.md): X25519, HKDF-SHA256, and AES-256-GCM.
-* [Testing Guide](docs/developer/testing.md): Test suites, parity vectors, and failure matrix.
-* [Platform Implementations](docs/developer/platforms.md): Native platform details.
-* [Operations & CI/CD](docs/developer/operations.md): GitHub Actions workflows and release packaging.
-* [Contributing Guidelines](CONTRIBUTING.md): Standards and pull request guidelines.
+### Developer Guides
+* [Architecture Overview](docs/developer/architecture.md): Subsystems and data flow.
+* [Wire Protocol Specification](docs/developer/protocol.md): Packet format and frame types.
+* [Cryptographic Specification](docs/developer/security.md): Key agreement, encryption, and test vectors.
+* [Testing Guide](docs/developer/testing.md): Automated tests and verification.
+* [Platform Implementations](docs/developer/platforms.md): Native Swift and Kotlin architectures.
+* [Operations & CI/CD](docs/developer/operations.md): Packaging, workflows, and release builds.
+* [Contributing Guidelines](CONTRIBUTING.md): Code standards and pull requests.
 
-## Development & Test Commands
+## Building from Source
 
-### macOS
-```bash
-# Run unit tests
-swift test --package-path macos
+| Platform | Test | Build |
+| :--- | :--- | :--- |
+| **macOS** | `swift test --package-path macos` | `./macos/package.sh --all` |
+| **Android** | `cd android && ./gradlew test` | `cd android && ./gradlew assembleRelease` |
 
-# Build release bundle (.app / .dmg / .zip)
-./macos/package.sh --all
-```
-
-### Android
-```bash
-cd android
-
-# Run unit tests
-./gradlew test
-
-# Assemble release APK
-./gradlew assembleRelease
-```
 ## License
 
-RapiDrop is open-source software licensed under the [MIT License](LICENSE).
+RapiDrop is open source software licensed under the [MIT License](LICENSE).  
 Built and maintained by [Prabotics](https://github.com/Prabotics).
