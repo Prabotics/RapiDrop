@@ -127,7 +127,7 @@ Files are streamed in discrete 1 MB (`1,048,576` bytes) slices:
 
 ## 5. Protocol Constants & Flow Control
 
-All protocol timeouts, window limits, and constants are single-sourced on `WireFrame`:
+The active binary framing and socket constants defined on `WireFrame`:
 
 | Constant | Value | Description |
 | :--- | :---: | :--- |
@@ -137,16 +137,13 @@ All protocol timeouts, window limits, and constants are single-sourced on `WireF
 | `CLIENT_SERVICE_TYPE` | `_clipsync-cli._tcp` | Secondary mDNS service advertisement type |
 | `MAX_PAYLOAD_SIZE` | `104,857,600` (100 MB) | Strict upper bound on single non-streamed frames |
 | `STREAMING_CHUNK_SIZE` | `1,048,576` (1 MB) | Fixed slice size for `FILE_CHUNK` transmissions |
-| `CHUNK_HEADER_SIZE` | `28` Bytes | Binary header prefixing each raw chunk payload |
-| `MAX_IN_FLIGHT_CHUNKS` | `4` | Maximum unacknowledged chunks allowed in pipelined flow control |
-| `INACTIVITY_TIMEOUT_MS` | `16,000` ms | Connection drop threshold if no frame or heartbeat arrives |
-| `WATCHDOG_INTERVAL_MS` | `5,000` ms | Interval for connection health and socket watchdog checks |
-| `HEARTBEAT_INTERVAL_MS` | `4,000` ms | Periodic `PING` frame transmission interval |
-| `PAIRING_INVITE_TIMEOUT_MS` | `30,000` ms | Timeout before unaccepted pairing invites expire |
+| `HEADER_SIZE` | `28` Bytes | Fixed 28-byte framing header |
+| `AUTH_TAG_SIZE` | `16` Bytes | AES-256-GCM authentication tag size |
+| `NONCE_SIZE` | `12` Bytes | AES-256-GCM standard nonce size |
 
-## 6. Replay Defense & Timestamp Freshness
+## 6. Replay Defense & Nonce Cache
 
-To prevent captured handshake packets from being replayed on local subnets:
+To prevent captured frames from being replayed on local subnets:
 
-- Handshake frames (`PAIR_INVITE` and `PAIR_ACCEPT`) validate the 8-byte Unix timestamp in the binary header.
-- Frames with `|now - frame.timestamp| > 60,000` ms (60 seconds) are dropped immediately and the socket connection is aborted.
+1. **Timestamp Freshness**: Frames validate the 8-byte Unix timestamp in the binary header. Frames with `|now - frame.timestamp| > 60,000` ms are dropped immediately.
+2. **Rolling Nonce Cache**: In addition to the timestamp window, receiver engines maintain an in-memory 60-second rolling cache of seen nonces. Any frame presenting a previously seen nonce within the window is discarded.
