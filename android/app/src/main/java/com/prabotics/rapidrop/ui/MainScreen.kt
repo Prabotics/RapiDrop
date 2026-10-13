@@ -1,6 +1,7 @@
 package com.prabotics.rapidrop.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -12,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -237,83 +239,96 @@ fun MainScreen(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 if (inspectingClip == null) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .statusBarsPadding()
                             .padding(horizontal = horizontalPad, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        if (!showSettings) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Surface(
-                                    modifier = Modifier.size(36.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        AnimatedContent(
+                            targetState = showSettings,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(150))
+                            },
+                            label = "topBarTransition",
+                        ) { inSettings ->
+                            if (!inSettings) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     ) {
-                                        RapiDropBrandLogo(size = 20.dp)
+                                        Surface(
+                                            modifier = Modifier.size(36.dp),
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                RapiDropBrandLogo(size = 20.dp)
+                                            }
+                                        }
+                                        Text(
+                                            text = "RapiDrop",
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 20.sp,
+                                                letterSpacing = (-0.4).sp,
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            HapticManager.performClick(context)
+                                            showSettings = true
+                                        },
+                                        modifier = Modifier.size(40.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Settings,
+                                            contentDescription = "Settings",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(24.dp),
+                                        )
                                     }
                                 }
-                                Text(
-                                    text = "RapiDrop",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp,
-                                        letterSpacing = (-0.4).sp,
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    HapticManager.performClick(context)
-                                    showSettings = true
-                                },
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = "Settings",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        HapticManager.performClick(context)
-                                        showSettings = false
-                                    },
-                                    modifier = Modifier.size(40.dp),
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                        contentDescription = "Back",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp),
+                                    IconButton(
+                                        onClick = {
+                                            HapticManager.performClick(context)
+                                            showSettings = false
+                                        },
+                                        modifier = Modifier.size(40.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                            contentDescription = "Back",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                    }
+                                    Text(
+                                        text = "Settings",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 22.sp,
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
-                                Text(
-                                    text = "Settings",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 22.sp,
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
                             }
                         }
                     }
@@ -385,87 +400,56 @@ fun MainScreen(
                         }
                     }
 
-                    if (showSettings) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .widthIn(max = 640.dp)
-                                .padding(horizontal = horizontalPad),
-                        ) {
-                            SettingsContent(
-                                currentMode = mediaDestinationMode,
-                                currentThemeMode = appThemeMode,
-                                showSyncHistory = showSyncHistory,
-                                pairedDeviceName = if (isPaired) (effectiveDeviceInfo?.deviceName ?: connectedPeerName) else null,
-                                onModeSelected = onMediaDestinationModeChange,
-                                onThemeModeSelected = onThemeModeChange,
-                                onToggleShowSyncHistory = { _ -> onToggleShowSyncHistory() },
-                                onUnpairDevice = {
-                                    onUnpair()
-                                    showSettings = false
-                                },
-                                onClose = { showSettings = false },
-                                onExitApp = onExitApp,
-                            )
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 640.dp)
-                                .padding(horizontal = horizontalPad, vertical = 16.dp)
-                                .verticalScroll(scrollState),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            if (isPaired) {
-                                PairedDeviceContent(
-                                    isConnected = isConnected,
-                                    isConnecting = isConnecting,
-                                    deviceInfo = effectiveDeviceInfo,
-                                    syncState = syncState,
-                                    onSendMediaClick = onSendMediaClick,
-                                    onSendClipboardClick = onSendClipboardClick,
-                                    onUnpairClick = onUnpair,
-                                )
-                                alertsContent()
-                                SyncHistoryFeed(
-                                    recentClips = recentClips,
-                                    pinnedClipIds = pinnedClipIds,
+                    AnimatedContent(
+                        targetState = showSettings,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(140))
+                        },
+                        label = "settingsContentTransition",
+                    ) { inSettings ->
+                        if (inSettings) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .widthIn(max = 640.dp)
+                                    .padding(horizontal = horizontalPad),
+                            ) {
+                                SettingsContent(
+                                    currentMode = mediaDestinationMode,
+                                    currentThemeMode = appThemeMode,
                                     showSyncHistory = showSyncHistory,
-                                    onCopyClip = onCopyClip,
-                                    onShareClip = onShareClip,
-                                    onClearHistory = onClearHistory,
-                                    onDeleteClip = onDeleteClip,
-                                    onSendClip = onSendClip,
-                                    onTogglePinClip = onTogglePinClip,
-                                    onToggleShowSyncHistory = onToggleShowSyncHistory,
-                                    onInspectClip = { clip -> inspectingClip = clip },
+                                    pairedDeviceName = if (isPaired) (effectiveDeviceInfo?.deviceName ?: connectedPeerName) else null,
+                                    onModeSelected = onMediaDestinationModeChange,
+                                    onThemeModeSelected = onThemeModeChange,
+                                    onToggleShowSyncHistory = { _ -> onToggleShowSyncHistory() },
+                                    onUnpairDevice = {
+                                        onUnpair()
+                                        showSettings = false
+                                    },
+                                    onClose = { showSettings = false },
+                                    onExitApp = onExitApp,
                                 )
-                                val otherDiscovered = discoveredDevices.filter {
-                                    !DeviceNameHelper.isSameDevice(it.name, connectedPeerName)
-                                }
-                                if (otherDiscovered.isNotEmpty()) {
-                                    NearbyDevicesSection(
-                                        devices = otherDiscovered,
-                                        pairingDeviceName = outgoingPairInvite?.deviceName,
-                                        onDeviceSelect = { device -> onSendPairInvite(device, "") },
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .widthIn(max = 640.dp)
+                                    .padding(horizontal = horizontalPad, vertical = 16.dp)
+                                    .verticalScroll(scrollState),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                if (isPaired) {
+                                    PairedDeviceContent(
+                                        isConnected = isConnected,
+                                        isConnecting = isConnecting,
+                                        deviceInfo = effectiveDeviceInfo,
+                                        syncState = syncState,
+                                        onSendMediaClick = onSendMediaClick,
+                                        onSendClipboardClick = onSendClipboardClick,
+                                        onUnpairClick = onUnpair,
                                     )
-                                }
-                                Spacer(Modifier.height(16.dp))
-                            } else {
-                                alertsContent()
-                                val availableDevices = discoveredDevices.filter { dev ->
-                                    activePairInvite?.let { !DeviceNameHelper.isSameDevice(dev.name, it.deviceName) } ?: true
-                                }
-                                DeviceDiscoveryRadar(
-                                    discoveredDevices = availableDevices,
-                                    pairingDeviceName = outgoingPairInvite?.deviceName,
-                                    pairingSasCode = outgoingPairInvite?.pin,
-                                    onDeviceSelect = { device -> onSendPairInvite(device, "") },
-                                    onCancelPairing = onCancelOutgoingInvite,
-                                    modifier = Modifier.padding(top = 16.dp),
-                                )
-                                if (recentClips.isNotEmpty()) {
+                                    alertsContent()
                                     SyncHistoryFeed(
                                         recentClips = recentClips,
                                         pinnedClipIds = pinnedClipIds,
@@ -479,6 +463,45 @@ fun MainScreen(
                                         onToggleShowSyncHistory = onToggleShowSyncHistory,
                                         onInspectClip = { clip -> inspectingClip = clip },
                                     )
+                                    val otherDiscovered = discoveredDevices.filter {
+                                        !DeviceNameHelper.isSameDevice(it.name, connectedPeerName)
+                                    }
+                                    if (otherDiscovered.isNotEmpty()) {
+                                        NearbyDevicesSection(
+                                            devices = otherDiscovered,
+                                            pairingDeviceName = outgoingPairInvite?.deviceName,
+                                            onDeviceSelect = { device -> onSendPairInvite(device, "") },
+                                        )
+                                    }
+                                    Spacer(Modifier.height(16.dp))
+                                } else {
+                                    alertsContent()
+                                    val availableDevices = discoveredDevices.filter { dev ->
+                                        activePairInvite?.let { !DeviceNameHelper.isSameDevice(dev.name, it.deviceName) } ?: true
+                                    }
+                                    DeviceDiscoveryRadar(
+                                        discoveredDevices = availableDevices,
+                                        pairingDeviceName = outgoingPairInvite?.deviceName,
+                                        pairingSasCode = outgoingPairInvite?.pin,
+                                        onDeviceSelect = { device -> onSendPairInvite(device, "") },
+                                        onCancelPairing = onCancelOutgoingInvite,
+                                        modifier = Modifier.padding(top = 16.dp),
+                                    )
+                                    if (recentClips.isNotEmpty()) {
+                                        SyncHistoryFeed(
+                                            recentClips = recentClips,
+                                            pinnedClipIds = pinnedClipIds,
+                                            showSyncHistory = showSyncHistory,
+                                            onCopyClip = onCopyClip,
+                                            onShareClip = onShareClip,
+                                            onClearHistory = onClearHistory,
+                                            onDeleteClip = onDeleteClip,
+                                            onSendClip = onSendClip,
+                                            onTogglePinClip = onTogglePinClip,
+                                            onToggleShowSyncHistory = onToggleShowSyncHistory,
+                                            onInspectClip = { clip -> inspectingClip = clip },
+                                        )
+                                    }
                                 }
                             }
                         }

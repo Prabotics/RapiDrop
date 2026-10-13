@@ -128,7 +128,26 @@ fun SettingsContent(
     var isHapticEnabled by remember { mutableStateOf(preferencesManager.isHapticEnabled()) }
     var isNotificationMirroringEnabled by remember { mutableStateOf(preferencesManager.isNotificationMirroringEnabled()) }
     var isNotificationListenerGranted by remember { mutableStateOf(NotificationSyncService.isPermissionGranted(context)) }
+    val powerManager = remember(context) { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
     val lifecycleOwner = LocalLifecycleOwner.current
+    var isNotificationGranted by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            },
+        )
+    }
+    var isBatteryOptimizedIgnored by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+            } else {
+                true
+            },
+        )
+    }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -137,23 +156,18 @@ fun SettingsContent(
                 if (hasPermission && preferencesManager.isNotificationMirroringEnabled()) {
                     isNotificationMirroringEnabled = true
                 }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    isNotificationGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    isBatteryOptimizedIgnored = powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
-    }
-    val isNotificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    } else {
-        true
-    }
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    val isBatteryOptimizedIgnored = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
-    } else {
-        true
     }
 
     if (showThemeDialog) {
@@ -406,8 +420,9 @@ fun SettingsContent(
             .padding(top = 8.dp, bottom = 36.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val cardBorder = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+        val outlineVariant = MaterialTheme.colorScheme.outlineVariant
+        val cardBorder = remember(outlineVariant) { BorderStroke(1.dp, outlineVariant.copy(alpha = 0.5f)) }
+        val dividerColor = remember(outlineVariant) { outlineVariant.copy(alpha = 0.45f) }
 
         if (pairedDeviceName != null && onUnpairDevice != null) {
             SettingsGroupHeader(title = "Paired Device")
@@ -520,10 +535,17 @@ fun SettingsContent(
                         onClick = {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 try {
-                                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                        data = Uri.parse("package:${context.packageName}")
+                                    }
                                     context.startActivity(intent)
-                                } catch (_: ActivityNotFoundException) {
-                                } catch (_: SecurityException) {}
+                                } catch (_: Exception) {
+                                    try {
+                                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                        context.startActivity(intent)
+                                    } catch (_: ActivityNotFoundException) {
+                                    } catch (_: SecurityException) {}
+                                }
                             }
                         },
                         shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
